@@ -1,12 +1,13 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:social_app/pages/SignInPage.dart';
+import 'package:social_app/pages/PhoneSignInPage.dart';
+import 'package:social_app/pages/SignUpPage/OTP/OtpPage.dart';
+import 'package:social_app/pages/SignUpPage/SignUpPage.dart';
 import 'package:social_app/services/auth_service.dart';
 import 'pages/Home.dart';
 
 class MyApp extends StatelessWidget {
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
@@ -20,11 +21,13 @@ class MyApp extends StatelessWidget {
         )
       ],
       child: MaterialApp(
-        title: 'Flutter Demo',
         theme: ThemeData(
           primarySwatch: Colors.blue,
           visualDensity: VisualDensity.adaptivePlatformDensity,
         ),
+        routes: {
+          HomePage.routeName: (context) => HomePage(),
+        },
         home: AuthenticationWrapper(),
       ),
     );
@@ -39,6 +42,6 @@ class AuthenticationWrapper extends StatelessWidget {
     if (firebaseUser != null) {
       return HomePage();
     }
-    return SignInPage();
+    return SignUpPage();
   }
 }
