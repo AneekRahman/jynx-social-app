@@ -3,12 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:social_app/services/auth_service.dart';
 import 'package:provider/provider.dart';
 
-class PhoneSignInPage extends StatefulWidget {
+class OldPhoneSignInPage extends StatefulWidget {
   @override
-  _PhoneSignInPageState createState() => _PhoneSignInPageState();
+  _OldPhoneSignInPageState createState() => _OldPhoneSignInPageState();
 }
 
-class _PhoneSignInPageState extends State<PhoneSignInPage> {
+class _OldPhoneSignInPageState extends State<OldPhoneSignInPage> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   String _phoneNo, _smsCode;
   String _msg = "";

@@ -17,7 +17,8 @@ class AuthenticationService {
   }
 
   Future<String> phoneSignIn({String smsCode}) async {
-    if (this._verificationId == null) return "Error with state, try again";
+    if (this._verificationId == null)
+      return "Error with state, please go back \nand start again";
     print("_verificationId is: " + _verificationId + " and code:" + smsCode);
 
     // Create a PhoneAuthCredential with the code
@@ -29,37 +30,41 @@ class AuthenticationService {
       await _firebaseAuth.signInWithCredential(phoneAuthCredential);
       return "success";
     } on FirebaseAuthException catch (e) {
+      if (e.code == "invalid-verification-code")
+        return "The code you entered was incorrect";
       return e.message;
     } catch (e) {
       print(e);
+      return "We encountered an error while logging in";
     }
   }
 
   Future<String> sendPhoneVerificationCode(
       {String phoneNo, Function(String) callback}) async {
     print("Send the veri code");
-    await _firebaseAuth.verifyPhoneNumber(
-      phoneNumber: phoneNo,
-      codeSent: (String verificationId, int resendToken) async {
-        this._verificationId = verificationId;
-        callback("success");
-      },
-      verificationFailed: (FirebaseAuthException e) {
-        print("Error called: " + e.message);
-        if (e.code == 'invalid-phone-number') {
-          return callback('The provided phone number is not valid.');
-        }
-        callback(e.message);
-      },
-      verificationCompleted: (PhoneAuthCredential phoneAuthCredential) {},
-      codeAutoRetrievalTimeout: (String verificationId) {},
-    );
+    try {
+      await _firebaseAuth.verifyPhoneNumber(
+        phoneNumber: phoneNo,
+        codeSent: (String verificationId, int resendToken) async {
+          this._verificationId = verificationId;
+          callback("success");
+        },
+        verificationFailed: (FirebaseAuthException e) {
+          print("Error called: " + e.message);
+          if (e.code == 'invalid-phone-number') {
+            return callback('The provided phone number is not valid.');
+          }
+          callback(e.message);
+        },
+        verificationCompleted: (PhoneAuthCredential phoneAuthCredential) {},
+        codeAutoRetrievalTimeout: (String verificationId) {},
+      );
+    } catch (e) {
+      print(e);
+      callback("We encountered an error while \nsending a verification code");
+    }
   }
 
-  /// There are a lot of different ways on how you can do exception handling.
-  /// This is to make it as easy as possible but a better way would be to
-  /// use your own custom class that would take the exception and return better
-  /// error messages. That way you can throw, return or whatever you prefer with that instead.
   Future<String> emailSignIn({String email, String password}) async {
     try {
       await _firebaseAuth.signInWithEmailAndPassword(
@@ -77,10 +82,6 @@ class AuthenticationService {
     }
   }
 
-  /// There are a lot of different ways on how you can do exception handling.
-  /// This is to make it as easy as possible but a better way would be to
-  /// use your own custom class that would take the exception and return better
-  /// error messages. That way you can throw, return or whatever you prefer with that instead.
   Future<String> emailSignUp({String email, String password}) async {
     try {
       await _firebaseAuth.createUserWithEmailAndPassword(

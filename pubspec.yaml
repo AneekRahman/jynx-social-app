@@ -41,6 +41,43 @@ dev_dependencies:
 
 # The following section is specific to Flutter.
 flutter:
+  assets:
+    - assets/
+    - fonts/
+
+  fonts:
+    - family: helvetica_ultra_light
+      fonts:
+        - asset: fonts/HelveticaNeueUltraLight.ttf
+
+    - family: helvetica_thin
+      fonts:
+        - asset: fonts/HelveticaNeue-Thin.otf
+
+    - family: helvetica_light
+      fonts:
+        - asset: fonts/HelveticaNeueLight.ttf
+
+    - family: helvetica_roman
+      fonts:
+        - asset: fonts/HelveticaNeue-Roman.otf
+
+    - family: helvetica_medium
+      fonts:
+        - asset: fonts/HelveticaNeue-Medium.otf
+
+    - family: helvetica_bold
+      fonts:
+        - asset: fonts/HelveticaNeue-Bold.ttf
+
+    - family: helvetica_heavy
+      fonts:
+        - asset: fonts/HelveticaNeue-Heavy.otf
+        
+    - family: helvetica_black
+      fonts:
+        - asset: fonts/HelveticaNeue-Black.otf
+
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
