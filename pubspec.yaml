@@ -28,6 +28,7 @@ dependencies:
   cloud_firestore: ^0.14.2
   intl_phone_number_input: any
   provider: ^4.3.2+2
+  timeago: any
 
   flutter:
     sdk: flutter

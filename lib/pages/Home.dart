@@ -1,8 +1,13 @@
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:social_app/models/ChatRow.dart';
 import 'package:social_app/modules/constants.dart';
 import 'package:social_app/services/auth_service.dart';
 import 'package:provider/provider.dart';
+import 'package:social_app/services/rtd_service.dart';
+import 'package:timeago/timeago.dart' as timeago;
+import 'ChatRoomPage.dart';
 
 class HomePage extends StatefulWidget {
   static final String routeName = "/HomePage";
@@ -11,6 +16,8 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  List<ChatRow> _chatRows = [];
+
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -18,9 +25,11 @@ class _HomePageState extends State<HomePage> {
           statusBarColor: Colors.transparent,
           statusBarIconBrightness: Brightness.dark),
       child: Scaffold(
+        backgroundColor: Colors.white,
         body: Column(
           children: [
             HomeAppBar(),
+            ChatsList(chatRows: _chatRows),
             RaisedButton(
               onPressed: () {
                 context.read<AuthenticationService>().signOut();
@@ -51,7 +60,7 @@ class HomeAppBar extends StatelessWidget {
             ),
             decoration: BoxDecoration(
                 border: Border.all(
-                  color: Colors.black38,
+                  color: Color(0xFFF2F2F2F2),
                   width: 2,
                 ),
                 borderRadius: BorderRadius.circular(100)),
@@ -74,10 +83,10 @@ class SearchBox extends StatelessWidget {
   Widget build(BuildContext context) {
     return Expanded(
       child: Container(
-        margin: EdgeInsets.symmetric(horizontal: 20),
+        margin: EdgeInsets.symmetric(horizontal: 15),
         padding: EdgeInsets.symmetric(vertical: 8, horizontal: 20),
         decoration: BoxDecoration(
-            color: Color(0xFF12121212),
+            color: Color(0xFFF2F2F2F2),
             borderRadius: BorderRadius.circular(100)),
         child: Row(
           children: [
@@ -91,6 +100,174 @@ class SearchBox extends StatelessWidget {
             )
           ],
         ),
+      ),
+    );
+  }
+}
+
+class ChatsList extends StatelessWidget {
+  const ChatsList({
+    Key key,
+    @required List<ChatRow> chatRows,
+  })  : _chatRows = chatRows,
+        super(key: key);
+
+  final List<ChatRow> _chatRows;
+
+  void _removeIfAlreadyAdded(ChatRow chatRow) {
+    for (int i = 0; i < _chatRows.length; i++) {
+      ChatRow element = _chatRows.elementAt(i);
+      if (element != null && chatRow.chatRoomUid == element.chatRoomUid) {
+        final index = _chatRows.indexOf(element);
+        _chatRows.removeAt(index);
+      }
+    }
+  }
+
+  void _setChatRowsFromStream(dynamic usersChatsObject) {
+    usersChatsObject.forEach((key, value) {
+      ChatRow chatRow =
+          ChatRow.fromJson({...usersChatsObject[key], 'chatRoomUid': key});
+      _removeIfAlreadyAdded(chatRow);
+      _chatRows.add(chatRow);
+    });
+
+    // Sort the first 10 results on the client side as well
+    _chatRows.sort((a, b) => b.lastMsgSentTime.compareTo(a.lastMsgSentTime));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: StreamBuilder(
+        stream:
+            context.watch<RealtimeDatabaseService>().getAllChatHisoryStream(),
+        builder: (context, AsyncSnapshot<Event> snapshot) {
+          if (snapshot.hasData && !snapshot.hasError) {
+            if (_chatRows.length <= 10) {
+              // Remove all if list less than or equal to 10
+              _chatRows.clear();
+            } else {
+              // Remove the first 10 (Range of stream) if list longer than 10
+              _chatRows.removeRange(0, 9);
+            }
+            print("UPDATE FROM STREAM");
+            _setChatRowsFromStream(snapshot.data.snapshot.value);
+
+            return CustomScrollView(
+              physics: BouncingScrollPhysics(),
+              slivers: [
+                SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      return FlatButton(
+                          padding: EdgeInsets.all(0),
+                          onPressed: () {
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => ChatRoomPage()));
+                          },
+                          child: ChatsListRow(
+                              chatRow: _chatRows.elementAt(index)));
+                    },
+                    childCount: _chatRows.length,
+                  ),
+                )
+              ],
+            );
+          } else {
+            return Center(
+                child: SizedBox(
+              child: CircularProgressIndicator(),
+              height: 25,
+              width: 25,
+            ));
+          }
+        },
+      ),
+    );
+  }
+}
+
+class ChatsListRow extends StatelessWidget {
+  const ChatsListRow({
+    Key key,
+    @required ChatRow chatRow,
+  })  : _chatRow = chatRow,
+        super(key: key);
+
+  final ChatRow _chatRow;
+
+  @override
+  Widget build(BuildContext context) {
+    final DateTime sentTime =
+        new DateTime.fromMillisecondsSinceEpoch(_chatRow.lastMsgSentTime);
+    final String sentTimeFormattedString =
+        timeago.format(sentTime, locale: 'en_short');
+    final fontFamily =
+        _chatRow.status == 0 ? HelveticaFont.Heavy : HelveticaFont.Medium;
+    return Container(
+      padding: EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(100),
+            child: Image.network(
+              _chatRow.otherUsersPic,
+              height: 40,
+              width: 40,
+            ),
+          ),
+          SizedBox(
+            width: 10,
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _chatRow.otherUsersName,
+                style: TextStyle(
+                  fontFamily: fontFamily,
+                  fontSize: 12,
+                ),
+              ),
+              SizedBox(
+                height: 2,
+              ),
+              Row(
+                children: [
+                  Icon(
+                    _chatRow.status == 0
+                        ? Icons.chat_bubble
+                        : Icons.chat_bubble_outline,
+                    size: 14,
+                  ),
+                  SizedBox(
+                    width: 5,
+                  ),
+                  Text(
+                    _chatRow.status == 0 ? "New message" : "Opened",
+                    style: TextStyle(
+                      fontFamily: fontFamily,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          Expanded(
+            child: Container(),
+          ),
+          Text(
+            sentTimeFormattedString,
+            style: TextStyle(
+              fontFamily: fontFamily,
+              fontSize: 12,
+            ),
+          )
+        ],
       ),
     );
   }

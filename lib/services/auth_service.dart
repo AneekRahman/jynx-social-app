@@ -39,7 +39,7 @@ class AuthenticationService {
     }
   }
 
-  Future<String> sendPhoneVerificationCode(
+  Future<void> sendPhoneVerificationCode(
       {String phoneNo, Function(String) callback}) async {
     print("Send the veri code");
     try {
@@ -65,7 +65,7 @@ class AuthenticationService {
     }
   }
 
-  Future<String> emailSignIn({String email, String password}) async {
+  Future<void> emailSignIn({String email, String password}) async {
     try {
       await _firebaseAuth.signInWithEmailAndPassword(
           email: email, password: password);
@@ -82,7 +82,7 @@ class AuthenticationService {
     }
   }
 
-  Future<String> emailSignUp({String email, String password}) async {
+  Future<void> emailSignUp({String email, String password}) async {
     try {
       await _firebaseAuth.createUserWithEmailAndPassword(
           email: email, password: password);

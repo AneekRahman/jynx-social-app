@@ -5,8 +5,14 @@ final normalTextStyle = TextStyle(
 );
 
 class HelveticaFont {
-  static const String Heavy = "helvetica_heavy";
+  static const String UltraLight = "helvetica_ultra_light";
+  static const String Thin = "helvetica_thin";
+  static const String Light = "helvetica_light";
   static const String Roman = "helvetica_roman";
+  static const String Medium = "helvetica_medium";
+  static const String Bold = "helvetica_bold";
+  static const String Heavy = "helvetica_heavy";
+  static const String Black = "helvetica_black";
 }
 
 final headingStyle = TextStyle(

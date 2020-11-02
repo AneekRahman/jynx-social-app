@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:social_app/modules/MyBottomButton.dart';
 import 'package:social_app/modules/constants.dart';
 
 class OtpForm extends StatefulWidget {

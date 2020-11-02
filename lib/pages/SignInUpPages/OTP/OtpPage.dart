@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:social_app/modules/MyBottomButton.dart';
 import 'package:social_app/modules/constants.dart';
 import 'package:provider/provider.dart';
-import 'package:social_app/pages/Home.dart';
 import 'package:social_app/services/auth_service.dart';
 
 import 'OtpForm.dart';
@@ -109,7 +108,7 @@ class _OtpPageState extends State<OtpPage> {
           builder: (_, value, child) {
             _resendCodeTimer = value.toInt();
             return Text(
-              "00:${_resendCodeTimer}",
+              "00:$_resendCodeTimer",
               style: TextStyle(color: Color(0xFF757575)),
             );
           },
@@ -158,7 +157,7 @@ class _OtpPageState extends State<OtpPage> {
                     onOtpChange: (smsCode) {
                       _smsCode = smsCode;
                       print(
-                          'GOT NEW SMS CODE: ${smsCode} and Length: ${smsCode.length}');
+                          'GOT NEW SMS CODE: $smsCode and Length: ${smsCode.length}');
                     },
                   ),
                   SizedBox(height: 20),
