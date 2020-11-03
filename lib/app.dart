@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:social_app/pages/SignInUpPages/IntialSignUpUpdatePage.dart';
 import 'package:social_app/pages/SignInUpPages/PhoneSignInPage.dart';
 import 'package:social_app/services/auth_service.dart';
 import 'package:social_app/services/rtd_service.dart';
@@ -45,7 +46,13 @@ class AuthenticationWrapper extends StatelessWidget {
     final User firebaseUser = context.watch<User>();
 
     if (firebaseUser != null) {
-      return HomePage();
+      if (firebaseUser.displayName == null ||
+          firebaseUser.displayName.isEmpty) {
+        return IntialSignUpUpdatePage();
+      } else {
+        return HomePage();
+      }
+
       // return TestPage();
     } else {
       return PhoneSignInPage();

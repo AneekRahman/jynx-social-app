@@ -17,7 +17,6 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   List<ChatRow> _chatRows = [];
-
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -29,7 +28,9 @@ class _HomePageState extends State<HomePage> {
         body: Column(
           children: [
             HomeAppBar(),
-            ChatsList(chatRows: _chatRows),
+            ChatsList(
+              chatRows: _chatRows,
+            ),
             RaisedButton(
               onPressed: () {
                 context.read<AuthenticationService>().signOut();
@@ -105,14 +106,35 @@ class SearchBox extends StatelessWidget {
   }
 }
 
+class LoadingBar extends StatelessWidget {
+  final bool _loading;
+  const LoadingBar({Key key, bool loading})
+      : _loading = loading,
+        super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      child: _loading
+          ? LinearProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              backgroundColor: Colors.blue[100],
+            )
+          : Container(),
+      constraints: BoxConstraints.expand(height: 1),
+    );
+  }
+}
+
 class ChatsList extends StatelessWidget {
-  const ChatsList({
+  ChatsList({
     Key key,
     @required List<ChatRow> chatRows,
   })  : _chatRows = chatRows,
         super(key: key);
 
   final List<ChatRow> _chatRows;
+  bool _loadingChats = true;
 
   void _removeIfAlreadyAdded(ChatRow chatRow) {
     for (int i = 0; i < _chatRows.length; i++) {
@@ -140,10 +162,11 @@ class ChatsList extends StatelessWidget {
   Widget build(BuildContext context) {
     return Expanded(
       child: StreamBuilder(
-        stream:
-            context.watch<RealtimeDatabaseService>().getAllChatHisoryStream(),
+        stream: context.watch<RealtimeDatabaseService>().getAllChatHisoryStream,
         builder: (context, AsyncSnapshot<Event> snapshot) {
           if (snapshot.hasData && !snapshot.hasError) {
+            print("UPDATE FROM STREAM");
+
             if (_chatRows.length <= 10) {
               // Remove all if list less than or equal to 10
               _chatRows.clear();
@@ -151,38 +174,48 @@ class ChatsList extends StatelessWidget {
               // Remove the first 10 (Range of stream) if list longer than 10
               _chatRows.removeRange(0, 9);
             }
-            print("UPDATE FROM STREAM");
-            _setChatRowsFromStream(snapshot.data.snapshot.value);
 
-            return CustomScrollView(
-              physics: BouncingScrollPhysics(),
-              slivers: [
-                SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      return FlatButton(
-                          padding: EdgeInsets.all(0),
-                          onPressed: () {
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => ChatRoomPage()));
+            // Set the _chatRows list
+            _setChatRowsFromStream(snapshot.data.snapshot.value);
+            // Update the loading Animation
+            _loadingChats = false;
+
+            return Column(
+              children: [
+                LoadingBar(loading: _loadingChats),
+                Expanded(
+                  child: CustomScrollView(
+                    physics: BouncingScrollPhysics(),
+                    slivers: [
+                      SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) {
+                            ChatRow chatRow = _chatRows.elementAt(index);
+                            return FlatButton(
+                                padding: EdgeInsets.all(0),
+                                onPressed: () {
+                                  Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) => ChatRoomPage(
+                                                chatRow: chatRow,
+                                              )));
+                                },
+                                child: ChatsListRow(chatRow: chatRow));
                           },
-                          child: ChatsListRow(
-                              chatRow: _chatRows.elementAt(index)));
-                    },
-                    childCount: _chatRows.length,
+                          childCount: _chatRows.length,
+                        ),
+                      )
+                    ],
                   ),
-                )
+                ),
               ],
             );
           } else {
             return Center(
-                child: SizedBox(
-              child: CircularProgressIndicator(),
-              height: 25,
-              width: 25,
-            ));
+              child: SizedBox(
+                  child: CircularProgressIndicator(), height: 25, width: 25),
+            );
           }
         },
       ),
@@ -204,7 +237,7 @@ class ChatsListRow extends StatelessWidget {
     final DateTime sentTime =
         new DateTime.fromMillisecondsSinceEpoch(_chatRow.lastMsgSentTime);
     final String sentTimeFormattedString =
-        timeago.format(sentTime, locale: 'en_short');
+        timeago.format(sentTime, locale: 'en_short', allowFromNow: true);
     final fontFamily =
         _chatRow.status == 0 ? HelveticaFont.Heavy : HelveticaFont.Medium;
     return Container(
