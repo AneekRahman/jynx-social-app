@@ -37,3 +37,12 @@ OutlineInputBorder outlineInputBorder(bool focused) {
         BorderSide(color: focused ? Colors.blueAccent : Color(0xFF757575)),
   );
 }
+
+String getOneOnOneChatUid(String userUid1, userUid2) {
+  // The greaterString:smallerString
+  if (userUid1.compareTo(userUid2) == 1) {
+    return userUid1 + ":" + userUid2;
+  } else {
+    return userUid2 + ":" + userUid1;
+  }
+}

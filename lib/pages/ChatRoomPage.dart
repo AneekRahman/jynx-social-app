@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
@@ -15,7 +16,7 @@ const kMessageTextFieldDecoration = InputDecoration(
   border: InputBorder.none,
 );
 
-AppBar chatTopBar(MyUserObject otherUser) => AppBar(
+AppBar chatTopBar({MyUserObject otherUser, ChatRow chatRow}) => AppBar(
       leading: Icon(Icons.arrow_back_ios),
       iconTheme: IconThemeData(color: Colors.black),
       elevation: 0,
@@ -26,11 +27,11 @@ AppBar chatTopBar(MyUserObject otherUser) => AppBar(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Text(
-                otherUser.displayName,
+                chatRow.otherUsersName ?? otherUser.displayName ?? "",
                 style: TextStyle(
                     fontFamily: 'Poppins', fontSize: 14, color: Colors.black),
               ),
-              Text("@" + otherUser.userName,
+              Text("seen 2 min ago",
                   style: TextStyle(
                       fontFamily: 'Poppins',
                       fontSize: 10,
@@ -58,6 +59,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   User _currentUser;
   List<MsgRow> _msgRows = [];
   String _chatRoomUid;
+  bool _initializingChatRoom = true;
 
   void _removeIfAlreadyAdded(MsgRow msgRow) {
     for (int i = 0; i < _msgRows.length; i++) {
@@ -82,12 +84,26 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
     _msgRows.sort((a, b) => b.sentTime.compareTo(a.sentTime));
   }
 
-  @override
-  void initState() {
+  void _initializeChatRoom() async {
     if (widget.chatRow != null) {
       _chatRoomUid = widget.chatRow.chatRoomUid;
+    } else {
+      String value = await context
+          .read<RealtimeDatabaseService>()
+          .searchForOneOnOneChatRoom(
+              _currentUser.uid, widget.otherUser.userUid);
+      if (value != null) _chatRoomUid = value;
     }
+    // Let the user now start chatting
+    setState(() {
+      _initializingChatRoom = false;
+    });
+  }
+
+  @override
+  void initState() {
     _currentUser = context.read<User>();
+    _initializeChatRoom();
     super.initState();
   }
 
@@ -98,7 +114,8 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
           statusBarColor: Colors.transparent,
           statusBarIconBrightness: Brightness.dark),
       child: Scaffold(
-        appBar: chatTopBar(widget.otherUser),
+        appBar:
+            chatTopBar(otherUser: widget.otherUser, chatRow: widget.chatRow),
         body: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -109,7 +126,9 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                     .watch<RealtimeDatabaseService>()
                     .getChatRoomStream(_chatRoomUid),
                 builder: (context, AsyncSnapshot<Event> snapshot) {
-                  if (snapshot.hasData && !snapshot.hasError) {
+                  if (snapshot.hasData &&
+                      !snapshot.hasError &&
+                      !_initializingChatRoom) {
                     _setMsgRowsFromStream(snapshot.data.snapshot.value);
 
                     return CustomScrollView(
@@ -233,8 +252,6 @@ class ChatBottomBar extends StatelessWidget {
   bool _alreadySending = false;
 
   Future _createRequestAndSendMsg(context) async {
-    print("Need to create a new requestedUserChats doc and send message");
-
     try {
       final Map<String, String> response = await _rootContext
           .read<RealtimeDatabaseService>()
@@ -243,16 +260,14 @@ class ChatBottomBar extends StatelessWidget {
 
       if (response['status'] == "success" && response["chatRoomUid"] != null) {
         // Successfully created new requestedUserChat
-        print(
-            'Successfully created requestedUserChats (${response["chatRoomUid"]}) document and sent message');
-        // Set the newly created chatRoomUid
         _chatRoomUid = response["chatRoomUid"];
+        // Set the newly created chatRoomUid
         _setChatRoomUid(response["chatRoomUid"]);
         // Lastly send the message
-        _sendMessageToChatRoom(context);
+        await _sendMessageToChatRoom(context);
       } else {
         Scaffold.of(context).showSnackBar(SnackBar(
-          content: Text("Error: " + response["errorMsg"]),
+          content: Text("There was a network issue while sending a message"),
         ));
       }
     } catch (e) {
@@ -265,14 +280,20 @@ class ChatBottomBar extends StatelessWidget {
 
   Future _sendMessageToChatRoom(context) async {
     print("Sending message to the user");
-    await _rootContext.read<RealtimeDatabaseService>().sendMessageInRoom(
-      _chatRoomUid,
-      {
-        "msg": _textInputValue,
-        "sentTime": new DateTime.now().millisecondsSinceEpoch,
-        "userUid": _currentUser.uid
-      },
-    );
+    try {
+      await _rootContext.read<RealtimeDatabaseService>().sendMessageInRoom(
+        _chatRoomUid,
+        {
+          "msg": _textInputValue,
+          "sentTime": new DateTime.now().millisecondsSinceEpoch,
+          "userUid": _currentUser.uid
+        },
+      );
+    } catch (e) {
+      Scaffold.of(context).showSnackBar(SnackBar(
+        content: Text("There was a network issue while sending the message"),
+      ));
+    }
   }
 
   void _onSendHandler(context) async {

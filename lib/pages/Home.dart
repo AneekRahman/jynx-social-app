@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -19,6 +20,14 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   List<ChatRow> _chatRows = [];
+  User _currentUser;
+
+  @override
+  void initState() {
+    _currentUser = context.read<User>();
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -32,6 +41,7 @@ class _HomePageState extends State<HomePage> {
             HomeAppBar(),
             ChatsList(
               chatRows: _chatRows,
+              currentUser: _currentUser,
             ),
             RaisedButton(
               onPressed: () {
@@ -122,10 +132,12 @@ class SearchBox extends StatelessWidget {
 class ChatsList extends StatelessWidget {
   ChatsList({
     Key key,
+    @required User currentUser,
     @required List<ChatRow> chatRows,
   })  : _chatRows = chatRows,
+        _currentUser = currentUser,
         super(key: key);
-
+  User _currentUser;
   final List<ChatRow> _chatRows;
   bool _loadingChats = true;
 
@@ -155,7 +167,9 @@ class ChatsList extends StatelessWidget {
   Widget build(BuildContext context) {
     return Expanded(
       child: StreamBuilder(
-        stream: context.watch<RealtimeDatabaseService>().getAllChatHisoryStream,
+        stream: context
+            .watch<RealtimeDatabaseService>()
+            .getAllChatHisoryStream(_currentUser.uid),
         builder: (context, AsyncSnapshot<Event> snapshot) {
           if (snapshot.hasData && !snapshot.hasError) {
             print("UPDATE FROM STREAM");
@@ -242,10 +256,13 @@ class ChatsListRow extends StatelessWidget {
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(100),
-            child: Image.network(
-              _chatRow.otherUsersPic,
-              height: 40,
-              width: 40,
+            child: Container(
+              color: Colors.black12,
+              child: Image.network(
+                _chatRow.otherUsersPic ?? "",
+                height: 40,
+                width: 40,
+              ),
             ),
           ),
           SizedBox(
