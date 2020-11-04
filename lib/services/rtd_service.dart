@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:social_app/models/MyUserObject.dart';
 
 class RealtimeDatabaseService {
   final FirebaseDatabase _firebaseDatabase;
@@ -22,32 +24,47 @@ class RealtimeDatabaseService {
         .onValue;
   }
 
-  Future sendMessageInRoom(String chatRoomUid, dynamic msgJson) {
-    _firebaseDatabase
+  Future sendMessageInRoom(String chatRoomUid, dynamic msgJson) async {
+    await _firebaseDatabase
         .reference()
         .child('chatRooms/$chatRoomUid')
         .push()
         .set(msgJson);
   }
 
-  Future<Map<String, String>> createRequestedUserChats(
-      {String currentUsersUid,
-      String otherUsersUid,
-      String currentUsersName,
-      String currentUsersPic}) async {
+  Future<Map<String, String>> createRequestedUserChats({
+    MyUserObject otherUserObject,
+    User currentUser,
+  }) async {
     try {
-      final DatabaseReference newDocumentRef = _firebaseDatabase
+      final DatabaseReference otherUsersRequestedChats = _firebaseDatabase
           .reference()
-          .child('requestedUserChats/$otherUsersUid')
+          .child('requestedUserChats/${otherUserObject.userUid}')
           .push();
-      await newDocumentRef.set({
+      // Create a document in the requestedUserChats for the user that the first msg is sent to
+      await otherUsersRequestedChats.set({
         "lastMsgSentTime": '${new DateTime.now().millisecondsSinceEpoch}',
-        "otherUsersUid": currentUsersUid,
-        "otherUsersName": currentUsersName,
-        "otherUsersPic": currentUsersPic,
+        "otherUsersUid": currentUser.uid,
+        "otherUsersName": currentUser.displayName,
+        "otherUsersPic": currentUser.photoURL,
+        "roomType": 0,
         "seen": 0
       });
-      return {"status": "success", "chatRoomUid": newDocumentRef.key};
+      // Create a document in the main chats for the current user
+      final DatabaseReference currentUsersChat = _firebaseDatabase
+          .reference()
+          .child('userChats/${currentUser.uid}')
+          .push();
+      // Create a document in the requestedUserChats for the user that the first msg is sent to
+      await currentUsersChat.set({
+        "lastMsgSentTime": '${new DateTime.now().millisecondsSinceEpoch}',
+        "otherUsersUid": otherUserObject.userUid,
+        "otherUsersName": otherUserObject.displayName,
+        "otherUsersPic": otherUserObject.profilePic,
+        "roomType": 0,
+        "seen": 1
+      });
+      return {"status": "success", "chatRoomUid": currentUsersChat.key};
     } catch (e) {
       return {"status": "error", "errorMsg": e.toString()};
     }

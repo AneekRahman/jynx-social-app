@@ -2,11 +2,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
 import 'package:social_app/models/ChatRow.dart';
 import 'package:social_app/models/MsgRow.dart';
 import 'package:social_app/models/MyUserObject.dart';
 import 'package:social_app/services/rtd_service.dart';
+import 'package:provider/provider.dart';
 
 const kMessageTextFieldDecoration = InputDecoration(
   contentPadding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
@@ -15,39 +15,41 @@ const kMessageTextFieldDecoration = InputDecoration(
   border: InputBorder.none,
 );
 
-AppBar chatTopBar = AppBar(
-  leading: Icon(Icons.arrow_back_ios),
-  iconTheme: IconThemeData(color: Colors.black),
-  elevation: 0,
-  backgroundColor: Colors.white10,
-  title: Row(
-    children: <Widget>[
-      Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+AppBar chatTopBar(MyUserObject otherUser) => AppBar(
+      leading: Icon(Icons.arrow_back_ios),
+      iconTheme: IconThemeData(color: Colors.black),
+      elevation: 0,
+      backgroundColor: Colors.white10,
+      title: Row(
         children: <Widget>[
-          Text(
-            'Naim Shahriyer',
-            style: TextStyle(
-                fontFamily: 'Poppins', fontSize: 14, color: Colors.black),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                otherUser.displayName,
+                style: TextStyle(
+                    fontFamily: 'Poppins', fontSize: 14, color: Colors.black),
+              ),
+              Text("@" + otherUser.userName,
+                  style: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 10,
+                      color: Colors.black54))
+            ],
           ),
-          Text('Active',
-              style: TextStyle(
-                  fontFamily: 'Poppins', fontSize: 10, color: Colors.black))
         ],
       ),
-    ],
-  ),
-  actions: <Widget>[
-    GestureDetector(
-      child: Icon(Icons.more_vert),
-    )
-  ],
-);
+      actions: <Widget>[
+        GestureDetector(
+          child: Icon(Icons.more_vert),
+        )
+      ],
+    );
 
 class ChatRoomPage extends StatefulWidget {
   final ChatRow chatRow;
   final MyUserObject otherUser;
-  ChatRoomPage({@required this.chatRow, this.otherUser});
+  ChatRoomPage({this.chatRow, this.otherUser});
   @override
   _ChatRoomPageState createState() => _ChatRoomPageState();
 }
@@ -68,12 +70,13 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   }
 
   void _setMsgRowsFromStream(dynamic chatRoomMsgsObject) {
-    chatRoomMsgsObject.forEach((key, value) {
-      MsgRow msgRow =
-          MsgRow.fromJson({...chatRoomMsgsObject[key], 'msgUid': key});
-      _removeIfAlreadyAdded(msgRow);
-      _msgRows.add(msgRow);
-    });
+    if (chatRoomMsgsObject != null)
+      chatRoomMsgsObject.forEach((key, value) {
+        MsgRow msgRow =
+            MsgRow.fromJson({...chatRoomMsgsObject[key], 'msgUid': key});
+        _removeIfAlreadyAdded(msgRow);
+        _msgRows.add(msgRow);
+      });
 
     // Sort the first 10 results on the client side as well
     _msgRows.sort((a, b) => b.sentTime.compareTo(a.sentTime));
@@ -81,7 +84,9 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
 
   @override
   void initState() {
-    _chatRoomUid = widget.chatRow.chatRoomUid;
+    if (widget.chatRow != null) {
+      _chatRoomUid = widget.chatRow.chatRoomUid;
+    }
     _currentUser = context.read<User>();
     super.initState();
   }
@@ -93,7 +98,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
           statusBarColor: Colors.transparent,
           statusBarIconBrightness: Brightness.dark),
       child: Scaffold(
-        appBar: chatTopBar,
+        appBar: chatTopBar(widget.otherUser),
         body: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -148,6 +153,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
               ),
             ),
             ChatBottomBar(
+                rootContext: context,
                 chatRoomUid: _chatRoomUid,
                 currentUser: _currentUser,
                 otherUser: widget.otherUser,
@@ -203,6 +209,7 @@ class MessageBubble extends StatelessWidget {
 }
 
 class ChatBottomBar extends StatelessWidget {
+  BuildContext _rootContext;
   String _chatRoomUid;
   User _currentUser;
   MyUserObject _otherUser;
@@ -212,11 +219,13 @@ class ChatBottomBar extends StatelessWidget {
       String chatRoomUid,
       User currentUser,
       MyUserObject otherUser,
-      Function setChatRoomUid})
+      Function setChatRoomUid,
+      BuildContext rootContext})
       : _chatRoomUid = chatRoomUid,
         _currentUser = currentUser,
         _otherUser = otherUser,
         _setChatRoomUid = setChatRoomUid,
+        _rootContext = rootContext,
         super(key: key);
 
   final chatMsgTextController = TextEditingController();
@@ -226,32 +235,37 @@ class ChatBottomBar extends StatelessWidget {
   Future _createRequestAndSendMsg(context) async {
     print("Need to create a new requestedUserChats doc and send message");
 
-    final Map<String, String> response = await context
-        .read<RealtimeDatabaseService>()
-        .createRequestedUserChats(
-            currentUsersUid: _currentUser.uid,
-            otherUsersUid: _otherUser.userUid,
-            currentUsersName: _currentUser.displayName,
-            currentUsersPic: _currentUser.photoURL);
+    try {
+      final Map<String, String> response = await _rootContext
+          .read<RealtimeDatabaseService>()
+          .createRequestedUserChats(
+              otherUserObject: _otherUser, currentUser: _currentUser);
 
-    if (response['status'] == "success" && response["chatRoomUid"] != null) {
-      // Successfully created new requestedUserChat
-      print(
-          "Successfully created requestedUserChats document and sent message");
-      // Set the newly created chatRoomUid
-      _chatRoomUid = response["chatRoomUid"];
-      _setChatRoomUid(response["chatRoomUid"]);
-      _sendMessageToChatRoom(context);
-    } else {
+      if (response['status'] == "success" && response["chatRoomUid"] != null) {
+        // Successfully created new requestedUserChat
+        print(
+            'Successfully created requestedUserChats (${response["chatRoomUid"]}) document and sent message');
+        // Set the newly created chatRoomUid
+        _chatRoomUid = response["chatRoomUid"];
+        _setChatRoomUid(response["chatRoomUid"]);
+        // Lastly send the message
+        _sendMessageToChatRoom(context);
+      } else {
+        Scaffold.of(context).showSnackBar(SnackBar(
+          content: Text("Error: " + response["errorMsg"]),
+        ));
+      }
+    } catch (e) {
       Scaffold.of(context).showSnackBar(SnackBar(
-        content: Text("Error: " + response["errorMsg"]),
+        content: Text("Unable to send the message to the user currently"),
       ));
+      throw e;
     }
   }
 
-  void _sendMessageToChatRoom(context) {
+  Future _sendMessageToChatRoom(context) async {
     print("Sending message to the user");
-    context.read<RealtimeDatabaseService>().sendMessageInRoom(
+    await _rootContext.read<RealtimeDatabaseService>().sendMessageInRoom(
       _chatRoomUid,
       {
         "msg": _textInputValue,
@@ -265,15 +279,11 @@ class ChatBottomBar extends StatelessWidget {
     _alreadySending = true;
 
     if (_chatRoomUid == null) {
-      // TODO Test this out
       await _createRequestAndSendMsg(context);
     } else {
       // Send a message to the chatRoomUid
-      _sendMessageToChatRoom(context);
+      await _sendMessageToChatRoom(context);
     }
-
-    // In the end, Reset the text input field
-    chatMsgTextController.clear();
     _alreadySending = false;
   }
 
@@ -288,15 +298,16 @@ class ChatBottomBar extends StatelessWidget {
           children: [
             Expanded(
               child: TextField(
-                onChanged: (String value) {
-                  _textInputValue = value;
-                },
                 controller: chatMsgTextController,
                 decoration: kMessageTextFieldDecoration,
               ),
             ),
             GestureDetector(
               onTap: () async {
+                // Save the input value
+                _textInputValue = chatMsgTextController.text;
+                // Reset the text input field
+                chatMsgTextController.clear();
                 // Don't send any message if _alreadySending or if message is empty
                 if (_textInputValue.isEmpty || _alreadySending) return;
                 _onSendHandler(context);

@@ -2,7 +2,9 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:social_app/models/ChatRow.dart';
+import 'package:social_app/models/LoadingBar.dart';
 import 'package:social_app/modules/constants.dart';
+import 'package:social_app/pages/SearchUsersPage.dart';
 import 'package:social_app/services/auth_service.dart';
 import 'package:provider/provider.dart';
 import 'package:social_app/services/rtd_service.dart';
@@ -83,45 +85,36 @@ class SearchBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: Container(
-        margin: EdgeInsets.symmetric(horizontal: 15),
-        padding: EdgeInsets.symmetric(vertical: 8, horizontal: 20),
-        decoration: BoxDecoration(
-            color: Color(0xFFF2F2F2F2),
-            borderRadius: BorderRadius.circular(100)),
-        child: Row(
-          children: [
-            Icon(Icons.search),
-            SizedBox(
-              width: 6,
-            ),
-            Text(
-              "Search using phone numbers",
-              style: TextStyle(fontFamily: HelveticaFont.Roman, fontSize: 12),
-            )
-          ],
+      child: GestureDetector(
+        onTap: () {
+          Navigator.push(
+              context,
+              PageRouteBuilder(
+                pageBuilder: (context, anim1, anim2) => SearchUsersPage(),
+                transitionDuration: Duration(milliseconds: 0),
+              ));
+        },
+        child: Container(
+          margin: EdgeInsets.symmetric(horizontal: 15),
+          height: 40,
+          padding: EdgeInsets.symmetric(horizontal: 20),
+          decoration: BoxDecoration(
+              color: Color(0xFFF2F2F2F2),
+              borderRadius: BorderRadius.circular(100)),
+          child: Row(
+            children: [
+              Icon(Icons.search),
+              SizedBox(
+                width: 6,
+              ),
+              Text(
+                "Search for friends",
+                style: TextStyle(fontFamily: HelveticaFont.Roman, fontSize: 12),
+              )
+            ],
+          ),
         ),
       ),
-    );
-  }
-}
-
-class LoadingBar extends StatelessWidget {
-  final bool _loading;
-  const LoadingBar({Key key, bool loading})
-      : _loading = loading,
-        super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      child: _loading
-          ? LinearProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-              backgroundColor: Colors.blue[100],
-            )
-          : Container(),
-      constraints: BoxConstraints.expand(height: 1),
     );
   }
 }
@@ -182,7 +175,10 @@ class ChatsList extends StatelessWidget {
 
             return Column(
               children: [
-                LoadingBar(loading: _loadingChats),
+                LoadingBar(
+                  loading: _loadingChats,
+                  valueColor: Colors.blue[100],
+                ),
                 Expanded(
                   child: CustomScrollView(
                     physics: BouncingScrollPhysics(),

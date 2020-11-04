@@ -1,10 +1,19 @@
 class ChatRow {
   String chatRoomUid;
+
   String otherUsersUid;
   String otherUsersName;
   String otherUsersPic;
   int lastMsgSentTime;
+  int roomType;
+  // roomType:
+  //   : 0 means oneOnOne
+  //   : 1 means group
+  //   : -1 means blocked (TODO implement security rules)
   int status;
+  // status:
+  //   : 0 means not seen by the user
+  //   : 1 means seen
 
   ChatRow({
     this.chatRoomUid,
@@ -12,6 +21,7 @@ class ChatRow {
     this.otherUsersName,
     this.otherUsersPic,
     this.lastMsgSentTime,
+    this.roomType,
     this.status,
   });
 
@@ -21,6 +31,7 @@ class ChatRow {
     otherUsersName = json['otherUsersName'];
     otherUsersPic = json['otherUsersPic'];
     lastMsgSentTime = json['lastMsgSentTime'];
+    roomType = json['roomType'];
     status = json['status'];
   }
 
@@ -31,6 +42,7 @@ class ChatRow {
     data['otherUsersName'] = this.otherUsersName;
     data['otherUsersPic'] = this.otherUsersPic;
     data['lastMsgSentTime'] = this.lastMsgSentTime;
+    data['roomType'] = this.roomType;
     data['status'] = this.status;
     return data;
   }

@@ -104,9 +104,12 @@ class _IntialSignUpUpdatePageState extends State<IntialSignUpUpdatePage> {
                               fontFamily: HelveticaFont.Roman, fontSize: 20),
                           decoration: InputDecoration(
                               labelText: "Username",
+                              prefix: Text("@"),
+                              prefixStyle: TextStyle(
+                                  color: Colors.black45, fontSize: 18),
                               floatingLabelBehavior:
                                   FloatingLabelBehavior.always,
-                              hintText: "eg: john_doe123",
+                              hintText: "john_doe123",
                               contentPadding: EdgeInsets.fromLTRB(0, 0, 0, 10)),
                         ),
                         SizedBox(height: 20),
