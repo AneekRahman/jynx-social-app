@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:social_app/models/ChatRow.dart';
 import 'package:social_app/models/MsgRow.dart';
 import 'package:social_app/models/MyUserObject.dart';
+import 'package:social_app/services/firestore_service.dart';
 import 'package:social_app/services/rtd_service.dart';
 import 'package:provider/provider.dart';
 
@@ -16,36 +17,40 @@ const kMessageTextFieldDecoration = InputDecoration(
   border: InputBorder.none,
 );
 
-AppBar chatTopBar({MyUserObject otherUser, ChatRow chatRow}) => AppBar(
-      leading: Icon(Icons.arrow_back_ios),
-      iconTheme: IconThemeData(color: Colors.black),
-      elevation: 0,
-      backgroundColor: Colors.white10,
-      title: Row(
-        children: <Widget>[
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text(
-                chatRow.otherUsersName ?? otherUser.displayName ?? "",
+AppBar chatTopBar({MyUserObject otherUser, ChatRow chatRow}) {
+  String name = "";
+  if (chatRow != null) name = chatRow.otherUsersName;
+  if (otherUser != null) name = otherUser.displayName;
+
+  return AppBar(
+    leading: Icon(Icons.arrow_back_ios),
+    iconTheme: IconThemeData(color: Colors.black),
+    elevation: 0,
+    backgroundColor: Colors.white10,
+    title: Row(
+      children: <Widget>[
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(
+              name,
+              style: TextStyle(
+                  fontFamily: 'Poppins', fontSize: 14, color: Colors.black),
+            ),
+            Text("seen 2 min ago",
                 style: TextStyle(
-                    fontFamily: 'Poppins', fontSize: 14, color: Colors.black),
-              ),
-              Text("seen 2 min ago",
-                  style: TextStyle(
-                      fontFamily: 'Poppins',
-                      fontSize: 10,
-                      color: Colors.black54))
-            ],
-          ),
-        ],
-      ),
-      actions: <Widget>[
-        GestureDetector(
-          child: Icon(Icons.more_vert),
-        )
+                    fontFamily: 'Poppins', fontSize: 10, color: Colors.black54))
+          ],
+        ),
       ],
-    );
+    ),
+    actions: <Widget>[
+      GestureDetector(
+        child: Icon(Icons.more_vert),
+      )
+    ],
+  );
+}
 
 class ChatRoomPage extends StatefulWidget {
   final ChatRow chatRow;
@@ -89,9 +94,8 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
       _chatRoomUid = widget.chatRow.chatRoomUid;
     } else {
       String value = await context
-          .read<RealtimeDatabaseService>()
-          .searchForOneOnOneChatRoom(
-              _currentUser.uid, widget.otherUser.userUid);
+          .read<FirestoreService>()
+          .findPrivateChatWithUser(_currentUser.uid, widget.otherUser.userUid);
       if (value != null) _chatRoomUid = value;
     }
     // Let the user now start chatting
@@ -176,6 +180,11 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                 chatRoomUid: _chatRoomUid,
                 currentUser: _currentUser,
                 otherUser: widget.otherUser,
+                updateLoading: (bool loading) {
+                  setState(() {
+                    _initializingChatRoom = loading;
+                  });
+                },
                 setChatRoomUid: (String chatRoomUid) {
                   setState(() {
                     _chatRoomUid = chatRoomUid;
@@ -232,17 +241,20 @@ class ChatBottomBar extends StatelessWidget {
   String _chatRoomUid;
   User _currentUser;
   MyUserObject _otherUser;
+  Function _updateLoading;
   Function _setChatRoomUid;
   ChatBottomBar(
       {Key key,
       String chatRoomUid,
       User currentUser,
       MyUserObject otherUser,
+      Function updateLoading,
       Function setChatRoomUid,
       BuildContext rootContext})
       : _chatRoomUid = chatRoomUid,
         _currentUser = currentUser,
         _otherUser = otherUser,
+        _updateLoading = updateLoading,
         _setChatRoomUid = setChatRoomUid,
         _rootContext = rootContext,
         super(key: key);
@@ -252,9 +264,11 @@ class ChatBottomBar extends StatelessWidget {
   bool _alreadySending = false;
 
   Future _createRequestAndSendMsg(context) async {
+    // Update UI
+    _updateLoading(true);
     try {
       final Map<String, String> response = await _rootContext
-          .read<RealtimeDatabaseService>()
+          .read<FirestoreService>()
           .createRequestedUserChats(
               otherUserObject: _otherUser, currentUser: _currentUser);
 
@@ -276,6 +290,8 @@ class ChatBottomBar extends StatelessWidget {
       ));
       throw e;
     }
+    // Update UI
+    _updateLoading(false);
   }
 
   Future _sendMessageToChatRoom(context) async {

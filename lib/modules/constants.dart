@@ -1,4 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:social_app/models/ChatRow.dart';
+import 'package:social_app/models/MyUserObject.dart';
+import 'package:social_app/models/UserChatsSnapshot.dart';
 
 final normalTextStyle = TextStyle(
   fontFamily: HelveticaFont.Roman,
@@ -38,11 +42,30 @@ OutlineInputBorder outlineInputBorder(bool focused) {
   );
 }
 
-String getOneOnOneChatUid(String userUid1, userUid2) {
-  // The greaterString:smallerString
-  if (userUid1.compareTo(userUid2) == 1) {
-    return userUid1 + ":" + userUid2;
-  } else {
-    return userUid2 + ":" + userUid1;
+ChatRow getChatRowFromDocSnapshot(
+    QueryDocumentSnapshot snapshot, String currentUserUid) {
+  UserChatsSnapshot userChatsSnapshot =
+      UserChatsSnapshot.fromSnapshot(snapshot);
+
+  // For private chats
+  if (userChatsSnapshot.type == "PRIVATE") {
+    ChatRow chatRow;
+    // Check if available in the members list
+    userChatsSnapshot.memberInfo.forEach((key, value) {
+      if (key != currentUserUid) {
+        MyUserObject userObject = MyUserObject.fromJson(
+            {...userChatsSnapshot.memberInfo[key], "userUid": key});
+        chatRow = ChatRow(
+          chatRoomUid: userChatsSnapshot.chatRoomUid,
+          otherUsersName: userObject.displayName,
+          otherUsersUid: userObject.userUid,
+          otherUsersPic: userObject.profilePic,
+          lastMsgSentTime: userChatsSnapshot.lastMsgSentTime,
+          seen: userChatsSnapshot.lastMsgSeenBy.contains(currentUserUid),
+        );
+      }
+    });
+
+    return chatRow;
   }
 }

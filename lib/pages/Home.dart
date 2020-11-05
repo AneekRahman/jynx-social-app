@@ -1,13 +1,16 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:social_app/models/ChatRow.dart';
+import 'package:social_app/models/LifecycleEventHandler.dart';
 import 'package:social_app/models/LoadingBar.dart';
 import 'package:social_app/modules/constants.dart';
 import 'package:social_app/pages/SearchUsersPage.dart';
 import 'package:social_app/services/auth_service.dart';
 import 'package:provider/provider.dart';
+import 'package:social_app/services/firestore_service.dart';
 import 'package:social_app/services/rtd_service.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'ChatRoomPage.dart';
@@ -151,10 +154,10 @@ class ChatsList extends StatelessWidget {
     }
   }
 
-  void _setChatRowsFromStream(dynamic usersChatsObject) {
-    usersChatsObject.forEach((key, value) {
-      ChatRow chatRow =
-          ChatRow.fromJson({...usersChatsObject[key], 'chatRoomUid': key});
+  void _setChatRowsFromStream(
+      List<QueryDocumentSnapshot> usersChatsDocSnapList) {
+    usersChatsDocSnapList.forEach((snapshot) {
+      ChatRow chatRow = getChatRowFromDocSnapshot(snapshot, _currentUser.uid);
       _removeIfAlreadyAdded(chatRow);
       _chatRows.add(chatRow);
     });
@@ -168,22 +171,22 @@ class ChatsList extends StatelessWidget {
     return Expanded(
       child: StreamBuilder(
         stream: context
-            .watch<RealtimeDatabaseService>()
-            .getAllChatHisoryStream(_currentUser.uid),
-        builder: (context, AsyncSnapshot<Event> snapshot) {
+            .watch<FirestoreService>()
+            .getUserChatsStream(_currentUser.uid, false),
+        builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (snapshot.hasData && !snapshot.hasError) {
-            print("UPDATE FROM STREAM");
+            print("UPDATE FROM STREAM FOR USER " + _currentUser.uid);
 
             if (_chatRows.length <= 10) {
               // Remove all if list less than or equal to 10
               _chatRows.clear();
             } else {
-              // Remove the first 10 (Range of stream) if list longer than 10
+              // Remove the first 10 (Range of stream)
               _chatRows.removeRange(0, 9);
             }
 
             // Set the _chatRows list
-            _setChatRowsFromStream(snapshot.data.snapshot.value);
+            _setChatRowsFromStream(snapshot.data.docs);
             // Update the loading Animation
             _loadingChats = false;
 
@@ -244,12 +247,12 @@ class ChatsListRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final DateTime sentTime =
-        new DateTime.fromMillisecondsSinceEpoch(_chatRow.lastMsgSentTime);
+    final DateTime sentTime = new DateTime.fromMillisecondsSinceEpoch(
+        int.parse(_chatRow.lastMsgSentTime));
     final String sentTimeFormattedString =
         timeago.format(sentTime, locale: 'en_short', allowFromNow: true);
     final fontFamily =
-        _chatRow.status == 0 ? HelveticaFont.Heavy : HelveticaFont.Medium;
+        !_chatRow.seen ? HelveticaFont.Heavy : HelveticaFont.Medium;
     return Container(
       padding: EdgeInsets.symmetric(vertical: 16, horizontal: 20),
       child: Row(
@@ -284,7 +287,7 @@ class ChatsListRow extends StatelessWidget {
               Row(
                 children: [
                   Icon(
-                    _chatRow.status == 0
+                    !_chatRow.seen
                         ? Icons.chat_bubble
                         : Icons.chat_bubble_outline,
                     size: 14,
@@ -293,7 +296,7 @@ class ChatsListRow extends StatelessWidget {
                     width: 5,
                   ),
                   Text(
-                    _chatRow.status == 0 ? "New message" : "Opened",
+                    !_chatRow.seen ? "New message" : "Opened",
                     style: TextStyle(
                       fontFamily: fontFamily,
                       fontSize: 12,

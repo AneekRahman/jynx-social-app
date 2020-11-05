@@ -24,8 +24,6 @@ class _IntialSignUpUpdatePageState extends State<IntialSignUpUpdatePage> {
   void _finishAccount(_context) async {
     if (_loading) return;
     if (_formKey.currentState.validate()) {
-      print('Username: $_userName and display name: $_displayName');
-
       try {
         setState(() {
           _loading = true;
@@ -33,10 +31,19 @@ class _IntialSignUpUpdatePageState extends State<IntialSignUpUpdatePage> {
 
         // Try to Save the /users/ and /takenUserNames/ documents
         await _firestoreInstance.runTransaction((transaction) async {
-          transaction.set(_firestoreInstance.collection("users").doc(_user.uid),
-              {"displayName": _displayName, "userName": _userName});
+          transaction
+              .set(_firestoreInstance.collection("users").doc(_user.uid), {
+            "displayName": _displayName.trim(),
+            "userName": _userName.trim(),
+            "searchKeywords": [
+              ..._createKeywords(_displayName.trim()),
+              ..._createKeywords(_userName.trim()),
+            ]
+          });
           transaction.set(
-              _firestoreInstance.collection("takenUserNames").doc(_userName),
+              _firestoreInstance
+                  .collection("takenUserNames")
+                  .doc(_userName.trim()),
               {"userUid": _user.uid});
         });
 
@@ -44,7 +51,7 @@ class _IntialSignUpUpdatePageState extends State<IntialSignUpUpdatePage> {
         await _user.updateProfile(displayName: _displayName);
 
         // Force refresh the Id token to get the userName in the future
-        await context.read<AuthenticationService>().currentUserClaims(true);
+        await AuthenticationService.currentUserClaims(true);
       } on FirebaseException catch (error) {
         print("Account Finish Error: " + error.toString());
         Scaffold.of(_context).showSnackBar(SnackBar(
@@ -56,6 +63,19 @@ class _IntialSignUpUpdatePageState extends State<IntialSignUpUpdatePage> {
           _loading = false;
         });
     }
+  }
+
+  List<String> _createKeywords(text) {
+    List<String> keywordsList = [];
+    // Split the text into words if there are spaces
+    text.split(" ").forEach((word) {
+      String tempWord = "";
+      word.split("").forEach((letter) {
+        tempWord += letter;
+        if (!keywordsList.contains(tempWord)) keywordsList.add(tempWord);
+      });
+    });
+    return keywordsList;
   }
 
   @override

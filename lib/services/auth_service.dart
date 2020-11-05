@@ -65,10 +65,10 @@ class AuthenticationService {
     }
   }
 
-  Future<Map<dynamic, dynamic>> currentUserClaims(forceRefresh) async {
+  static Future<Map<dynamic, dynamic>> currentUserClaims(forceRefresh) async {
     // If refresh is set to true, a refresh of the id token is forced.
     final idTokenResult =
-        await _firebaseAuth.currentUser.getIdTokenResult(forceRefresh);
+        await FirebaseAuth.instance.currentUser.getIdTokenResult(forceRefresh);
 
     return idTokenResult.claims;
   }
