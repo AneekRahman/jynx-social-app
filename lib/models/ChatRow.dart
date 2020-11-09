@@ -3,9 +3,11 @@ class ChatRow {
   String chatRoomUid;
   String otherUsersUid;
   String otherUsersName;
+  String otherUsersUserName;
   String otherUsersPic;
   String lastMsgSentTime;
   bool seen;
+  bool requested;
   // status:
   //   : 0 means not seen by the user
   //   : 1 means seen
@@ -17,7 +19,9 @@ class ChatRow {
     this.otherUsersName,
     this.otherUsersPic,
     this.lastMsgSentTime,
+    this.otherUsersUserName,
     this.seen,
+    this.requested,
   });
 
   ChatRow.fromJson(Map<dynamic, dynamic> json) {
@@ -26,19 +30,9 @@ class ChatRow {
     otherUsersUid = json['otherUsersUid'];
     otherUsersName = json['otherUsersName'];
     otherUsersPic = json['otherUsersPic'];
+    otherUsersUserName = json['otherUsersUserName'];
     lastMsgSentTime = json['lastMsgSentTime'];
     seen = json['seen'];
-  }
-
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['userChatsDocUid'] = this.userChatsDocUid;
-    data['chatRoomUid'] = this.chatRoomUid;
-    data['otherUsersUid'] = this.otherUsersUid;
-    data['otherUsersName'] = this.otherUsersName;
-    data['otherUsersPic'] = this.otherUsersPic;
-    data['lastMsgSentTime'] = this.lastMsgSentTime;
-    data['seen'] = this.seen;
-    return data;
+    requested = json['requested'];
   }
 }

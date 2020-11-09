@@ -1,19 +1,14 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:social_app/models/ChatRow.dart';
-import 'package:social_app/models/LifecycleEventHandler.dart';
-import 'package:social_app/models/LoadingBar.dart';
+import 'package:social_app/models/ChatList.dart';
 import 'package:social_app/modules/constants.dart';
+import 'package:social_app/pages/RequestsPage.dart';
 import 'package:social_app/pages/SearchUsersPage.dart';
 import 'package:social_app/services/auth_service.dart';
 import 'package:provider/provider.dart';
 import 'package:social_app/services/firestore_service.dart';
-import 'package:social_app/services/rtd_service.dart';
-import 'package:timeago/timeago.dart' as timeago;
-import 'ChatRoomPage.dart';
 
 class HomePage extends StatefulWidget {
   static final String routeName = "/HomePage";
@@ -22,7 +17,6 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  List<ChatRow> _chatRows = [];
   User _currentUser;
 
   @override
@@ -43,8 +37,10 @@ class _HomePageState extends State<HomePage> {
           children: [
             HomeAppBar(),
             ChatsList(
-              chatRows: _chatRows,
               currentUser: _currentUser,
+              stream: context
+                  .watch<FirestoreService>()
+                  .getUserChatsStream(_currentUser.uid, false),
             ),
             RaisedButton(
               onPressed: () {
@@ -83,7 +79,14 @@ class HomeAppBar extends StatelessWidget {
             padding: EdgeInsets.all(4),
           ),
           SearchBox(),
-          Icon(Icons.person_add),
+          GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  CupertinoPageRoute(builder: (context) => RequestsPage()),
+                );
+              },
+              child: Icon(Icons.person_add)),
         ],
       ),
     );
@@ -127,196 +130,6 @@ class SearchBox extends StatelessWidget {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class ChatsList extends StatelessWidget {
-  ChatsList({
-    Key key,
-    @required User currentUser,
-    @required List<ChatRow> chatRows,
-  })  : _chatRows = chatRows,
-        _currentUser = currentUser,
-        super(key: key);
-  User _currentUser;
-  final List<ChatRow> _chatRows;
-  bool _loadingChats = true;
-
-  void _removeIfAlreadyAdded(ChatRow chatRow) {
-    for (int i = 0; i < _chatRows.length; i++) {
-      ChatRow element = _chatRows.elementAt(i);
-      if (element != null && chatRow.chatRoomUid == element.chatRoomUid) {
-        final index = _chatRows.indexOf(element);
-        _chatRows.removeAt(index);
-      }
-    }
-  }
-
-  void _setChatRowsFromStream(
-      List<QueryDocumentSnapshot> usersChatsDocSnapList) {
-    usersChatsDocSnapList.forEach((snapshot) {
-      ChatRow chatRow = getChatRowFromDocSnapshot(snapshot, _currentUser.uid);
-      _removeIfAlreadyAdded(chatRow);
-      _chatRows.add(chatRow);
-    });
-
-    // Sort the first 10 results on the client side as well
-    _chatRows.sort((a, b) => b.lastMsgSentTime.compareTo(a.lastMsgSentTime));
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: StreamBuilder(
-        stream: context
-            .watch<FirestoreService>()
-            .getUserChatsStream(_currentUser.uid, false),
-        builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
-          if (snapshot.hasData && !snapshot.hasError) {
-            print("UPDATE FROM STREAM FOR USER " + _currentUser.uid);
-
-            if (_chatRows.length <= 10) {
-              // Remove all if list less than or equal to 10
-              _chatRows.clear();
-            } else {
-              // Remove the first 10 (Range of stream)
-              _chatRows.removeRange(0, 9);
-            }
-
-            // Set the _chatRows list
-            _setChatRowsFromStream(snapshot.data.docs);
-            // Update the loading Animation
-            _loadingChats = false;
-
-            return Column(
-              children: [
-                LoadingBar(
-                  loading: _loadingChats,
-                  valueColor: Colors.blue[100],
-                ),
-                Expanded(
-                  child: CustomScrollView(
-                    physics: BouncingScrollPhysics(),
-                    slivers: [
-                      SliverList(
-                        delegate: SliverChildBuilderDelegate(
-                          (context, index) {
-                            ChatRow chatRow = _chatRows.elementAt(index);
-                            return FlatButton(
-                                padding: EdgeInsets.all(0),
-                                onPressed: () {
-                                  Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) => ChatRoomPage(
-                                                chatRow: chatRow,
-                                              )));
-                                },
-                                child: ChatsListRow(chatRow: chatRow));
-                          },
-                          childCount: _chatRows.length,
-                        ),
-                      )
-                    ],
-                  ),
-                ),
-              ],
-            );
-          } else {
-            return Center(
-              child: SizedBox(
-                  child: CircularProgressIndicator(), height: 25, width: 25),
-            );
-          }
-        },
-      ),
-    );
-  }
-}
-
-class ChatsListRow extends StatelessWidget {
-  const ChatsListRow({
-    Key key,
-    @required ChatRow chatRow,
-  })  : _chatRow = chatRow,
-        super(key: key);
-
-  final ChatRow _chatRow;
-
-  @override
-  Widget build(BuildContext context) {
-    final DateTime sentTime = new DateTime.fromMillisecondsSinceEpoch(
-        int.parse(_chatRow.lastMsgSentTime));
-    final String sentTimeFormattedString =
-        timeago.format(sentTime, locale: 'en_short', allowFromNow: true);
-    final fontFamily =
-        !_chatRow.seen ? HelveticaFont.Heavy : HelveticaFont.Medium;
-    return Container(
-      padding: EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-      child: Row(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(100),
-            child: Container(
-              color: Colors.black12,
-              child: Image.network(
-                _chatRow.otherUsersPic ?? "",
-                height: 40,
-                width: 40,
-              ),
-            ),
-          ),
-          SizedBox(
-            width: 10,
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                _chatRow.otherUsersName,
-                style: TextStyle(
-                  fontFamily: fontFamily,
-                  fontSize: 12,
-                ),
-              ),
-              SizedBox(
-                height: 2,
-              ),
-              Row(
-                children: [
-                  Icon(
-                    !_chatRow.seen
-                        ? Icons.chat_bubble
-                        : Icons.chat_bubble_outline,
-                    size: 14,
-                  ),
-                  SizedBox(
-                    width: 5,
-                  ),
-                  Text(
-                    !_chatRow.seen ? "New message" : "Opened",
-                    style: TextStyle(
-                      fontFamily: fontFamily,
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          Expanded(
-            child: Container(),
-          ),
-          Text(
-            sentTimeFormattedString,
-            style: TextStyle(
-              fontFamily: fontFamily,
-              fontSize: 12,
-            ),
-          )
-        ],
       ),
     );
   }

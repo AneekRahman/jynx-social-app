@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:social_app/models/ChatRow.dart';
 import 'package:social_app/models/MsgRow.dart';
 import 'package:social_app/models/MyUserObject.dart';
+import 'package:social_app/modules/constants.dart';
 import 'package:social_app/services/firestore_service.dart';
 import 'package:social_app/services/rtd_service.dart';
 import 'package:provider/provider.dart';
@@ -17,44 +18,74 @@ const kMessageTextFieldDecoration = InputDecoration(
   border: InputBorder.none,
 );
 
-AppBar chatTopBar({MyUserObject otherUser, ChatRow chatRow}) {
-  String name = "";
-  if (chatRow != null) name = chatRow.otherUsersName;
-  if (otherUser != null) name = otherUser.displayName;
-
-  return AppBar(
-    leading: Icon(Icons.arrow_back_ios),
-    iconTheme: IconThemeData(color: Colors.black),
-    elevation: 0,
-    backgroundColor: Colors.white10,
-    title: Row(
-      children: <Widget>[
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text(
-              name,
-              style: TextStyle(
-                  fontFamily: 'Poppins', fontSize: 14, color: Colors.black),
-            ),
-            Text("seen 2 min ago",
-                style: TextStyle(
-                    fontFamily: 'Poppins', fontSize: 10, color: Colors.black54))
-          ],
-        ),
-      ],
-    ),
-    actions: <Widget>[
-      GestureDetector(
-        child: Icon(Icons.more_vert),
-      )
-    ],
+Center _buildLoadingAnim() {
+  return Center(
+    child: SizedBox(child: CircularProgressIndicator(), height: 25, width: 25),
   );
 }
 
+class ChatTopBar extends StatelessWidget {
+  ChatRow chatRow;
+  MyUserObject otherUser;
+  ChatTopBar({this.chatRow, this.otherUser});
+
+  final double _padding = 20;
+
+  @override
+  Widget build(BuildContext context) {
+    String name = "";
+    String userName = "";
+    if (chatRow != null) name = chatRow.otherUsersName;
+    if (otherUser != null) name = otherUser.displayName;
+    if (chatRow != null) userName = chatRow.otherUsersUserName;
+    if (otherUser != null) userName = otherUser.userName;
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(_padding,
+          _padding + MediaQuery.of(context).padding.top, _padding, _padding),
+      child: Row(
+        children: <Widget>[
+          GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Icon(
+                Icons.arrow_back_ios,
+                size: 18,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  name,
+                  style: TextStyle(
+                      fontFamily: HelveticaFont.Bold,
+                      fontSize: 14,
+                      color: Colors.black),
+                ),
+                Text("@" + userName,
+                    style: TextStyle(
+                        fontFamily: HelveticaFont.Bold,
+                        fontSize: 10,
+                        color: Colors.black38))
+              ],
+            ),
+          ),
+          GestureDetector(
+            child: Icon(Icons.more_vert),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class ChatRoomPage extends StatefulWidget {
-  final ChatRow chatRow;
-  final MyUserObject otherUser;
+  ChatRow chatRow;
+  MyUserObject otherUser;
   ChatRoomPage({this.chatRow, this.otherUser});
   @override
   _ChatRoomPageState createState() => _ChatRoomPageState();
@@ -63,7 +94,6 @@ class ChatRoomPage extends StatefulWidget {
 class _ChatRoomPageState extends State<ChatRoomPage> {
   User _currentUser;
   List<MsgRow> _msgRows = [];
-  String _chatRoomUid;
   bool _initializingChatRoom = true;
 
   void _removeIfAlreadyAdded(MsgRow msgRow) {
@@ -90,13 +120,21 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   }
 
   void _initializeChatRoom() async {
-    if (widget.chatRow != null) {
-      _chatRoomUid = widget.chatRow.chatRoomUid;
-    } else {
-      String value = await context
+    if (widget.chatRow == null) {
+      // Search for an already made private chatroom for these 2 users
+      ChatRow chatRow = await context
           .read<FirestoreService>()
           .findPrivateChatWithUser(_currentUser.uid, widget.otherUser.userUid);
-      if (value != null) _chatRoomUid = value;
+      if (chatRow != null) widget.chatRow = chatRow;
+    }
+
+    // If chatRoom found, then make sure to update the seen of lastMsg if already not seen
+    if (widget.chatRow != null &&
+        widget.chatRow.chatRoomUid != null &&
+        !widget.chatRow.seen) {
+      context.read<FirestoreService>().setSeenUserChatsDocument(
+          widget.chatRow.userChatsDocUid, _currentUser.uid);
+      widget.chatRow.seen = true;
     }
     // Let the user now start chatting
     setState(() {
@@ -106,9 +144,9 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
 
   @override
   void initState() {
+    super.initState();
     _currentUser = context.read<User>();
     _initializeChatRoom();
-    super.initState();
   }
 
   @override
@@ -118,76 +156,73 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
           statusBarColor: Colors.transparent,
           statusBarIconBrightness: Brightness.dark),
       child: Scaffold(
-        appBar:
-            chatTopBar(otherUser: widget.otherUser, chatRow: widget.chatRow),
         body: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            Expanded(
-              child: StreamBuilder(
-                stream: context
-                    .watch<RealtimeDatabaseService>()
-                    .getChatRoomStream(_chatRoomUid),
-                builder: (context, AsyncSnapshot<Event> snapshot) {
-                  if (snapshot.hasData &&
-                      !snapshot.hasError &&
-                      !_initializingChatRoom) {
-                    _setMsgRowsFromStream(snapshot.data.snapshot.value);
+            ChatTopBar(
+              chatRow: widget.chatRow,
+              otherUser: widget.otherUser,
+            ),
+            widget.chatRow != null
+                ? Expanded(
+                    child: StreamBuilder(
+                      stream: context
+                          .watch<RealtimeDatabaseService>()
+                          .getChatRoomStream(widget.chatRow.chatRoomUid),
+                      builder: (context, AsyncSnapshot<Event> snapshot) {
+                        if (snapshot.hasData &&
+                            !snapshot.hasError &&
+                            !_initializingChatRoom) {
+                          _setMsgRowsFromStream(snapshot.data.snapshot.value);
 
-                    return CustomScrollView(
-                      reverse: true,
-                      physics: BouncingScrollPhysics(),
-                      slivers: [
-                        SliverList(
-                          delegate: SliverChildBuilderDelegate(
-                            (context, index) {
-                              MsgRow msgRow = _msgRows.elementAt(index);
-                              // Check if previous post was also from the same user
-                              bool firstMsgOfUser = true;
-                              if (index == 0 ||
-                                  _msgRows.elementAt(index - 1).msgUid ==
-                                      _currentUser.uid) {
-                                firstMsgOfUser = false;
-                              }
+                          return CustomScrollView(
+                            reverse: true,
+                            physics: BouncingScrollPhysics(),
+                            slivers: [
+                              SliverList(
+                                delegate: SliverChildBuilderDelegate(
+                                  (context, index) {
+                                    MsgRow msgRow = _msgRows.elementAt(index);
+                                    // Check if previous post was also from the same user
+                                    bool firstMsgOfUser = true;
+                                    if (index == 0 ||
+                                        _msgRows.elementAt(index - 1).msgUid ==
+                                            _currentUser.uid) {
+                                      firstMsgOfUser = false;
+                                    }
 
-                              print("CURRENT USER ID: " + _currentUser.uid);
-
-                              return MessageBubble(
-                                msgRow: msgRow,
-                                isUser: msgRow.userUid == _currentUser.uid,
-                                firstMsgOfUser: firstMsgOfUser,
-                              );
-                            },
-                            childCount: _msgRows.length,
-                          ),
-                        )
-                      ],
-                    );
-                  } else {
-                    return Center(
-                      child: SizedBox(
-                          child: CircularProgressIndicator(),
-                          height: 25,
-                          width: 25),
-                    );
-                  }
-                },
-              ),
+                                    return MessageBubble(
+                                      msgRow: msgRow,
+                                      isUser:
+                                          msgRow.userUid == _currentUser.uid,
+                                      firstMsgOfUser: firstMsgOfUser,
+                                    );
+                                  },
+                                  childCount: _msgRows.length,
+                                ),
+                              )
+                            ],
+                          );
+                        } else {
+                          return _buildLoadingAnim();
+                        }
+                      },
+                    ),
+                  )
+                : _buildLoadingAnim(),
+            ChatRequestActions(
+              chatRow: widget.chatRow,
+              currentUser: _currentUser,
             ),
             ChatBottomBar(
                 rootContext: context,
-                chatRoomUid: _chatRoomUid,
+                chatRow: widget.chatRow,
                 currentUser: _currentUser,
                 otherUser: widget.otherUser,
-                updateLoading: (bool loading) {
-                  setState(() {
-                    _initializingChatRoom = loading;
-                  });
-                },
                 setChatRoomUid: (String chatRoomUid) {
                   setState(() {
-                    _chatRoomUid = chatRoomUid;
+                    widget.chatRow.chatRoomUid = chatRoomUid;
                   });
                 }),
           ],
@@ -219,14 +254,14 @@ class MessageBubble extends StatelessWidget {
                   : BorderSide(style: BorderStyle.none),
               left: isUser
                   ? BorderSide(style: BorderStyle.none)
-                  : BorderSide(color: Colors.orangeAccent, width: 4),
+                  : BorderSide(color: Colors.redAccent, width: 4),
             ),
           ),
           padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
           child: Text(
             msgRow.msg,
             style: TextStyle(
-              fontFamily: 'Poppins',
+              fontFamily: HelveticaFont.Roman,
               fontSize: 15,
             ),
           ),
@@ -237,46 +272,36 @@ class MessageBubble extends StatelessWidget {
 }
 
 class ChatBottomBar extends StatelessWidget {
-  BuildContext _rootContext;
-  String _chatRoomUid;
-  User _currentUser;
-  MyUserObject _otherUser;
-  Function _updateLoading;
-  Function _setChatRoomUid;
+  BuildContext rootContext;
+  ChatRow chatRow;
+  User currentUser;
+  MyUserObject otherUser;
+  Function setChatRoomUid;
   ChatBottomBar(
       {Key key,
-      String chatRoomUid,
-      User currentUser,
-      MyUserObject otherUser,
-      Function updateLoading,
-      Function setChatRoomUid,
-      BuildContext rootContext})
-      : _chatRoomUid = chatRoomUid,
-        _currentUser = currentUser,
-        _otherUser = otherUser,
-        _updateLoading = updateLoading,
-        _setChatRoomUid = setChatRoomUid,
-        _rootContext = rootContext,
-        super(key: key);
+      this.chatRow,
+      this.currentUser,
+      this.otherUser,
+      this.setChatRoomUid,
+      this.rootContext})
+      : super(key: key);
 
   final chatMsgTextController = TextEditingController();
   String _textInputValue = "";
   bool _alreadySending = false;
 
   Future _createRequestAndSendMsg(context) async {
-    // Update UI
-    _updateLoading(true);
     try {
-      final Map<String, String> response = await _rootContext
+      final Map<String, String> response = await rootContext
           .read<FirestoreService>()
           .createRequestedUserChats(
-              otherUserObject: _otherUser, currentUser: _currentUser);
+              otherUserObject: otherUser, currentUser: currentUser);
 
       if (response['status'] == "success" && response["chatRoomUid"] != null) {
         // Successfully created new requestedUserChat
-        _chatRoomUid = response["chatRoomUid"];
+        chatRow.chatRoomUid = response["chatRoomUid"];
         // Set the newly created chatRoomUid
-        _setChatRoomUid(response["chatRoomUid"]);
+        setChatRoomUid(response["chatRoomUid"]);
         // Lastly send the message
         await _sendMessageToChatRoom(context);
       } else {
@@ -290,21 +315,26 @@ class ChatBottomBar extends StatelessWidget {
       ));
       throw e;
     }
-    // Update UI
-    _updateLoading(false);
   }
 
   Future _sendMessageToChatRoom(context) async {
-    print("Sending message to the user");
     try {
-      await _rootContext.read<RealtimeDatabaseService>().sendMessageInRoom(
-        _chatRoomUid,
+      int lastMsgSentTime = new DateTime.now().millisecondsSinceEpoch;
+      // Send a message in the RealtimeDatabase chatRoom
+      rootContext.read<RealtimeDatabaseService>().sendMessageInRoom(
+        chatRow.chatRoomUid,
         {
           "msg": _textInputValue,
-          "sentTime": new DateTime.now().millisecondsSinceEpoch,
-          "userUid": _currentUser.uid
+          "sentTime": lastMsgSentTime,
+          "userUid": currentUser.uid
         },
       );
+      // Update the userChats document and reset the lastMsgSeen array and sentTime
+      rootContext.read<FirestoreService>().setNewMsgUserChatsSeenReset(
+            chatRow.chatRoomUid,
+            currentUser.uid,
+            lastMsgSentTime.toString(),
+          );
     } catch (e) {
       Scaffold.of(context).showSnackBar(SnackBar(
         content: Text("There was a network issue while sending the message"),
@@ -313,9 +343,10 @@ class ChatBottomBar extends StatelessWidget {
   }
 
   void _onSendHandler(context) async {
+    if (_alreadySending) return;
     _alreadySending = true;
 
-    if (_chatRoomUid == null) {
+    if (chatRow.chatRoomUid == null) {
       await _createRequestAndSendMsg(context);
     } else {
       // Send a message to the chatRoomUid
@@ -335,6 +366,7 @@ class ChatBottomBar extends StatelessWidget {
           children: [
             Expanded(
               child: TextField(
+                style: TextStyle(fontFamily: HelveticaFont.Roman),
                 controller: chatMsgTextController,
                 decoration: kMessageTextFieldDecoration,
               ),
@@ -362,5 +394,90 @@ class ChatBottomBar extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class ChatRequestActions extends StatefulWidget {
+  ChatRequestActions({this.currentUser, this.chatRow});
+  User currentUser;
+  ChatRow chatRow;
+
+  @override
+  _ChatRequestActionsState createState() => _ChatRequestActionsState();
+}
+
+class _ChatRequestActionsState extends State<ChatRequestActions> {
+  bool _loading = false;
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.chatRow == null || !widget.chatRow.requested) return Container();
+
+    if (widget.chatRow.requested)
+      return Column(
+        children: [
+          Container(
+            margin: EdgeInsets.only(top: 10),
+            height: 1,
+            width: MediaQuery.of(context).size.width,
+            color: Color(0xFFF1F1F1F1),
+          ),
+          Container(
+            padding: EdgeInsets.fromLTRB(20, 20, 20, 0),
+            child: !_loading
+                ? Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      GestureDetector(
+                        onTap: () async {
+                          if (_loading || widget.chatRow.chatRoomUid == null)
+                            return;
+                          setState(() => _loading = true);
+                          try {
+                            // Accept the request
+                            await context
+                                .read<FirestoreService>()
+                                .acceptChatUserRequest(
+                                    widget.chatRow.userChatsDocUid,
+                                    widget.currentUser.uid);
+                            // Update the UI
+                            setState(() => widget.chatRow.requested = false);
+                          } catch (e) {}
+                          // Update the UI
+                          setState(() => _loading = false);
+                        },
+                        child: Container(
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.black12, width: 1),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          padding: EdgeInsets.symmetric(
+                              vertical: 12, horizontal: 24),
+                          child: Text(
+                            "Accept Request",
+                            style: TextStyle(fontFamily: HelveticaFont.Bold),
+                          ),
+                        ),
+                      ),
+                      GestureDetector(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.black12, width: 1),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          padding: EdgeInsets.symmetric(
+                              vertical: 12, horizontal: 24),
+                          child: Text(
+                            "Block messages",
+                            style: TextStyle(fontFamily: HelveticaFont.Bold),
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
+                : _buildLoadingAnim(),
+          ),
+        ],
+      );
   }
 }

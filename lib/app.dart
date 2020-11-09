@@ -19,7 +19,12 @@ class MyApp extends StatelessWidget {
           create: (_) => AuthenticationService(FirebaseAuth.instance),
         ),
         Provider<RealtimeDatabaseService>(
-          create: (_) => RealtimeDatabaseService(FirebaseDatabase.instance),
+          create: (_) {
+            FirebaseDatabase firebaseDatabase = FirebaseDatabase.instance;
+            firebaseDatabase.setPersistenceEnabled(true);
+            firebaseDatabase.setPersistenceCacheSizeBytes(10000000);
+            return RealtimeDatabaseService(firebaseDatabase);
+          },
         ),
         Provider<FirestoreService>(
           create: (_) => FirestoreService(FirebaseFirestore.instance),

@@ -56,13 +56,16 @@ ChatRow getChatRowFromDocSnapshot(
         MyUserObject userObject = MyUserObject.fromJson(
             {...userChatsSnapshot.memberInfo[key], "userUid": key});
         chatRow = ChatRow(
-          chatRoomUid: userChatsSnapshot.chatRoomUid,
-          otherUsersName: userObject.displayName,
-          otherUsersUid: userObject.userUid,
-          otherUsersPic: userObject.profilePic,
-          lastMsgSentTime: userChatsSnapshot.lastMsgSentTime,
-          seen: userChatsSnapshot.lastMsgSeenBy.contains(currentUserUid),
-        );
+            userChatsDocUid: snapshot.id,
+            chatRoomUid: userChatsSnapshot.chatRoomUid,
+            otherUsersName: userObject.displayName,
+            otherUsersUserName: userObject.userName,
+            otherUsersUid: userObject.userUid,
+            otherUsersPic: userObject.profilePic,
+            lastMsgSentTime: userChatsSnapshot.lastMsgSentTime,
+            seen: userChatsSnapshot.lastMsgSeenBy.contains(currentUserUid),
+            requested:
+                userChatsSnapshot.requestedMembers.contains(currentUserUid));
       }
     });
 

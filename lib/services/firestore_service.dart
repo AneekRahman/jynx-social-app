@@ -1,6 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
+import 'package:social_app/models/ChatRow.dart';
 import 'package:social_app/models/MyUserObject.dart';
+import 'package:social_app/models/UserChatsSnapshot.dart';
+import 'package:social_app/modules/constants.dart';
 import 'package:uuid/uuid.dart';
 
 import 'auth_service.dart';
@@ -19,17 +23,29 @@ class FirestoreService {
         .snapshots();
   }
 
-  Future<String> findPrivateChatWithUser(
+  Stream<QuerySnapshot> getUserChatsRequestedStream(
+      String currentUserUid, requestedChats) {
+    return _firestoreInstance
+        .collection("userChats")
+        .where("requestedMembers", arrayContains: currentUserUid)
+        .orderBy("lastMsgSentTime", descending: true)
+        .limit(10)
+        .snapshots();
+  }
+
+  Future<ChatRow> findPrivateChatWithUser(
       String currentUserUid, String otherUserUid) async {
     try {
-      print("Array contains: $currentUserUid and $otherUserUid");
-      QuerySnapshot snapshot = await _firestoreInstance
+      QuerySnapshot snapshots = await _firestoreInstance
           .collection("userChats")
           .where("memberInfo.$currentUserUid.userDeleted", isEqualTo: false)
           .where("memberInfo.$otherUserUid.userDeleted", isEqualTo: false)
           .where("type", isEqualTo: "PRIVATE")
           .get();
-      if (snapshot.docs.length > 0) return snapshot.docs[0].get("chatRoomUid");
+      if (snapshots.docs.length == 0) return null;
+      QueryDocumentSnapshot snapshot = snapshots.docs[0];
+      ChatRow chatrow = getChatRowFromDocSnapshot(snapshot, currentUserUid);
+      return chatrow;
     } catch (e) {
       throw e;
     }
@@ -41,9 +57,10 @@ class FirestoreService {
   }) async {
     try {
       Map claims = await AuthenticationService.currentUserClaims(false);
-      String chatRoomUid = Uuid().v1();
+      // Create a new UID
+      String chatRoomUid = FirebaseDatabase.instance.reference().push().key;
       // Create a Firestore document
-      await FirebaseFirestore.instance.collection("userChats").add({
+      await _firestoreInstance.collection("userChats").doc(chatRoomUid).set({
         "allMembers": [otherUserObject.userUid, currentUser.uid],
         "members": [currentUser.uid],
         "lastMsgSeenBy": [currentUser.uid],
@@ -71,5 +88,38 @@ class FirestoreService {
     } catch (e) {
       return {"status": "error", "errorMsg": e.toString()};
     }
+  }
+
+  Future setNewMsgUserChatsSeenReset(String userChatsDocumentUid,
+      String currentUserUid, String lastMsgSentTime) async {
+    await _firestoreInstance
+        .collection("userChats")
+        .doc(userChatsDocumentUid)
+        .update({
+      "lastMsgSeenBy": [currentUserUid],
+      "lastMsgSentTime": lastMsgSentTime
+    });
+  }
+
+  Future setSeenUserChatsDocument(
+      String userChatsDocumentUid, String currentUserUid) async {
+    print("Should fire seen chat on chatroom open");
+    await _firestoreInstance
+        .collection("userChats")
+        .doc(userChatsDocumentUid)
+        .update({
+      "lastMsgSeenBy": FieldValue.arrayUnion([currentUserUid]),
+    });
+  }
+
+  Future acceptChatUserRequest(
+      String userChatsDocumentUid, String currentUserUid) async {
+    await _firestoreInstance
+        .collection("userChats")
+        .doc(userChatsDocumentUid)
+        .update({
+      "members": FieldValue.arrayUnion([currentUserUid]),
+      "requestedMembers": FieldValue.arrayRemove([currentUserUid]),
+    });
   }
 }

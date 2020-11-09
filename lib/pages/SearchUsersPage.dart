@@ -1,11 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:social_app/models/LoadingBar.dart';
 import 'package:social_app/models/MyUserObject.dart';
 import 'package:social_app/modules/constants.dart';
 import 'package:social_app/pages/ChatRoomPage.dart';
-import 'package:social_app/pages/Home.dart';
+import 'package:provider/provider.dart';
 
 class SearchUsersPage extends StatefulWidget {
   @override
@@ -17,6 +19,7 @@ class _SearchUsersPageState extends State<SearchUsersPage> {
   String _msg = "Search for names, usernames";
   List<MyUserObject> _searchUsersList = [];
   bool _loading = false;
+  User _currentUser;
 
   void _searchUsers(String input) async {
     if (_loading) return;
@@ -38,12 +41,13 @@ class _SearchUsersPageState extends State<SearchUsersPage> {
     // Map the results
     for (QueryDocumentSnapshot user in result.docs) {
       Map data = user.data();
-      users.add(MyUserObject(
-        displayName: data["displayName"],
-        userName: data["userName"],
-        profilePic: data["profilePic"],
-        userUid: user.id,
-      ));
+      if (user.id != _currentUser.uid)
+        users.add(MyUserObject(
+          displayName: data["displayName"],
+          userName: data["userName"],
+          profilePic: data["profilePic"],
+          userUid: user.id,
+        ));
     }
     // Update the UI
     setState(() {
@@ -59,6 +63,12 @@ class _SearchUsersPageState extends State<SearchUsersPage> {
   // Callback passed down to the search input
   void _setSearchInput(input) {
     _searchUsers(input);
+  }
+
+  @override
+  void initState() {
+    _currentUser = context.read<User>();
+    super.initState();
   }
 
   @override
@@ -94,7 +104,7 @@ class _SearchUsersPageState extends State<SearchUsersPage> {
                                 //
                                 Navigator.push(
                                   context,
-                                  MaterialPageRoute(
+                                  CupertinoPageRoute(
                                     builder: (context) => ChatRoomPage(
                                       otherUser: _searchUsersList[index],
                                     ),
