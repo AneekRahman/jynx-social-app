@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:social_app/models/CustomClaims.dart';
 import 'package:social_app/modules/MyBottomButton.dart';
 import 'package:social_app/modules/constants.dart';
 import 'package:provider/provider.dart';
@@ -51,7 +52,7 @@ class _IntialSignUpUpdatePageState extends State<IntialSignUpUpdatePage> {
         await _user.updateProfile(displayName: _displayName);
 
         // Force refresh the Id token to get the userName in the future
-        await AuthenticationService.currentUserClaims(true);
+        await CustomClaims.getClaims(true);
       } on FirebaseException catch (error) {
         print("Account Finish Error: " + error.toString());
         Scaffold.of(_context).showSnackBar(SnackBar(

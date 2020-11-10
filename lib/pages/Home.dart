@@ -2,8 +2,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:social_app/models/ChatList.dart';
+import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
+import 'package:social_app/modules/ChatList.dart';
 import 'package:social_app/modules/constants.dart';
+import 'package:social_app/pages/MyProfilePage.dart';
 import 'package:social_app/pages/RequestsPage.dart';
 import 'package:social_app/pages/SearchUsersPage.dart';
 import 'package:social_app/services/auth_service.dart';
@@ -68,6 +70,17 @@ class HomeAppBar extends StatelessWidget {
       child: Row(
         children: [
           GestureDetector(
+            onTap: () {
+              showMaterialModalBottomSheet(
+                backgroundColor: Colors.transparent,
+                context: context,
+                builder: (context, scrollController) => Padding(
+                  padding:
+                      EdgeInsets.only(top: MediaQuery.of(context).padding.top),
+                  child: MyProfilePage(),
+                ),
+              );
+            },
             child: Image.asset(
               "assets/profile-user.png",
               height: 30,

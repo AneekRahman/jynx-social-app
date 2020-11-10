@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:social_app/models/ChatRow.dart';
+import 'package:social_app/models/CustomClaims.dart';
 import 'package:social_app/models/MyUserObject.dart';
 import 'package:social_app/modules/constants.dart';
 import 'auth_service.dart';
@@ -53,7 +54,7 @@ class FirestoreService {
     User currentUser,
   }) async {
     try {
-      Map claims = await AuthenticationService.currentUserClaims(false);
+      CustomClaims claims = await CustomClaims.getClaims(false);
       // Create a new UID
       String chatRoomUid = FirebaseDatabase.instance.reference().push().key;
       // Create a Firestore document
@@ -66,7 +67,7 @@ class FirestoreService {
         "lastMsgSentTime": new DateTime.now().millisecondsSinceEpoch.toString(),
         "memberInfo": {
           currentUser.uid: {
-            "userName": claims["userName"],
+            "userName": claims.userName,
             "displayName": currentUser.displayName,
             "profilePic": currentUser.photoURL ?? "",
             "userDeleted": false,

@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:social_app/models/LoadingBar.dart';
+import 'package:social_app/modules/LoadingBar.dart';
 import 'package:social_app/models/MyUserObject.dart';
 import 'package:social_app/modules/constants.dart';
 import 'package:social_app/pages/ChatRoomPage.dart';

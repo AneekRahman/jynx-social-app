@@ -7,18 +7,17 @@ import 'package:provider/provider.dart';
 import 'package:social_app/modules/constants.dart';
 import 'package:social_app/services/auth_service.dart';
 
-class MyProfilePage extends StatefulWidget {
+class OthersProfilePage extends StatefulWidget {
   @override
-  _MyProfilePageState createState() => _MyProfilePageState();
+  _OthersProfilePageState createState() => _OthersProfilePageState();
 }
 
-class _MyProfilePageState extends State<MyProfilePage> {
+class _OthersProfilePageState extends State<OthersProfilePage> {
   User _currentUser;
   CustomClaims customClaims;
 
-  void _loadUserInfo() async {
-    customClaims = await CustomClaims.getClaims(false);
-    setState(() => {});
+  void _loadUserInfo() {
+    setState(() async => customClaims = await CustomClaims.getClaims(false));
   }
 
   @override
@@ -77,7 +76,7 @@ class _MyProfilePageState extends State<MyProfilePage> {
                   size: 18,
                 ),
                 Text(
-                  customClaims.location ?? " Add location",
+                  " Bangladesh",
                   style: TextStyle(
                     fontFamily: HelveticaFont.Roman,
                     color: Colors.white60,
@@ -88,7 +87,7 @@ class _MyProfilePageState extends State<MyProfilePage> {
             ),
             SizedBox(height: 10),
             Text(
-              customClaims.bio ?? "Add a bio",
+              "Add me on Spotify @lexypanterra gram",
               style: TextStyle(
                 fontFamily: HelveticaFont.Roman,
                 color: Colors.white70,
@@ -97,7 +96,7 @@ class _MyProfilePageState extends State<MyProfilePage> {
             ),
             SizedBox(height: 10),
             Text(
-              customClaims.website ?? "Add a website",
+              "www.lexygram.com",
               style: TextStyle(
                 fontFamily: HelveticaFont.Bold,
                 color: Colors.yellow,
@@ -116,12 +115,12 @@ class _MyProfilePageState extends State<MyProfilePage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
-                    Icons.settings,
+                    Icons.chat_bubble,
                     size: 18,
                   ),
                   SizedBox(width: 10),
                   Text(
-                    "Edit Profile",
+                    "Message",
                     style: TextStyle(
                       fontFamily: HelveticaFont.Bold,
                       fontSize: 14,
