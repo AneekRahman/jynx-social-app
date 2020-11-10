@@ -76,7 +76,8 @@ class _SearchUsersPageState extends State<SearchUsersPage> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
           statusBarColor: Colors.transparent,
-          statusBarIconBrightness: Brightness.light),
+          statusBarIconBrightness: Brightness.light,
+          systemNavigationBarIconBrightness: Brightness.dark),
       child: Scaffold(
         backgroundColor: Colors.black,
         body: SafeArea(
@@ -87,7 +88,6 @@ class _SearchUsersPageState extends State<SearchUsersPage> {
               ),
               LoadingBar(
                 loading: _loading,
-                valueColor: Colors.blue[400],
               ),
               Expanded(
                 child: Padding(
@@ -101,7 +101,6 @@ class _SearchUsersPageState extends State<SearchUsersPage> {
                               SliverChildBuilderDelegate((context, index) {
                             return GestureDetector(
                               onTap: () {
-                                //
                                 Navigator.push(
                                   context,
                                   CupertinoPageRoute(
@@ -152,7 +151,7 @@ class SearchAppBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.fromLTRB(
-          24, 20 + MediaQuery.of(context).padding.top, 10, 20),
+          18, 20 + MediaQuery.of(context).padding.top, 10, 20),
       width: MediaQuery.of(context).size.width,
       child: Row(
         children: [

@@ -30,14 +30,16 @@ class _HomePageState extends State<HomePage> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
           statusBarColor: Colors.transparent,
-          statusBarIconBrightness: Brightness.dark),
+          statusBarIconBrightness: Brightness.light,
+          systemNavigationBarIconBrightness: Brightness.dark),
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: Color(0xFF0a0a0a),
         body: Column(
           children: [
             HomeAppBar(),
             ChatsList(
               currentUser: _currentUser,
+              emptyChatListMsg: HomeChatListIntro(),
               stream: context
                   .watch<FirestoreService>()
                   .getUserChatsStream(_currentUser.uid, false),
@@ -65,28 +67,27 @@ class HomeAppBar extends StatelessWidget {
       width: MediaQuery.of(context).size.width,
       child: Row(
         children: [
-          Container(
-            child: Icon(
-              Icons.person,
-              color: Colors.black38,
+          GestureDetector(
+            child: Image.asset(
+              "assets/profile-user.png",
+              height: 30,
+              width: 30,
             ),
-            decoration: BoxDecoration(
-                border: Border.all(
-                  color: Color(0xFFF2F2F2F2),
-                  width: 2,
-                ),
-                borderRadius: BorderRadius.circular(100)),
-            padding: EdgeInsets.all(4),
           ),
           SearchBox(),
           GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  CupertinoPageRoute(builder: (context) => RequestsPage()),
-                );
-              },
-              child: Icon(Icons.person_add)),
+            onTap: () {
+              Navigator.push(
+                context,
+                CupertinoPageRoute(builder: (context) => RequestsPage()),
+              );
+            },
+            child: Image.asset(
+              "assets/box.png",
+              height: 30,
+              width: 30,
+            ),
+          ),
         ],
       ),
     );
@@ -115,21 +116,42 @@ class SearchBox extends StatelessWidget {
           height: 40,
           padding: EdgeInsets.symmetric(horizontal: 20),
           decoration: BoxDecoration(
-              color: Color(0xFFF2F2F2F2),
-              borderRadius: BorderRadius.circular(100)),
+              color: Colors.white12, borderRadius: BorderRadius.circular(100)),
           child: Row(
             children: [
-              Icon(Icons.search),
+              Icon(Icons.search, color: Colors.white38),
               SizedBox(
                 width: 6,
               ),
               Text(
                 "Search for friends",
-                style: TextStyle(fontFamily: HelveticaFont.Roman, fontSize: 12),
+                style: TextStyle(
+                  fontFamily: HelveticaFont.Roman,
+                  fontSize: 12,
+                  color: Colors.white54,
+                ),
               )
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class HomeChatListIntro extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      child: Column(
+        children: [
+          Icon(Icons.cake),
+          Text(
+            "Looks like we need some friends in this chat :D",
+            style: TextStyle(
+                fontFamily: HelveticaFont.Roman, color: Colors.black38),
+          )
+        ],
       ),
     );
   }

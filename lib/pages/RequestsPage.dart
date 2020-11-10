@@ -25,9 +25,9 @@ class _RequestsPageState extends State<RequestsPage> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
           statusBarColor: Colors.transparent,
-          statusBarIconBrightness: Brightness.dark),
+          statusBarIconBrightness: Brightness.light),
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: Color(0xFF0a0a0a),
         body: Column(
           children: [
             HomeAppBar(),
@@ -64,6 +64,7 @@ class HomeAppBar extends StatelessWidget {
               child: Icon(
                 Icons.arrow_back_ios,
                 size: 16,
+                color: Colors.white,
               ),
             ),
           ),
@@ -72,7 +73,7 @@ class HomeAppBar extends StatelessWidget {
             style: TextStyle(
                 fontFamily: HelveticaFont.Bold,
                 fontSize: 16,
-                color: Colors.black),
+                color: Colors.white),
           ),
         ],
       ),

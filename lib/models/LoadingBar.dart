@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 
 class LoadingBar extends StatelessWidget {
   bool _loading;
-  Color valueColor = Colors.blue[100];
-  LoadingBar({Key key, bool loading, Color valueColor})
+  LoadingBar({Key key, bool loading})
       : _loading = loading,
-        valueColor = valueColor,
         super(key: key);
 
   @override
@@ -13,7 +11,7 @@ class LoadingBar extends StatelessWidget {
     return Container(
       child: _loading
           ? LinearProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(valueColor),
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.yellow),
               backgroundColor: Colors.transparent,
             )
           : Container(),

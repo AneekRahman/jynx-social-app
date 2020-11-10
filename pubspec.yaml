@@ -30,6 +30,7 @@ dependencies:
   provider: ^4.3.2+2
   timeago: any
   uuid: ^2.2.2
+  modal_bottom_sheet: ^0.2.2
 
   flutter:
     sdk: flutter

@@ -15,7 +15,9 @@ class ChatsList extends StatelessWidget {
     Key key,
     @required this.currentUser,
     @required this.stream,
+    this.emptyChatListMsg,
   }) : super(key: key);
+  final Widget emptyChatListMsg;
   final User currentUser;
   List<ChatRow> chatRows = [];
   bool loadingChats = true;
@@ -64,7 +66,7 @@ class ChatsList extends StatelessWidget {
     return StreamBuilder(
       stream: stream,
       builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
-        if (snapshot.hasData && !snapshot.hasError) {
+        if (snapshot.hasData) {
           _buildChatRows(snapshot.data.docs);
         }
 
@@ -73,9 +75,15 @@ class ChatsList extends StatelessWidget {
             children: [
               LoadingBar(
                 loading: loadingChats,
-                valueColor: Colors.blue[100],
               ),
-              snapshot.hasData && !snapshot.hasError
+              // Show the end of result widget here
+              emptyChatListMsg != null &&
+                      snapshot.hasData &&
+                      snapshot.data.docs.length == 0
+                  ? emptyChatListMsg
+                  : Container(),
+              // Show the ChatList scroll view here
+              snapshot.hasData
                   ? Expanded(
                       child: CustomScrollView(
                         physics: BouncingScrollPhysics(),
@@ -155,20 +163,26 @@ class _ChatsListRowState extends State<ChatsListRow> {
   Widget build(BuildContext context) {
     final fontFamily =
         !widget._chatRow.seen ? HelveticaFont.Heavy : HelveticaFont.Medium;
+
+    bool hasImg = widget._chatRow.otherUsersPic != null &&
+        widget._chatRow.otherUsersPic.isNotEmpty;
     return Container(
       padding: EdgeInsets.symmetric(vertical: 16, horizontal: 20),
       child: Row(
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(100),
-            child: Container(
-              color: Colors.black12,
-              child: Image.network(
-                widget._chatRow.otherUsersPic ?? "",
-                height: 40,
-                width: 40,
-              ),
-            ),
+            child: hasImg
+                ? Image.network(
+                    widget._chatRow.otherUsersPic,
+                    height: 40,
+                    width: 40,
+                  )
+                : Image.asset(
+                    "assets/user.png",
+                    height: 40,
+                    width: 40,
+                  ),
           ),
           SizedBox(
             width: 10,
@@ -180,7 +194,8 @@ class _ChatsListRowState extends State<ChatsListRow> {
                 widget._chatRow.otherUsersName,
                 style: TextStyle(
                   fontFamily: fontFamily,
-                  fontSize: 12,
+                  fontSize: 14,
+                  color: Colors.white,
                 ),
               ),
               SizedBox(
@@ -193,6 +208,7 @@ class _ChatsListRowState extends State<ChatsListRow> {
                         ? Icons.chat_bubble
                         : Icons.chat_bubble_outline,
                     size: 14,
+                    color: Colors.white,
                   ),
                   SizedBox(
                     width: 5,
@@ -202,6 +218,7 @@ class _ChatsListRowState extends State<ChatsListRow> {
                     style: TextStyle(
                       fontFamily: fontFamily,
                       fontSize: 12,
+                      color: Colors.white,
                     ),
                   ),
                 ],

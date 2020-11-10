@@ -409,6 +409,40 @@ class ChatRequestActions extends StatefulWidget {
 class _ChatRequestActionsState extends State<ChatRequestActions> {
   bool _loading = false;
 
+  Future _acceptRequest() async {
+    if (_loading || widget.chatRow.chatRoomUid == null) return;
+    setState(() => _loading = true);
+    try {
+      // Accept the request
+      await context.read<FirestoreService>().acceptChatUserRequest(
+          widget.chatRow.userChatsDocUid, widget.currentUser.uid);
+      // Update the UI
+      setState(() => widget.chatRow.requested = false);
+    } catch (e) {
+      throw e;
+    }
+    // Update the UI
+    setState(() => _loading = false);
+  }
+
+  Future _blockUser() async {
+    if (_loading || widget.chatRow.chatRoomUid == null) return;
+    setState(() => _loading = true);
+    try {
+      // Accept the request
+      await context.read<FirestoreService>().blockUser(
+          userChatsDocumentUid: widget.chatRow.userChatsDocUid,
+          currentUserUid: widget.currentUser.uid,
+          blockedUserUid: widget.chatRow.otherUsersUid);
+      // Update the UI
+      setState(() => widget.chatRow.requested = false);
+    } catch (e) {
+      throw e;
+    }
+    // Update the UI
+    setState(() => _loading = false);
+  }
+
   @override
   Widget build(BuildContext context) {
     if (widget.chatRow == null || !widget.chatRow.requested) return Container();
@@ -429,22 +463,8 @@ class _ChatRequestActionsState extends State<ChatRequestActions> {
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       GestureDetector(
-                        onTap: () async {
-                          if (_loading || widget.chatRow.chatRoomUid == null)
-                            return;
-                          setState(() => _loading = true);
-                          try {
-                            // Accept the request
-                            await context
-                                .read<FirestoreService>()
-                                .acceptChatUserRequest(
-                                    widget.chatRow.userChatsDocUid,
-                                    widget.currentUser.uid);
-                            // Update the UI
-                            setState(() => widget.chatRow.requested = false);
-                          } catch (e) {}
-                          // Update the UI
-                          setState(() => _loading = false);
+                        onTap: () {
+                          _acceptRequest();
                         },
                         child: Container(
                           decoration: BoxDecoration(
@@ -460,6 +480,9 @@ class _ChatRequestActionsState extends State<ChatRequestActions> {
                         ),
                       ),
                       GestureDetector(
+                        onTap: () {
+                          _blockUser();
+                        },
                         child: Container(
                           decoration: BoxDecoration(
                             border: Border.all(color: Colors.black12, width: 1),
@@ -468,7 +491,7 @@ class _ChatRequestActionsState extends State<ChatRequestActions> {
                           padding: EdgeInsets.symmetric(
                               vertical: 12, horizontal: 24),
                           child: Text(
-                            "Block messages",
+                            "Block User",
                             style: TextStyle(fontFamily: HelveticaFont.Bold),
                           ),
                         ),
@@ -479,5 +502,7 @@ class _ChatRequestActionsState extends State<ChatRequestActions> {
           ),
         ],
       );
+    else
+      return Container();
   }
 }

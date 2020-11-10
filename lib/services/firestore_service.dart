@@ -3,10 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:social_app/models/ChatRow.dart';
 import 'package:social_app/models/MyUserObject.dart';
-import 'package:social_app/models/UserChatsSnapshot.dart';
 import 'package:social_app/modules/constants.dart';
-import 'package:uuid/uuid.dart';
-
 import 'auth_service.dart';
 
 class FirestoreService {
@@ -38,8 +35,8 @@ class FirestoreService {
     try {
       QuerySnapshot snapshots = await _firestoreInstance
           .collection("userChats")
-          .where("memberInfo.$currentUserUid.userDeleted", isEqualTo: false)
-          .where("memberInfo.$otherUserUid.userDeleted", isEqualTo: false)
+          .where("memberInfo.$currentUserUid.searchable", isEqualTo: true)
+          .where("memberInfo.$otherUserUid.searchable", isEqualTo: true)
           .where("type", isEqualTo: "PRIVATE")
           .get();
       if (snapshots.docs.length == 0) return null;
@@ -121,5 +118,32 @@ class FirestoreService {
       "members": FieldValue.arrayUnion([currentUserUid]),
       "requestedMembers": FieldValue.arrayRemove([currentUserUid]),
     });
+  }
+
+  Future blockUser({
+    String userChatsDocumentUid,
+    String currentUserUid,
+    String blockedUserUid,
+  }) async {
+    await _firestoreInstance
+        .collection("users")
+        .doc(currentUserUid)
+        .collection("blockedUsers")
+        .add({
+      "blockedUserUid": blockedUserUid,
+      "time": new DateTime.now().millisecondsSinceEpoch.toString(),
+    });
+
+    if (userChatsDocumentUid != null) {
+      // Remove from members or requestedMembers and add a list of users who have blocked this chat
+      await _firestoreInstance
+          .collection("userChats")
+          .doc(userChatsDocumentUid)
+          .update({
+        "members": FieldValue.arrayRemove([currentUserUid]),
+        "requestedMembers": FieldValue.arrayRemove([currentUserUid]),
+        "chatBlockedByUsers": [currentUserUid]
+      });
+    }
   }
 }
