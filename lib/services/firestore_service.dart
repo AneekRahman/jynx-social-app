@@ -147,4 +147,47 @@ class FirestoreService {
       });
     }
   }
+
+  Future updateCurrentUser(User user, object, {bool updateUserName}) async {
+    print("PRINNTING: " + object.toString());
+    // Try to Save the /users/ and /takenUserNames/ documents
+    await _firestoreInstance.runTransaction((transaction) async {
+      final newObject = {
+        "displayName": object["displayName"].trim(),
+        "searchKeywords": [
+          ...createKeywords(object["userName"].trim()),
+          ...createKeywords(object["displayName"].trim()),
+        ],
+        "userMeta": {
+          "location": object["location"],
+          "bio": object["bio"],
+          "website": object["website"],
+        }
+      };
+      // Only update userName if not the same
+      if (updateUserName) newObject["userName"] = object["userName"].trim();
+      // Update in /users/
+      transaction.update(
+        _firestoreInstance.collection("users").doc(user.uid),
+        newObject,
+      );
+      // Create the userName record in /takenUserNames/ if not the same
+      if (updateUserName)
+        transaction.set(
+          _firestoreInstance
+              .collection("takenUserNames")
+              .doc(object["userName"].toLowerCase().trim()),
+          {"userUid": user.uid},
+        );
+    });
+
+    // Update the FirebaseAuthentication user
+    await user.updateProfile(
+      displayName: object["displayName"],
+      photoURL: object["profilePic"],
+    );
+
+    // Await 2 seconds for the trigger functions to set the custom claims
+    await Future.delayed(Duration(seconds: 1));
+  }
 }

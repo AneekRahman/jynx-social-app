@@ -16,16 +16,16 @@ class MyProfilePage extends StatefulWidget {
 
 class _MyProfilePageState extends State<MyProfilePage> {
   User _currentUser;
-  CustomClaims customClaims;
+  CustomClaims customClaims = CustomClaims();
 
   void _loadUserInfo() async {
+    _currentUser = context.read<User>();
     customClaims = await CustomClaims.getClaims(false);
     setState(() => {});
   }
 
   @override
   void initState() {
-    _currentUser = context.read<User>();
     _loadUserInfo();
     super.initState();
   }
@@ -79,7 +79,10 @@ class _MyProfilePageState extends State<MyProfilePage> {
                   size: 18,
                 ),
                 Text(
-                  customClaims.location ?? " Add location",
+                  customClaims.location != null &&
+                          customClaims.location.isNotEmpty
+                      ? customClaims.location
+                      : " Add location",
                   style: TextStyle(
                     fontFamily: HelveticaFont.Roman,
                     color: Colors.white60,
@@ -90,7 +93,9 @@ class _MyProfilePageState extends State<MyProfilePage> {
             ),
             SizedBox(height: 10),
             Text(
-              customClaims.bio ?? "Add a bio",
+              customClaims.bio != null && customClaims.bio.isNotEmpty
+                  ? customClaims.bio
+                  : "Add a bio",
               style: TextStyle(
                 fontFamily: HelveticaFont.Roman,
                 color: Colors.white70,
@@ -99,7 +104,9 @@ class _MyProfilePageState extends State<MyProfilePage> {
             ),
             SizedBox(height: 10),
             Text(
-              customClaims.website ?? "Add a website",
+              customClaims.website != null && customClaims.website.isNotEmpty
+                  ? customClaims.website
+                  : "Add a website",
               style: TextStyle(
                 fontFamily: HelveticaFont.Bold,
                 color: Colors.yellow,

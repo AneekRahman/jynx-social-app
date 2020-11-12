@@ -5,7 +5,6 @@ import 'package:social_app/models/CustomClaims.dart';
 import 'package:social_app/modules/MyBottomButton.dart';
 import 'package:social_app/modules/constants.dart';
 import 'package:provider/provider.dart';
-import 'package:social_app/services/auth_service.dart';
 
 class IntialSignUpUpdatePage extends StatefulWidget {
   @override
@@ -37,15 +36,16 @@ class _IntialSignUpUpdatePageState extends State<IntialSignUpUpdatePage> {
             "displayName": _displayName.trim(),
             "userName": _userName.trim(),
             "searchKeywords": [
-              ..._createKeywords(_displayName.trim()),
-              ..._createKeywords(_userName.trim()),
+              ...createKeywords(_displayName.trim()),
+              ...createKeywords(_userName.trim()),
             ]
           });
           transaction.set(
-              _firestoreInstance
-                  .collection("takenUserNames")
-                  .doc(_userName.trim()),
-              {"userUid": _user.uid});
+            _firestoreInstance
+                .collection("takenUserNames")
+                .doc(_userName.toLowerCase().trim()),
+            {"userUid": _user.uid},
+          );
         });
 
         // Update the displayName
@@ -64,19 +64,6 @@ class _IntialSignUpUpdatePageState extends State<IntialSignUpUpdatePage> {
           _loading = false;
         });
     }
-  }
-
-  List<String> _createKeywords(text) {
-    List<String> keywordsList = [];
-    // Split the text into words if there are spaces
-    text.split(" ").forEach((word) {
-      String tempWord = "";
-      word.split("").forEach((letter) {
-        tempWord += letter;
-        if (!keywordsList.contains(tempWord)) keywordsList.add(tempWord);
-      });
-    });
-    return keywordsList;
   }
 
   @override

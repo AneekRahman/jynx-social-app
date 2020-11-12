@@ -72,3 +72,16 @@ ChatRow getChatRowFromDocSnapshot(
     return chatRow;
   }
 }
+
+List<String> createKeywords(text) {
+  List<String> keywordsList = [];
+  // Split the text into words if there are spaces
+  text.split(" ").forEach((word) {
+    String tempWord = "";
+    word.split("").forEach((letter) {
+      tempWord += letter;
+      if (!keywordsList.contains(tempWord)) keywordsList.add(tempWord);
+    });
+  });
+  return keywordsList;
+}

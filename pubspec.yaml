@@ -31,8 +31,7 @@ dependencies:
   timeago: any
   uuid: ^2.2.2
   modal_bottom_sheet: ^0.2.2
-  google_maps_flutter: ^0.5.33
-  place_picker: ^0.9.15
+  search_map_place: ^0.3.0
 
   flutter:
     sdk: flutter

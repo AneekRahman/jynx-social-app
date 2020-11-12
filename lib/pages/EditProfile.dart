@@ -1,12 +1,11 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:place_picker/entities/location_result.dart';
-import 'package:place_picker/place_picker.dart';
-import 'package:place_picker/widgets/place_picker.dart';
 import 'package:social_app/models/CustomClaims.dart';
 import 'package:social_app/modules/constants.dart';
 import 'package:provider/provider.dart';
+import 'package:social_app/pages/LocationPicker.dart';
+import 'package:social_app/services/firestore_service.dart';
 
 class EditProfile extends StatelessWidget {
   @override
@@ -43,8 +42,12 @@ class _EditProfileFormState extends State<EditProfileForm> {
   TextEditingController _bioController = TextEditingController();
   TextEditingController _wwwController = TextEditingController();
   String _location = "";
+
+  final RegExp _userNameRegExp = new RegExp("^([a-zA-Z0-9_.]{6,32})\$");
+  final RegExp _displayNameRegExp = new RegExp("^([a-zA-Z ]{3,32})\$");
   User _currentUser;
   CustomClaims customClaims = CustomClaims();
+  bool _loading = false;
 
   InputDecoration _getInputDecoration({String labelText, Widget prefix}) {
     return InputDecoration(
@@ -70,6 +73,41 @@ class _EditProfileFormState extends State<EditProfileForm> {
     setState(() => {});
   }
 
+  Future _updateProfile(_context) async {
+    if (_loading) return;
+    if (_formKey.currentState.validate()) {
+      try {
+        setState(() {
+          _loading = true;
+        });
+
+        await context.read<FirestoreService>().updateCurrentUser(
+              _currentUser,
+              {
+                "displayName": _displayNameController.text,
+                "userName": _userNameController.text,
+                "location": _location,
+                "bio": _bioController.text,
+                "website": _wwwController.text,
+              },
+              updateUserName: customClaims.userName != _userNameController.text,
+            );
+
+        // Force refresh the Id token to get the userName in the future
+        await CustomClaims.getClaims(true);
+      } on FirebaseException catch (error) {
+        print("Update Profile Error: " + error.toString());
+        Scaffold.of(_context).showSnackBar(SnackBar(
+          content: Text("Couldn't upldate profile, try again later"),
+        ));
+      }
+      if (this.mounted)
+        setState(() {
+          _loading = false;
+        });
+    }
+  }
+
   @override
   void initState() {
     _currentUser = context.read<User>();
@@ -86,6 +124,14 @@ class _EditProfileFormState extends State<EditProfileForm> {
           children: [
             TextFormField(
               controller: _userNameController,
+              validator: (input) {
+                if (input.length < 6 || input.length > 32) {
+                  return "Should be between 6 - 32 characters long";
+                }
+                if (input.isEmpty || !_userNameRegExp.hasMatch(input)) {
+                  return "Usernames must only be Alpha-Numeric, dots or underscores";
+                }
+              },
               style: TextStyle(color: Colors.white),
               decoration: _getInputDecoration(
                 labelText: "Username",
@@ -98,6 +144,14 @@ class _EditProfileFormState extends State<EditProfileForm> {
             SizedBox(height: 5),
             TextFormField(
               controller: _displayNameController,
+              validator: (input) {
+                if (input.length < 3 || input.length > 32) {
+                  return "Should be between 3 - 32 characters long";
+                }
+                if (input.isEmpty || !_displayNameRegExp.hasMatch(input)) {
+                  return "Names cannot contain numbers or special characters";
+                }
+              },
               style: TextStyle(color: Colors.white),
               decoration: _getInputDecoration(labelText: "Display Name"),
             ),
@@ -121,21 +175,32 @@ class _EditProfileFormState extends State<EditProfileForm> {
             ),
             SizedBox(height: 10),
             LocationButton(
-              location: _location,
-            ),
-            Container(
-              margin: EdgeInsets.symmetric(vertical: 30),
-              padding: EdgeInsets.all(14),
-              width: MediaQuery.of(context).size.width,
-              decoration: BoxDecoration(
-                color: Colors.yellow,
-                borderRadius: BorderRadius.circular(1000),
-              ),
-              child: Text(
-                "Update",
-                textAlign: TextAlign.center,
-                style: TextStyle(fontFamily: HelveticaFont.Bold),
-              ),
+                location: _location,
+                setLocation: (location) {
+                  setState(() => _location = location);
+                }),
+            Builder(
+              builder: (_context) {
+                return GestureDetector(
+                  onTap: () async {
+                    _updateProfile(_context);
+                  },
+                  child: Container(
+                    margin: EdgeInsets.symmetric(vertical: 30),
+                    padding: EdgeInsets.all(14),
+                    width: MediaQuery.of(context).size.width,
+                    decoration: BoxDecoration(
+                      color: _loading ? Colors.yellow[100] : Colors.yellow,
+                      borderRadius: BorderRadius.circular(1000),
+                    ),
+                    child: Text(
+                      "Update",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontFamily: HelveticaFont.Bold),
+                    ),
+                  ),
+                );
+              },
             )
           ],
         ),
@@ -148,32 +213,34 @@ class LocationButton extends StatelessWidget {
   LocationButton({
     Key key,
     this.location,
+    this.setLocation,
   }) : super(key: key);
   String location;
+  Function setLocation;
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () async {
-        LocationResult result = await Navigator.of(context).push(
-          CupertinoPageRoute(
-            builder: (context) => PlacePicker(
-              "AIzaSyBwPACLNRvfWCz5yUvOFJD3mMroUX1p80A",
-            ),
-          ),
-        );
-
-        if (result != null) {}
-        // Handle the result in your way
-        print("RASULRT: " + result.toString());
-      },
-      child: Container(
-        padding: EdgeInsets.symmetric(vertical: 20),
-        width: MediaQuery.of(context).size.width,
-        decoration: BoxDecoration(
-          border: Border(bottom: BorderSide(color: Colors.white24, width: 1)),
-        ),
-        child: Text(
+    return Container(
+      width: MediaQuery.of(context).size.width,
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: Colors.white24, width: 1)),
+      ),
+      child: ListTile(
+        onTap: () async {
+          String result = await Navigator.push(context,
+              CupertinoPageRoute(builder: (context) => LocationPicker()));
+          if (result != null) {
+            setLocation(result);
+          }
+        },
+        trailing: location.length > 0
+            ? GestureDetector(
+                onTap: () {
+                  setLocation("");
+                },
+                child: Icon(Icons.close, color: Colors.white))
+            : null,
+        title: Text(
           location.isEmpty ? "Add location" : location,
           style: TextStyle(
             color: location.isEmpty ? Colors.white30 : Colors.white,
