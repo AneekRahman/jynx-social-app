@@ -1,10 +1,12 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:social_app/models/CustomClaims.dart';
 import 'package:social_app/models/MyUserObject.dart';
 import 'package:provider/provider.dart';
 import 'package:social_app/modules/constants.dart';
+import 'package:social_app/pages/EditProfile.dart';
 import 'package:social_app/services/auth_service.dart';
 
 class MyProfilePage extends StatefulWidget {
@@ -105,31 +107,48 @@ class _MyProfilePageState extends State<MyProfilePage> {
               ),
             ),
             SizedBox(height: 20),
-            Container(
-              width: MediaQuery.of(context).size.width,
-              padding: EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(100),
-                color: Colors.yellow,
+            EditProfileButton()
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class EditProfileButton extends StatelessWidget {
+  const EditProfileButton({
+    Key key,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+            context, CupertinoPageRoute(builder: (context) => EditProfile()));
+      },
+      child: Container(
+        width: MediaQuery.of(context).size.width,
+        padding: EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(100),
+          color: Colors.yellow,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.settings,
+              size: 18,
+            ),
+            SizedBox(width: 10),
+            Text(
+              "Edit Profile",
+              style: TextStyle(
+                fontFamily: HelveticaFont.Bold,
+                fontSize: 14,
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.settings,
-                    size: 18,
-                  ),
-                  SizedBox(width: 10),
-                  Text(
-                    "Edit Profile",
-                    style: TextStyle(
-                      fontFamily: HelveticaFont.Bold,
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
-            )
+            ),
           ],
         ),
       ),
