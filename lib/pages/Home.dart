@@ -46,12 +46,6 @@ class _HomePageState extends State<HomePage> {
                   .watch<FirestoreService>()
                   .getUserChatsStream(_currentUser.uid, false),
             ),
-            RaisedButton(
-              onPressed: () {
-                context.read<AuthenticationService>().signOut();
-              },
-              child: Text("Sign out"),
-            ),
           ],
         ),
       ),

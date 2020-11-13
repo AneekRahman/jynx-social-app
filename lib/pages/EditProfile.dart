@@ -179,29 +179,23 @@ class _EditProfileFormState extends State<EditProfileForm> {
                 setLocation: (location) {
                   setState(() => _location = location);
                 }),
+            SizedBox(height: 30),
             Builder(
               builder: (_context) {
-                return GestureDetector(
-                  onTap: () async {
-                    _updateProfile(_context);
-                  },
-                  child: Container(
-                    margin: EdgeInsets.symmetric(vertical: 30),
-                    padding: EdgeInsets.all(14),
-                    width: MediaQuery.of(context).size.width,
-                    decoration: BoxDecoration(
-                      color: _loading ? Colors.yellow[100] : Colors.yellow,
-                      borderRadius: BorderRadius.circular(1000),
-                    ),
+                return buildYellowButton(
                     child: Text(
                       "Update",
                       textAlign: TextAlign.center,
                       style: TextStyle(fontFamily: HelveticaFont.Bold),
                     ),
-                  ),
-                );
+                    onTap: () {
+                      _updateProfile(_context);
+                    },
+                    context: context,
+                    loading: _loading);
               },
-            )
+            ),
+            SizedBox(height: 30),
           ],
         ),
       ),

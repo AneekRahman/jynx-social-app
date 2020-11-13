@@ -9,6 +9,8 @@ import 'package:social_app/modules/constants.dart';
 import 'package:social_app/pages/EditProfile.dart';
 import 'package:social_app/services/auth_service.dart';
 
+import 'SettingsPage.dart';
+
 class MyProfilePage extends StatefulWidget {
   @override
   _MyProfilePageState createState() => _MyProfilePageState();
@@ -114,48 +116,30 @@ class _MyProfilePageState extends State<MyProfilePage> {
               ),
             ),
             SizedBox(height: 20),
-            EditProfileButton()
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class EditProfileButton extends StatelessWidget {
-  const EditProfileButton({
-    Key key,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-            context, CupertinoPageRoute(builder: (context) => EditProfile()));
-      },
-      child: Container(
-        width: MediaQuery.of(context).size.width,
-        padding: EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(100),
-          color: Colors.yellow,
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.settings,
-              size: 18,
-            ),
-            SizedBox(width: 10),
-            Text(
-              "Edit Profile",
-              style: TextStyle(
-                fontFamily: HelveticaFont.Bold,
-                fontSize: 14,
-              ),
-            ),
+            buildYellowButton(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.settings,
+                      size: 18,
+                    ),
+                    SizedBox(width: 10),
+                    Text(
+                      "Edit Profile",
+                      style: TextStyle(
+                        fontFamily: HelveticaFont.Bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+                onTap: () {
+                  Navigator.push(context,
+                      CupertinoPageRoute(builder: (context) => EditProfile()));
+                },
+                context: context,
+                loading: false),
           ],
         ),
       ),
@@ -215,10 +199,16 @@ class ProfilePageAppBar extends StatelessWidget {
               size: 36,
             ),
           ),
-          Icon(
-            Icons.more_horiz,
-            color: Colors.white,
-            size: 30,
+          GestureDetector(
+            onTap: () {
+              Navigator.push(context,
+                  CupertinoPageRoute(builder: (context) => SettingsPage()));
+            },
+            child: Icon(
+              Icons.settings,
+              color: Colors.white,
+              size: 30,
+            ),
           ),
         ],
       ),

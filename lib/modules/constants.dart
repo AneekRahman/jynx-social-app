@@ -73,6 +73,22 @@ ChatRow getChatRowFromDocSnapshot(
   }
 }
 
+Widget buildYellowButton(
+    {Widget child, Function onTap, bool loading, BuildContext context}) {
+  return GestureDetector(
+    onTap: onTap,
+    child: Container(
+      padding: EdgeInsets.all(14),
+      width: MediaQuery.of(context).size.width,
+      decoration: BoxDecoration(
+        color: Colors.yellow,
+        borderRadius: BorderRadius.circular(1000),
+      ),
+      child: child,
+    ),
+  );
+}
+
 List<String> createKeywords(text) {
   List<String> keywordsList = [];
   // Split the text into words if there are spaces
