@@ -32,7 +32,7 @@ class MyApp extends StatelessWidget {
         StreamProvider(
           create: (context) =>
               context.read<AuthenticationService>().authStateChanges,
-        )
+        ),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,

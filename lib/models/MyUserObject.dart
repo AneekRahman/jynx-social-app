@@ -3,12 +3,14 @@ class MyUserObject {
   String displayName;
   String userName;
   String profilePic;
+  Map<String, String> userMeta = {};
 
   MyUserObject({
     this.userUid,
     this.displayName,
     this.userName,
     this.profilePic,
+    this.userMeta,
   });
 
   MyUserObject.fromJson(Map<dynamic, dynamic> json) {
@@ -16,14 +18,11 @@ class MyUserObject {
     displayName = json['displayName'];
     userName = json['userName'];
     profilePic = json['profilePic'];
-  }
-
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['userUid'] = this.userUid;
-    data['displayName'] = this.displayName;
-    data['userName'] = this.userName;
-    data['profilePic'] = this.profilePic;
-    return data;
+    Map metaMap = json["userMeta"];
+    if (metaMap != null) {
+      userMeta["bio"] = metaMap["bio"];
+      userMeta["website"] = metaMap["website"];
+      userMeta["location"] = metaMap["location"];
+    }
   }
 }

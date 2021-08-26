@@ -53,12 +53,12 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Widget _buildCheckBoxTile(String title, String subTitle,
-      {void onChanged(bool checked)}) {
+      {bool value, void onChanged(bool checked)}) {
     return CheckboxListTile(
       activeColor: Colors.yellow,
       checkColor: Colors.black,
       contentPadding: EdgeInsets.all(0),
-      value: false,
+      value: value,
       onChanged: onChanged,
       title: Text(
         title,
@@ -106,6 +106,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       _buildCheckBoxTile(
                         "Recieve notifications",
                         "Control if you want to recieve notifications from Jynx",
+                        value: _recieveNotifications,
                         onChanged: (checked) {
                           setState(() => _recieveNotifications = checked);
                         },

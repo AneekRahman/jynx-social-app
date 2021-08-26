@@ -5,11 +5,15 @@ import 'package:social_app/models/ChatRow.dart';
 import 'package:social_app/models/CustomClaims.dart';
 import 'package:social_app/models/MyUserObject.dart';
 import 'package:social_app/modules/constants.dart';
-import 'auth_service.dart';
 
 class FirestoreService {
   final FirebaseFirestore _firestoreInstance;
   const FirestoreService(this._firestoreInstance);
+
+  Stream<DocumentSnapshot> getUserDocumentStream(String userUid) {
+    return _firestoreInstance.collection("users").doc(userUid).snapshots();
+    // return MyUserObject.fromJson(snapshot.data());
+  }
 
   Stream<QuerySnapshot> getUserChatsStream(
       String currentUserUid, requestedChats) {

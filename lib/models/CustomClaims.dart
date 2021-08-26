@@ -3,25 +3,17 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 class CustomClaims {
   String userName;
-  String location;
-  String bio;
-  String website;
 
   CustomClaims({
     this.userName,
-    this.location,
-    this.bio,
-    this.website,
   });
 
   CustomClaims.fromJson(Map json) {
     this.userName = json["userName"];
-    final Map userMeta = json["userMeta"];
-    if (userMeta != null) {
-      this.location = userMeta["location"];
-      this.bio = userMeta["bio"];
-      this.website = userMeta["website"];
-    }
+    // final Map userMeta = json["userMeta"];
+    // if (userMeta != null) {
+    //   this.bio = userMeta["bio"];
+    // }
   }
 
   static Future<CustomClaims> getClaims(forceRefresh) async {

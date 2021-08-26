@@ -2,12 +2,15 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:social_app/models/CustomClaims.dart';
+import 'package:social_app/models/MyUserObject.dart';
 import 'package:social_app/modules/constants.dart';
 import 'package:provider/provider.dart';
 import 'package:social_app/pages/LocationPicker.dart';
 import 'package:social_app/services/firestore_service.dart';
 
 class EditProfile extends StatelessWidget {
+  EditProfile({this.userObject});
+  MyUserObject userObject;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -19,7 +22,7 @@ class EditProfile extends StatelessWidget {
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 30),
-                child: EditProfileForm(),
+                child: EditProfileForm(userObject: userObject),
               ),
             ),
           ],
@@ -30,6 +33,8 @@ class EditProfile extends StatelessWidget {
 }
 
 class EditProfileForm extends StatefulWidget {
+  EditProfileForm({this.userObject});
+  MyUserObject userObject;
   @override
   _EditProfileFormState createState() => _EditProfileFormState();
 }
@@ -67,9 +72,12 @@ class _EditProfileFormState extends State<EditProfileForm> {
     customClaims = await CustomClaims.getClaims(false);
     _userNameController.text = customClaims.userName;
     _displayNameController.text = _currentUser.displayName;
-    _bioController.text = customClaims.bio ?? "";
-    _wwwController.text = customClaims.website ?? "";
-    _location = customClaims.location ?? "";
+    Map userMeta = widget.userObject.userMeta;
+    if (userMeta != null) {
+      _bioController.text = userMeta["bio"] ?? "";
+      _wwwController.text = userMeta["website"] ?? "";
+      _location = userMeta["location"] ?? "";
+    }
     setState(() => {});
   }
 
@@ -81,6 +89,8 @@ class _EditProfileFormState extends State<EditProfileForm> {
           _loading = true;
         });
 
+        bool updateUserName = customClaims.userName != _userNameController.text;
+
         await context.read<FirestoreService>().updateCurrentUser(
               _currentUser,
               {
@@ -90,11 +100,11 @@ class _EditProfileFormState extends State<EditProfileForm> {
                 "bio": _bioController.text,
                 "website": _wwwController.text,
               },
-              updateUserName: customClaims.userName != _userNameController.text,
+              updateUserName: updateUserName,
             );
 
-        // Force refresh the Id token to get the userName in the future
-        await CustomClaims.getClaims(true);
+        // Force refresh the Id token to get the customClaims userName
+        if (updateUserName) await CustomClaims.getClaims(true);
       } on FirebaseException catch (error) {
         print("Update Profile Error: " + error.toString());
         Scaffold.of(_context).showSnackBar(SnackBar(

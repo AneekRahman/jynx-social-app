@@ -8,6 +8,8 @@ import 'package:provider/provider.dart';
 import 'package:social_app/modules/constants.dart';
 import 'package:social_app/pages/EditProfile.dart';
 import 'package:social_app/services/auth_service.dart';
+import 'package:social_app/services/firestore_service.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'SettingsPage.dart';
 
@@ -18,17 +20,37 @@ class MyProfilePage extends StatefulWidget {
 
 class _MyProfilePageState extends State<MyProfilePage> {
   User _currentUser;
-  CustomClaims customClaims = CustomClaims();
+  MyUserObject _myUserObject = MyUserObject();
 
   void _loadUserInfo() async {
     _currentUser = context.read<User>();
-    customClaims = await CustomClaims.getClaims(false);
+    CustomClaims customClaims = await CustomClaims.getClaims(false);
+    _myUserObject.userName = customClaims.userName;
+    _myUserObject.displayName = _currentUser.displayName;
+    _myUserObject.profilePic = _currentUser.photoURL;
     setState(() => {});
+  }
+
+  // void _loadUserMetaData() async {
+  //   UserDocumentStream userDocumentStream = context.watch<UserDocumentStream>();
+  //   MyUserObject userObject = MyUserObject.fromJson(userDocumentStream.data());
+  //   setState(() => _myUserObject = userObject);
+  // }
+
+  void _launchUserWebsite() async {
+    if (_myUserObject.userMeta == null) return;
+    String url = "https://" + _myUserObject.userMeta["website"];
+    if (await canLaunch(url)) {
+      await launch(url);
+    } else {
+      throw 'Could not launch $url';
+    }
   }
 
   @override
   void initState() {
     _loadUserInfo();
+    // _loadUserMetaData();
     super.initState();
   }
 
@@ -44,7 +66,9 @@ class _MyProfilePageState extends State<MyProfilePage> {
             ProfilePageAppBar(),
             Row(
               children: [
-                ProfileImageBlock(),
+                ProfileImageBlock(
+                  profilePic: _myUserObject.profilePic,
+                ),
                 SizedBox(
                   width: 20,
                 ),
@@ -52,16 +76,16 @@ class _MyProfilePageState extends State<MyProfilePage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _currentUser.displayName,
+                      _myUserObject.displayName,
                       style: TextStyle(
-                        fontFamily: HelveticaFont.Black,
+                        fontFamily: HelveticaFont.Bold,
                         color: Colors.white,
                         fontSize: 18,
                       ),
                     ),
                     SizedBox(height: 6),
                     Text(
-                      customClaims.userName ?? "",
+                      _myUserObject.userName ?? "",
                       style: TextStyle(
                         fontFamily: HelveticaFont.Medium,
                         color: Colors.white,
@@ -73,48 +97,59 @@ class _MyProfilePageState extends State<MyProfilePage> {
               ],
             ),
             SizedBox(height: 20),
-            Row(
-              children: [
-                Icon(
-                  Icons.location_on,
-                  color: Colors.white,
-                  size: 18,
-                ),
-                Text(
-                  customClaims.location != null &&
-                          customClaims.location.isNotEmpty
-                      ? customClaims.location
-                      : " Add location",
-                  style: TextStyle(
-                    fontFamily: HelveticaFont.Roman,
-                    color: Colors.white60,
-                    fontSize: 14,
-                  ),
-                ),
-              ],
-            ),
+            _myUserObject.userMeta != null
+                ? Row(
+                    children: [
+                      Icon(
+                        Icons.location_on,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                      SizedBox(width: 4),
+                      Text(
+                        _myUserObject.userMeta["location"].isNotEmpty
+                            ? _myUserObject.userMeta["location"]
+                            : "Add location",
+                        style: TextStyle(
+                          fontFamily: HelveticaFont.Roman,
+                          color: Colors.white38,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  )
+                : Container(),
             SizedBox(height: 10),
-            Text(
-              customClaims.bio != null && customClaims.bio.isNotEmpty
-                  ? customClaims.bio
-                  : "Add a bio",
-              style: TextStyle(
-                fontFamily: HelveticaFont.Roman,
-                color: Colors.white70,
-                fontSize: 14,
-              ),
-            ),
+            _myUserObject.userMeta != null
+                ? Text(
+                    _myUserObject.userMeta["bio"].isNotEmpty
+                        ? _myUserObject.userMeta["bio"]
+                        : "Add a bio",
+                    style: TextStyle(
+                      fontFamily: HelveticaFont.Roman,
+                      color: Colors.white70,
+                      fontSize: 14,
+                    ),
+                  )
+                : Container(),
             SizedBox(height: 10),
-            Text(
-              customClaims.website != null && customClaims.website.isNotEmpty
-                  ? customClaims.website
-                  : "Add a website",
-              style: TextStyle(
-                fontFamily: HelveticaFont.Bold,
-                color: Colors.yellow,
-                fontSize: 14,
-              ),
-            ),
+            _myUserObject.userMeta != null
+                ? GestureDetector(
+                    onTap: () {
+                      _launchUserWebsite();
+                    },
+                    child: Text(
+                      _myUserObject.userMeta["website"].isNotEmpty
+                          ? _myUserObject.userMeta["website"]
+                          : "Add a website",
+                      style: TextStyle(
+                        fontFamily: HelveticaFont.Bold,
+                        color: Colors.yellow,
+                        fontSize: 14,
+                      ),
+                    ),
+                  )
+                : Container(),
             SizedBox(height: 20),
             buildYellowButton(
                 child: Row(
@@ -135,8 +170,11 @@ class _MyProfilePageState extends State<MyProfilePage> {
                   ],
                 ),
                 onTap: () {
-                  Navigator.push(context,
-                      CupertinoPageRoute(builder: (context) => EditProfile()));
+                  Navigator.push(
+                      context,
+                      CupertinoPageRoute(
+                          builder: (context) =>
+                              EditProfile(userObject: _myUserObject)));
                 },
                 context: context,
                 loading: false),
