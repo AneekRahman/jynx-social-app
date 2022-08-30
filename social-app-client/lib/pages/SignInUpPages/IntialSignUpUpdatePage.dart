@@ -5,6 +5,8 @@ import 'package:social_app/models/CustomClaims.dart';
 import 'package:social_app/modules/MyBottomButton.dart';
 import 'package:social_app/modules/constants.dart';
 import 'package:provider/provider.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class IntialSignUpUpdatePage extends StatefulWidget {
   @override
@@ -17,52 +19,47 @@ class _IntialSignUpUpdatePageState extends State<IntialSignUpUpdatePage> {
   final RegExp _displayNameRegExp = new RegExp("^([a-zA-Z ]{3,32})\$");
   String _userName = "";
   String _displayName = "";
-  FirebaseFirestore _firestoreInstance;
-  User _user;
+  late FirebaseFirestore _firestoreInstance;
+  User? _user;
   bool _loading = false;
 
   void _finishAccount(_context) async {
     if (_loading) return;
-    if (_formKey.currentState.validate()) {
+    if (_formKey.currentState!.validate()) {
+      setState(() {
+        _loading = true;
+      });
       try {
-        setState(() {
-          _loading = true;
-        });
-
-        // Try to Save the /users/ and /takenUserNames/ documents
-        await _firestoreInstance.runTransaction((transaction) async {
-          transaction
-              .set(_firestoreInstance.collection("users").doc(_user.uid), {
-            "displayName": _displayName.trim(),
+        String idToken = await _user!.getIdToken(); // TODO Fix invalid JWT
+        http.Response response = await http.post(
+          Uri.parse(MyServer.SERVER_API + MyServer.SIGNUP),
+          headers: {"Authorization": idToken, ...MyServer.JSON_HEADER},
+          body: json.encode({
             "userName": _userName.trim(),
-            "searchKeywords": [
-              ...createKeywords(_displayName.trim()),
-              ...createKeywords(_userName.trim()),
-            ]
-          });
-          transaction.set(
-            _firestoreInstance
-                .collection("takenUserNames")
-                .doc(_userName.toLowerCase().trim()),
-            {"userUid": _user.uid},
-          );
-        });
-
-        // Update the displayName
-        await _user.updateProfile(displayName: _displayName);
-
-        // Force refresh the Id token to get the userName in the future
-        await CustomClaims.getClaims(true);
-      } on FirebaseException catch (error) {
-        print("Account Finish Error: " + error.toString());
-        Scaffold.of(_context).showSnackBar(SnackBar(
-          content: Text("The username is already taken"),
+            "displayName": _displayName.trim(),
+          }),
+        );
+        if (response.statusCode == 200) {
+          // Force refresh the Id token to get the userName in the future
+          await CustomClaims.getClaims(true);
+          ScaffoldMessenger.of(_context).showSnackBar(SnackBar(
+            content: Text("Welcome, $_displayName!"),
+          ));
+        } else {
+          Map jsonObject = json.decode(response.body);
+          ScaffoldMessenger.of(_context).showSnackBar(SnackBar(
+            content: Text(jsonObject["message"] ?? "There was an error while, try again!"),
+          ));
+        }
+      } catch (e) {
+        print(e.toString());
+        ScaffoldMessenger.of(_context).showSnackBar(SnackBar(
+          content: Text("There was an error while, try again!"),
         ));
       }
-      if (this.mounted)
-        setState(() {
-          _loading = false;
-        });
+      setState(() {
+        _loading = false;
+      });
     }
   }
 
@@ -99,24 +96,20 @@ class _IntialSignUpUpdatePageState extends State<IntialSignUpUpdatePage> {
                         TextFormField(
                           onChanged: (value) => _userName = value.trim(),
                           validator: (input) {
-                            if (input.length < 6 || input.length > 32) {
+                            if (input!.length < 6 || input.length > 32) {
                               return "Should be between 6 - 32 characters long";
                             }
-                            if (input.isEmpty ||
-                                !_userNameRegExp.hasMatch(input)) {
+                            if (input.isEmpty || !_userNameRegExp.hasMatch(input)) {
                               return "Usernames must only be Alpha-Numeric, dots or underscores";
                             }
                           },
                           autofocus: true,
-                          style: TextStyle(
-                              fontFamily: HelveticaFont.Roman, fontSize: 20),
+                          style: TextStyle(fontFamily: HelveticaFont.Roman, fontSize: 20),
                           decoration: InputDecoration(
                               labelText: "Username",
                               prefix: Text("@"),
-                              prefixStyle: TextStyle(
-                                  color: Colors.black45, fontSize: 18),
-                              floatingLabelBehavior:
-                                  FloatingLabelBehavior.always,
+                              prefixStyle: TextStyle(color: Colors.black45, fontSize: 18),
+                              floatingLabelBehavior: FloatingLabelBehavior.always,
                               hintText: "john_doe123",
                               contentPadding: EdgeInsets.fromLTRB(0, 0, 0, 10)),
                         ),
@@ -124,21 +117,18 @@ class _IntialSignUpUpdatePageState extends State<IntialSignUpUpdatePage> {
                         TextFormField(
                           onChanged: (value) => _displayName = value.trim(),
                           validator: (input) {
-                            if (input.length < 3 || input.length > 32) {
+                            if (input!.length < 3 || input.length > 32) {
                               return "Should be between 3 - 32 characters long";
                             }
-                            if (input.isEmpty ||
-                                !_displayNameRegExp.hasMatch(input)) {
+                            if (input.isEmpty || !_displayNameRegExp.hasMatch(input)) {
                               return "Names cannot contain numbers or special characters";
                             }
                           },
-                          style: TextStyle(
-                              fontFamily: HelveticaFont.Roman, fontSize: 20),
+                          style: TextStyle(fontFamily: HelveticaFont.Roman, fontSize: 20),
                           textCapitalization: TextCapitalization.words,
                           decoration: InputDecoration(
                               labelText: "Full Name",
-                              floatingLabelBehavior:
-                                  FloatingLabelBehavior.always,
+                              floatingLabelBehavior: FloatingLabelBehavior.always,
                               hintText: "eg: John Doe",
                               contentPadding: EdgeInsets.fromLTRB(0, 0, 0, 10)),
                         ),

@@ -12,7 +12,7 @@ class RequestsPage extends StatefulWidget {
 }
 
 class _RequestsPageState extends State<RequestsPage> {
-  User _currentUser;
+  late User _currentUser;
 
   @override
   void initState() {
@@ -23,9 +23,7 @@ class _RequestsPageState extends State<RequestsPage> {
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
-          statusBarColor: Colors.transparent,
-          statusBarIconBrightness: Brightness.light),
+      value: const SystemUiOverlayStyle(statusBarColor: Colors.transparent, statusBarIconBrightness: Brightness.light),
       child: Scaffold(
         backgroundColor: Color(0xFF0a0a0a),
         body: Column(
@@ -34,9 +32,7 @@ class _RequestsPageState extends State<RequestsPage> {
             Expanded(
               child: ChatsList(
                 currentUser: _currentUser,
-                stream: context
-                    .watch<FirestoreService>()
-                    .getUserChatsRequestedStream(_currentUser.uid, false),
+                stream: context.watch<FirestoreService>().getUserChatsRequestedStream(_currentUser.uid, false),
               ),
             ),
           ],
@@ -52,8 +48,7 @@ class HomeAppBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.fromLTRB(_padding,
-          _padding + MediaQuery.of(context).padding.top, _padding, _padding),
+      padding: EdgeInsets.fromLTRB(_padding, _padding + MediaQuery.of(context).padding.top, _padding, _padding),
       width: MediaQuery.of(context).size.width,
       child: Row(
         children: [
@@ -70,10 +65,7 @@ class HomeAppBar extends StatelessWidget {
           ),
           Text(
             "Requests",
-            style: TextStyle(
-                fontFamily: HelveticaFont.Bold,
-                fontSize: 16,
-                color: Colors.white),
+            style: TextStyle(fontFamily: HelveticaFont.Bold, fontSize: 16, color: Colors.white),
           ),
         ],
       ),

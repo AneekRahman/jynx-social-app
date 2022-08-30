@@ -19,7 +19,7 @@ class _SearchUsersPageState extends State<SearchUsersPage> {
   String _msg = "Search for names, usernames";
   List<MyUserObject> _searchUsersList = [];
   bool _loading = false;
-  User _currentUser;
+  late User _currentUser;
 
   void _searchUsers(String input) async {
     if (_loading) return;
@@ -40,7 +40,7 @@ class _SearchUsersPageState extends State<SearchUsersPage> {
 
     // Map the results
     for (QueryDocumentSnapshot user in result.docs) {
-      Map data = user.data();
+      Map? data = user.data() as Map;
       if (user.id != _currentUser.uid)
         users.add(MyUserObject(
           displayName: data["displayName"],
@@ -97,8 +97,7 @@ class _SearchUsersPageState extends State<SearchUsersPage> {
                     child: CustomScrollView(
                       slivers: [
                         SliverList(
-                          delegate:
-                              SliverChildBuilderDelegate((context, index) {
+                          delegate: SliverChildBuilderDelegate((context, index) {
                             return GestureDetector(
                               onTap: () {
                                 Navigator.push(
@@ -144,14 +143,13 @@ class _SearchUsersPageState extends State<SearchUsersPage> {
 
 class SearchAppBar extends StatelessWidget {
   final Function(String) _setSearchInput;
-  const SearchAppBar({Function setSearchInput, key})
+  const SearchAppBar({required Function(String) setSearchInput, Key? key})
       : _setSearchInput = setSearchInput,
         super(key: key);
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.fromLTRB(
-          18, 20 + MediaQuery.of(context).padding.top, 10, 20),
+      padding: EdgeInsets.fromLTRB(18, 20 + MediaQuery.of(context).padding.top, 10, 20),
       width: MediaQuery.of(context).size.width,
       child: Row(
         children: [
@@ -182,8 +180,8 @@ class SearchBox extends StatelessWidget {
   final Function(String) _setSearchInput;
 
   const SearchBox({
-    Function setSearchInput,
-    Key key,
+    required Function(String) setSearchInput,
+    Key? key,
   })  : _setSearchInput = setSearchInput,
         super(key: key);
 
@@ -194,8 +192,7 @@ class SearchBox extends StatelessWidget {
         margin: EdgeInsets.symmetric(horizontal: 15),
         padding: EdgeInsets.symmetric(horizontal: 8),
         height: 40,
-        decoration: BoxDecoration(
-            color: Colors.white12, borderRadius: BorderRadius.circular(100)),
+        decoration: BoxDecoration(color: Colors.white12, borderRadius: BorderRadius.circular(100)),
         child: TextField(
           onChanged: (input) {
             _setSearchInput(input);
@@ -218,7 +215,7 @@ class SearchBox extends StatelessWidget {
 
 class SearchUserRow extends StatelessWidget {
   final MyUserObject _userObject;
-  const SearchUserRow({Key key, userObject})
+  const SearchUserRow({Key? key, userObject})
       : _userObject = userObject,
         super(key: key);
 
@@ -251,7 +248,7 @@ class SearchUserRow extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    _userObject.displayName,
+                    _userObject.displayName!,
                     style: TextStyle(
                       color: Colors.white,
                       fontFamily: HelveticaFont.Roman,
@@ -261,7 +258,7 @@ class SearchUserRow extends StatelessWidget {
                     height: 5,
                   ),
                   Text(
-                    "@" + _userObject.userName,
+                    "@" + _userObject.userName!,
                     style: TextStyle(
                       color: Colors.white60,
                       fontFamily: HelveticaFont.Roman,

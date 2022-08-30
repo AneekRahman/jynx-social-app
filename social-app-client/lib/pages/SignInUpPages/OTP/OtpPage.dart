@@ -8,13 +8,13 @@ import 'OtpForm.dart';
 
 class OtpPage extends StatefulWidget {
   final String phoneNo;
-  OtpPage({this.phoneNo});
+  OtpPage({required this.phoneNo});
   @override
   _OtpPageState createState() => _OtpPageState();
 }
 
 class _OtpPageState extends State<OtpPage> {
-  String _smsCode, _msg;
+  String? _smsCode, _msg;
   bool _loading = false, _resentCode = false, _reSendingCode = false;
   int _resendCodeTimer = 0;
 
@@ -59,7 +59,7 @@ class _OtpPageState extends State<OtpPage> {
     // If already loading, return
     if (_loading) return;
     // If the smsCode is null or not exactly 6 digits show an error
-    if (_smsCode == null || _smsCode.length != 6) {
+    if (_smsCode == null || _smsCode!.length != 6) {
       setState(() {
         _msg = "Enter a 6 digit code sent to you";
       });
@@ -129,9 +129,7 @@ class _OtpPageState extends State<OtpPage> {
         text,
         style: TextStyle(
             decoration: TextDecoration.underline,
-            color: _reSendingCode || _resentCode || _resendCodeTimer != 0
-                ? Colors.black38
-                : Colors.black),
+            color: _reSendingCode || _resentCode || _resendCodeTimer != 0 ? Colors.black38 : Colors.black),
       ),
     );
   }
@@ -156,8 +154,7 @@ class _OtpPageState extends State<OtpPage> {
                   OtpForm(
                     onOtpChange: (smsCode) {
                       _smsCode = smsCode;
-                      print(
-                          'GOT NEW SMS CODE: $smsCode and Length: ${smsCode.length}');
+                      print('GOT NEW SMS CODE: $smsCode and Length: ${smsCode.length}');
                     },
                   ),
                   SizedBox(height: 20),

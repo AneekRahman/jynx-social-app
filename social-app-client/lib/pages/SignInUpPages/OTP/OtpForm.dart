@@ -3,20 +3,20 @@ import 'package:social_app/modules/constants.dart';
 
 class OtpForm extends StatefulWidget {
   final Function onOtpChange;
-  const OtpForm({Key key, this.onOtpChange}) : super(key: key);
+  const OtpForm({Key? key, required this.onOtpChange}) : super(key: key);
 
   @override
   _OtpFormState createState() => _OtpFormState();
 }
 
 class _OtpFormState extends State<OtpForm> {
-  FocusNode pin1FocusNode;
-  FocusNode pin2FocusNode;
-  FocusNode pin3FocusNode;
-  FocusNode pin4FocusNode;
-  FocusNode pin5FocusNode;
-  FocusNode pin6FocusNode;
-  List<String> values = new List(6);
+  late FocusNode pin1FocusNode;
+  late FocusNode pin2FocusNode;
+  late FocusNode pin3FocusNode;
+  late FocusNode pin4FocusNode;
+  late FocusNode pin5FocusNode;
+  late FocusNode pin6FocusNode;
+  List<String?> values = new List.filled(6, null, growable: true); // TODO CHeck if this wordks
 
   @override
   void initState() {
@@ -46,8 +46,7 @@ class _OtpFormState extends State<OtpForm> {
     }
   }
 
-  SizedBox buildInputNode(
-      FocusNode focusNode, FocusNode nextFocusNode, int index) {
+  SizedBox buildInputNode(FocusNode focusNode, FocusNode nextFocusNode, int index) {
     return SizedBox(
       width: 60,
       child: TextFormField(

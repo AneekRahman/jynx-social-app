@@ -13,8 +13,8 @@ class OthersProfilePage extends StatefulWidget {
 }
 
 class _OthersProfilePageState extends State<OthersProfilePage> {
-  User _currentUser;
-  CustomClaims customClaims;
+  late User _currentUser;
+  late CustomClaims customClaims;
 
   void _loadUserInfo() {
     setState(() async => customClaims = await CustomClaims.getClaims(false));
@@ -39,7 +39,9 @@ class _OthersProfilePageState extends State<OthersProfilePage> {
             ProfilePageAppBar(),
             Row(
               children: [
-                ProfileImageBlock(),
+                ProfileImageBlock(
+                  profilePic: "",
+                ),
                 SizedBox(
                   width: 20,
                 ),
@@ -47,7 +49,7 @@ class _OthersProfilePageState extends State<OthersProfilePage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _currentUser.displayName,
+                      _currentUser.displayName!,
                       style: TextStyle(
                         fontFamily: HelveticaFont.Black,
                         color: Colors.white,
@@ -137,11 +139,11 @@ class _OthersProfilePageState extends State<OthersProfilePage> {
 }
 
 class ProfileImageBlock extends StatelessWidget {
-  const ProfileImageBlock({
-    Key key,
-    this.profilePic,
-  }) : super(key: key);
   final String profilePic;
+  const ProfileImageBlock({
+    Key? key,
+    required this.profilePic,
+  }) : super(key: key);
   @override
   Widget build(BuildContext context) {
     bool hasImg = profilePic != null && profilePic.isNotEmpty;
@@ -168,7 +170,7 @@ class ProfileImageBlock extends StatelessWidget {
 
 class ProfilePageAppBar extends StatelessWidget {
   const ProfilePageAppBar({
-    Key key,
+    Key? key,
   }) : super(key: key);
 
   @override

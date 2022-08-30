@@ -9,12 +9,12 @@ class PhoneSignInPage extends StatefulWidget {
 
 class _PhoneSignInPageState extends State<PhoneSignInPage> {
   int _pageNum = 0;
-  String _phoneNumber;
+  String? _phoneNumber;
 
   Widget _getStepPage() {
     if (_pageNum == 1 && _phoneNumber != null) {
       return OtpPage(
-        phoneNo: _phoneNumber,
+        phoneNo: _phoneNumber!,
       );
     }
 

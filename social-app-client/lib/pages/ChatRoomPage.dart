@@ -27,7 +27,7 @@ Center _buildLoadingAnim() {
 class ChatTopBar extends StatelessWidget {
   ChatRow chatRow;
   MyUserObject otherUser;
-  ChatTopBar({this.chatRow, this.otherUser});
+  ChatTopBar({required this.chatRow, required this.otherUser});
 
   final double _padding = 20;
 
@@ -35,14 +35,13 @@ class ChatTopBar extends StatelessWidget {
   Widget build(BuildContext context) {
     String name = "";
     String userName = "";
-    if (chatRow != null) name = chatRow.otherUsersName;
-    if (otherUser != null) name = otherUser.displayName;
-    if (chatRow != null) userName = chatRow.otherUsersUserName;
-    if (otherUser != null) userName = otherUser.userName;
+    if (chatRow != null) name = chatRow.otherUsersName!;
+    if (otherUser != null) name = otherUser.displayName!;
+    if (chatRow != null) userName = chatRow.otherUsersUserName!;
+    if (otherUser != null) userName = otherUser.userName!;
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(_padding,
-          _padding + MediaQuery.of(context).padding.top, _padding, _padding),
+      padding: EdgeInsets.fromLTRB(_padding, _padding + MediaQuery.of(context).padding.top, _padding, _padding),
       child: Row(
         children: <Widget>[
           GestureDetector(
@@ -61,16 +60,9 @@ class ChatTopBar extends StatelessWidget {
               children: <Widget>[
                 Text(
                   name,
-                  style: TextStyle(
-                      fontFamily: HelveticaFont.Bold,
-                      fontSize: 14,
-                      color: Colors.black),
+                  style: TextStyle(fontFamily: HelveticaFont.Bold, fontSize: 14, color: Colors.black),
                 ),
-                Text("@" + userName,
-                    style: TextStyle(
-                        fontFamily: HelveticaFont.Bold,
-                        fontSize: 10,
-                        color: Colors.black38))
+                Text("@" + userName, style: TextStyle(fontFamily: HelveticaFont.Bold, fontSize: 10, color: Colors.black38))
               ],
             ),
           ),
@@ -84,15 +76,15 @@ class ChatTopBar extends StatelessWidget {
 }
 
 class ChatRoomPage extends StatefulWidget {
-  ChatRow chatRow;
-  MyUserObject otherUser;
+  ChatRow? chatRow;
+  MyUserObject? otherUser;
   ChatRoomPage({this.chatRow, this.otherUser});
   @override
   _ChatRoomPageState createState() => _ChatRoomPageState();
 }
 
 class _ChatRoomPageState extends State<ChatRoomPage> {
-  User _currentUser;
+  late User _currentUser;
   List<MsgRow> _msgRows = [];
   bool _initializingChatRoom = true;
 
@@ -109,32 +101,26 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   void _setMsgRowsFromStream(dynamic chatRoomMsgsObject) {
     if (chatRoomMsgsObject != null)
       chatRoomMsgsObject.forEach((key, value) {
-        MsgRow msgRow =
-            MsgRow.fromJson({...chatRoomMsgsObject[key], 'msgUid': key});
+        MsgRow msgRow = MsgRow.fromJson({...chatRoomMsgsObject[key], 'msgUid': key});
         _removeIfAlreadyAdded(msgRow);
         _msgRows.add(msgRow);
       });
 
     // Sort the first 10 results on the client side as well
-    _msgRows.sort((a, b) => b.sentTime.compareTo(a.sentTime));
+    _msgRows.sort((a, b) => b.sentTime!.compareTo(a.sentTime!));
   }
 
   void _initializeChatRoom() async {
     if (widget.chatRow == null) {
       // Search for an already made private chatroom for these 2 users
-      ChatRow chatRow = await context
-          .read<FirestoreService>()
-          .findPrivateChatWithUser(_currentUser.uid, widget.otherUser.userUid);
+      ChatRow? chatRow = await context.read<FirestoreService>().findPrivateChatWithUser(_currentUser.uid, widget.otherUser!.userUid!);
       if (chatRow != null) widget.chatRow = chatRow;
     }
 
     // If chatRoom found, then make sure to update the seen of lastMsg if already not seen
-    if (widget.chatRow != null &&
-        widget.chatRow.chatRoomUid != null &&
-        !widget.chatRow.seen) {
-      context.read<FirestoreService>().setSeenUserChatsDocument(
-          widget.chatRow.userChatsDocUid, _currentUser.uid);
-      widget.chatRow.seen = true;
+    if (widget.chatRow != null && widget.chatRow!.chatRoomUid != null && !widget.chatRow!.seen!) {
+      context.read<FirestoreService>().setSeenUserChatsDocument(widget.chatRow!.userChatsDocUid!, _currentUser.uid);
+      widget.chatRow!.seen = true;
     }
     // Let the user now start chatting
     setState(() {
@@ -152,29 +138,23 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
-          statusBarColor: Colors.transparent,
-          statusBarIconBrightness: Brightness.dark),
+      value: const SystemUiOverlayStyle(statusBarColor: Colors.transparent, statusBarIconBrightness: Brightness.dark),
       child: Scaffold(
         body: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
             ChatTopBar(
-              chatRow: widget.chatRow,
-              otherUser: widget.otherUser,
+              chatRow: widget.chatRow!,
+              otherUser: widget.otherUser!,
             ),
             widget.chatRow != null
                 ? Expanded(
                     child: StreamBuilder(
-                      stream: context
-                          .watch<RealtimeDatabaseService>()
-                          .getChatRoomStream(widget.chatRow.chatRoomUid),
-                      builder: (context, AsyncSnapshot<Event> snapshot) {
-                        if (snapshot.hasData &&
-                            !snapshot.hasError &&
-                            !_initializingChatRoom) {
-                          _setMsgRowsFromStream(snapshot.data.snapshot.value);
+                      stream: context.watch<RealtimeDatabaseService>().getChatRoomStream(widget.chatRow!.chatRoomUid!),
+                      builder: (context, AsyncSnapshot snapshot) {
+                        if (snapshot.hasData && !snapshot.hasError && !_initializingChatRoom) {
+                          _setMsgRowsFromStream(snapshot.data!.snapshot.value);
 
                           return CustomScrollView(
                             reverse: true,
@@ -186,16 +166,13 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                                     MsgRow msgRow = _msgRows.elementAt(index);
                                     // Check if previous post was also from the same user
                                     bool firstMsgOfUser = true;
-                                    if (index == 0 ||
-                                        _msgRows.elementAt(index - 1).msgUid ==
-                                            _currentUser.uid) {
+                                    if (index == 0 || _msgRows.elementAt(index - 1).msgUid == _currentUser.uid) {
                                       firstMsgOfUser = false;
                                     }
 
                                     return MessageBubble(
                                       msgRow: msgRow,
-                                      isUser:
-                                          msgRow.userUid == _currentUser.uid,
+                                      isUser: msgRow.userUid == _currentUser.uid,
                                       firstMsgOfUser: firstMsgOfUser,
                                     );
                                   },
@@ -212,17 +189,17 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                   )
                 : _buildLoadingAnim(),
             ChatRequestActions(
-              chatRow: widget.chatRow,
+              chatRow: widget.chatRow!,
               currentUser: _currentUser,
             ),
             ChatBottomBar(
                 rootContext: context,
-                chatRow: widget.chatRow,
+                chatRow: widget.chatRow!,
                 currentUser: _currentUser,
-                otherUser: widget.otherUser,
+                otherUser: widget.otherUser!,
                 setChatRoomUid: (String chatRoomUid) {
                   setState(() {
-                    widget.chatRow.chatRoomUid = chatRoomUid;
+                    widget.chatRow!.chatRoomUid = chatRoomUid;
                   });
                 }),
           ],
@@ -236,30 +213,25 @@ class MessageBubble extends StatelessWidget {
   final MsgRow msgRow;
   final bool firstMsgOfUser;
   final bool isUser;
-  MessageBubble({this.msgRow, this.firstMsgOfUser, this.isUser});
+  MessageBubble({required this.msgRow, required this.firstMsgOfUser, required this.isUser});
 
   @override
   Widget build(BuildContext context) {
     return Column(
-      crossAxisAlignment:
-          isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      crossAxisAlignment: isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
       children: <Widget>[
         Container(
           margin: EdgeInsets.only(top: 4, right: 10, left: 10),
           decoration: BoxDecoration(
             color: Color(0xFFF1F1F1F1),
             border: Border(
-              right: isUser
-                  ? BorderSide(color: Colors.blueAccent, width: 4)
-                  : BorderSide(style: BorderStyle.none),
-              left: isUser
-                  ? BorderSide(style: BorderStyle.none)
-                  : BorderSide(color: Colors.redAccent, width: 4),
+              right: isUser ? BorderSide(color: Colors.blueAccent, width: 4) : BorderSide(style: BorderStyle.none),
+              left: isUser ? BorderSide(style: BorderStyle.none) : BorderSide(color: Colors.redAccent, width: 4),
             ),
           ),
           padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
           child: Text(
-            msgRow.msg,
+            msgRow.msg!,
             style: TextStyle(
               fontFamily: HelveticaFont.Roman,
               fontSize: 15,
@@ -278,12 +250,12 @@ class ChatBottomBar extends StatelessWidget {
   MyUserObject otherUser;
   Function setChatRoomUid;
   ChatBottomBar(
-      {Key key,
-      this.chatRow,
-      this.currentUser,
-      this.otherUser,
-      this.setChatRoomUid,
-      this.rootContext})
+      {Key? key,
+      required this.chatRow,
+      required this.currentUser,
+      required this.otherUser,
+      required this.setChatRoomUid,
+      required this.rootContext})
       : super(key: key);
 
   final chatMsgTextController = TextEditingController();
@@ -292,25 +264,23 @@ class ChatBottomBar extends StatelessWidget {
 
   Future _createRequestAndSendMsg(context) async {
     try {
-      final Map<String, String> response = await rootContext
-          .read<FirestoreService>()
-          .createRequestedUserChats(
-              otherUserObject: otherUser, currentUser: currentUser);
+      final Map<String, String> response =
+          await rootContext.read<FirestoreService>().createRequestedUserChats(otherUserObject: otherUser, currentUser: currentUser);
 
       if (response['status'] == "success" && response["chatRoomUid"] != null) {
         // Successfully created new requestedUserChat
-        chatRow.chatRoomUid = response["chatRoomUid"];
+        chatRow.chatRoomUid = response["chatRoomUid"]!;
         // Set the newly created chatRoomUid
         setChatRoomUid(response["chatRoomUid"]);
         // Lastly send the message
         await _sendMessageToChatRoom(context);
       } else {
-        Scaffold.of(context).showSnackBar(SnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text("There was a network issue while sending a message"),
         ));
       }
     } catch (e) {
-      Scaffold.of(context).showSnackBar(SnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text("Unable to send the message to the user currently"),
       ));
       throw e;
@@ -322,21 +292,17 @@ class ChatBottomBar extends StatelessWidget {
       int lastMsgSentTime = new DateTime.now().millisecondsSinceEpoch;
       // Send a message in the RealtimeDatabase chatRoom
       rootContext.read<RealtimeDatabaseService>().sendMessageInRoom(
-        chatRow.chatRoomUid,
-        {
-          "msg": _textInputValue,
-          "sentTime": lastMsgSentTime,
-          "userUid": currentUser.uid
-        },
+        chatRow.chatRoomUid!,
+        {"msg": _textInputValue, "sentTime": lastMsgSentTime, "userUid": currentUser.uid},
       );
       // Update the userChats document and reset the lastMsgSeen array and sentTime
       rootContext.read<FirestoreService>().setNewMsgUserChatsSeenReset(
-            chatRow.chatRoomUid,
+            chatRow.chatRoomUid!,
             currentUser.uid,
             lastMsgSentTime.toString(),
           );
     } catch (e) {
-      Scaffold.of(context).showSnackBar(SnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text("There was a network issue while sending the message"),
       ));
     }
@@ -382,8 +348,7 @@ class ChatBottomBar extends StatelessWidget {
                 _onSendHandler(context);
               },
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(vertical: 12.0, horizontal: 14),
+                padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 14),
                 child: Icon(
                   Icons.fast_forward,
                   color: Colors.black38,
@@ -398,7 +363,7 @@ class ChatBottomBar extends StatelessWidget {
 }
 
 class ChatRequestActions extends StatefulWidget {
-  ChatRequestActions({this.currentUser, this.chatRow});
+  ChatRequestActions({required this.currentUser, required this.chatRow});
   User currentUser;
   ChatRow chatRow;
 
@@ -414,8 +379,7 @@ class _ChatRequestActionsState extends State<ChatRequestActions> {
     setState(() => _loading = true);
     try {
       // Accept the request
-      await context.read<FirestoreService>().acceptChatUserRequest(
-          widget.chatRow.userChatsDocUid, widget.currentUser.uid);
+      await context.read<FirestoreService>().acceptChatUserRequest(widget.chatRow.userChatsDocUid!, widget.currentUser.uid);
       // Update the UI
       setState(() => widget.chatRow.requested = false);
     } catch (e) {
@@ -431,9 +395,9 @@ class _ChatRequestActionsState extends State<ChatRequestActions> {
     try {
       // Accept the request
       await context.read<FirestoreService>().blockUser(
-          userChatsDocumentUid: widget.chatRow.userChatsDocUid,
+          userChatsDocumentUid: widget.chatRow.userChatsDocUid!,
           currentUserUid: widget.currentUser.uid,
-          blockedUserUid: widget.chatRow.otherUsersUid);
+          blockedUserUid: widget.chatRow.otherUsersUid!);
       // Update the UI
       setState(() => widget.chatRow.requested = false);
     } catch (e) {
@@ -445,9 +409,9 @@ class _ChatRequestActionsState extends State<ChatRequestActions> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.chatRow == null || !widget.chatRow.requested) return Container();
+    if (widget.chatRow == null || !widget.chatRow.requested!) return Container();
 
-    if (widget.chatRow.requested)
+    if (widget.chatRow.requested!)
       return Column(
         children: [
           Container(
@@ -471,8 +435,7 @@ class _ChatRequestActionsState extends State<ChatRequestActions> {
                             border: Border.all(color: Colors.black12, width: 1),
                             borderRadius: BorderRadius.circular(4),
                           ),
-                          padding: EdgeInsets.symmetric(
-                              vertical: 12, horizontal: 24),
+                          padding: EdgeInsets.symmetric(vertical: 12, horizontal: 24),
                           child: Text(
                             "Accept Request",
                             style: TextStyle(fontFamily: HelveticaFont.Bold),
@@ -488,8 +451,7 @@ class _ChatRequestActionsState extends State<ChatRequestActions> {
                             border: Border.all(color: Colors.black12, width: 1),
                             borderRadius: BorderRadius.circular(4),
                           ),
-                          padding: EdgeInsets.symmetric(
-                              vertical: 12, horizontal: 24),
+                          padding: EdgeInsets.symmetric(vertical: 12, horizontal: 24),
                           child: Text(
                             "Block User",
                             style: TextStyle(fontFamily: HelveticaFont.Bold),

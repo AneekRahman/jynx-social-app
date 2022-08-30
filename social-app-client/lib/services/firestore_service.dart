@@ -15,8 +15,7 @@ class FirestoreService {
     // return MyUserObject.fromJson(snapshot.data());
   }
 
-  Stream<QuerySnapshot> getUserChatsStream(
-      String currentUserUid, requestedChats) {
+  Stream<QuerySnapshot> getUserChatsStream(String currentUserUid, requestedChats) {
     return _firestoreInstance
         .collection("userChats")
         .where("members", arrayContains: currentUserUid)
@@ -25,8 +24,7 @@ class FirestoreService {
         .snapshots();
   }
 
-  Stream<QuerySnapshot> getUserChatsRequestedStream(
-      String currentUserUid, requestedChats) {
+  Stream<QuerySnapshot> getUserChatsRequestedStream(String currentUserUid, requestedChats) {
     return _firestoreInstance
         .collection("userChats")
         .where("requestedMembers", arrayContains: currentUserUid)
@@ -35,8 +33,7 @@ class FirestoreService {
         .snapshots();
   }
 
-  Future<ChatRow> findPrivateChatWithUser(
-      String currentUserUid, String otherUserUid) async {
+  Future<ChatRow?> findPrivateChatWithUser(String currentUserUid, String otherUserUid) async {
     try {
       QuerySnapshot snapshots = await _firestoreInstance
           .collection("userChats")
@@ -46,7 +43,7 @@ class FirestoreService {
           .get();
       if (snapshots.docs.length == 0) return null;
       QueryDocumentSnapshot snapshot = snapshots.docs[0];
-      ChatRow chatrow = getChatRowFromDocSnapshot(snapshot, currentUserUid);
+      ChatRow chatrow = getChatRowFromDocSnapshot(snapshot, currentUserUid)!;
       return chatrow;
     } catch (e) {
       throw e;
@@ -54,13 +51,13 @@ class FirestoreService {
   }
 
   Future<Map<String, String>> createRequestedUserChats({
-    MyUserObject otherUserObject,
-    User currentUser,
+    required MyUserObject otherUserObject,
+    required User currentUser,
   }) async {
     try {
       CustomClaims claims = await CustomClaims.getClaims(false);
       // Create a new UID
-      String chatRoomUid = FirebaseDatabase.instance.reference().push().key;
+      String? chatRoomUid = FirebaseDatabase.instance.ref().push().key;
       // Create a Firestore document
       await _firestoreInstance.collection("userChats").doc(chatRoomUid).set({
         "allMembers": [otherUserObject.userUid, currentUser.uid],
@@ -86,65 +83,46 @@ class FirestoreService {
         "type": "PRIVATE"
       });
 
-      return {"status": "success", "chatRoomUid": chatRoomUid};
+      return {"status": "success", "chatRoomUid": chatRoomUid!};
     } catch (e) {
       return {"status": "error", "errorMsg": e.toString()};
     }
   }
 
-  Future setNewMsgUserChatsSeenReset(String userChatsDocumentUid,
-      String currentUserUid, String lastMsgSentTime) async {
-    await _firestoreInstance
-        .collection("userChats")
-        .doc(userChatsDocumentUid)
-        .update({
+  Future setNewMsgUserChatsSeenReset(String userChatsDocumentUid, String currentUserUid, String lastMsgSentTime) async {
+    await _firestoreInstance.collection("userChats").doc(userChatsDocumentUid).update({
       "lastMsgSeenBy": [currentUserUid],
       "lastMsgSentTime": lastMsgSentTime
     });
   }
 
-  Future setSeenUserChatsDocument(
-      String userChatsDocumentUid, String currentUserUid) async {
+  Future setSeenUserChatsDocument(String userChatsDocumentUid, String currentUserUid) async {
     print("Should fire seen chat on chatroom open");
-    await _firestoreInstance
-        .collection("userChats")
-        .doc(userChatsDocumentUid)
-        .update({
+    await _firestoreInstance.collection("userChats").doc(userChatsDocumentUid).update({
       "lastMsgSeenBy": FieldValue.arrayUnion([currentUserUid]),
     });
   }
 
-  Future acceptChatUserRequest(
-      String userChatsDocumentUid, String currentUserUid) async {
-    await _firestoreInstance
-        .collection("userChats")
-        .doc(userChatsDocumentUid)
-        .update({
+  Future acceptChatUserRequest(String userChatsDocumentUid, String currentUserUid) async {
+    await _firestoreInstance.collection("userChats").doc(userChatsDocumentUid).update({
       "members": FieldValue.arrayUnion([currentUserUid]),
       "requestedMembers": FieldValue.arrayRemove([currentUserUid]),
     });
   }
 
   Future blockUser({
-    String userChatsDocumentUid,
-    String currentUserUid,
-    String blockedUserUid,
+    required String userChatsDocumentUid,
+    required String currentUserUid,
+    required String blockedUserUid,
   }) async {
-    await _firestoreInstance
-        .collection("users")
-        .doc(currentUserUid)
-        .collection("blockedUsers")
-        .add({
+    await _firestoreInstance.collection("users").doc(currentUserUid).collection("blockedUsers").add({
       "blockedUserUid": blockedUserUid,
       "time": new DateTime.now().millisecondsSinceEpoch.toString(),
     });
 
     if (userChatsDocumentUid != null) {
       // Remove from members or requestedMembers and add a list of users who have blocked this chat
-      await _firestoreInstance
-          .collection("userChats")
-          .doc(userChatsDocumentUid)
-          .update({
+      await _firestoreInstance.collection("userChats").doc(userChatsDocumentUid).update({
         "members": FieldValue.arrayRemove([currentUserUid]),
         "requestedMembers": FieldValue.arrayRemove([currentUserUid]),
         "chatBlockedByUsers": [currentUserUid]
@@ -152,7 +130,7 @@ class FirestoreService {
     }
   }
 
-  Future updateCurrentUser(User user, object, {bool updateUserName}) async {
+  Future updateCurrentUser(User user, object, {required bool updateUserName}) async {
     print("PRINNTING: " + object.toString());
     // Try to Save the /users/ and /takenUserNames/ documents
     await _firestoreInstance.runTransaction((transaction) async {
@@ -178,9 +156,7 @@ class FirestoreService {
       // Create the userName record in /takenUserNames/ if not the same
       if (updateUserName)
         transaction.set(
-          _firestoreInstance
-              .collection("takenUserNames")
-              .doc(object["userName"].toLowerCase().trim()),
+          _firestoreInstance.collection("takenUserNames").doc(object["userName"].toLowerCase().trim()),
           {"userUid": user.uid},
         );
     });

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:social_app/modules/constants.dart';
+import 'package:social_app/pages/Home.dart';
 import 'package:social_app/services/auth_service.dart';
 import 'package:provider/provider.dart';
 
@@ -27,33 +28,44 @@ class _SettingsPageState extends State<SettingsPage> {
       padding: const EdgeInsets.symmetric(vertical: 10.0),
       child: Text(
         text,
-        style: TextStyle(
-            color: Colors.white, fontFamily: HelveticaFont.Bold, fontSize: 20),
+        style: TextStyle(color: Colors.white, fontFamily: HelveticaFont.Bold, fontSize: 20),
       ),
     );
   }
 
-  Widget _buildButton(String text, Function onTap) {
-    return OutlineButton(
-      padding: EdgeInsets.all(14),
-      borderSide: BorderSide(
-        color: Colors.white30,
-        width: 1,
-      ),
-      onPressed: onTap,
-      child: Container(
-        width: MediaQuery.of(context).size.width,
-        child: Text(
-          text,
-          textAlign: TextAlign.center,
-          style: _buttonTextStyle,
+  Widget _buildButton(String text, Function() onTap) {
+    return TextButton(
+        style: ButtonStyle(
+          padding: MaterialStateProperty.all(EdgeInsets.all(14)),
         ),
-      ),
-    );
+        onPressed: onTap,
+        child: Container(
+          width: MediaQuery.of(context).size.width,
+          child: Text(
+            text,
+            textAlign: TextAlign.center,
+            style: _buttonTextStyle,
+          ),
+        ));
+    // return OutlineButton(
+    //   padding: EdgeInsets.all(14),
+    //   borderSide: BorderSide(
+    //     color: Colors.white30,
+    //     width: 1,
+    //   ),
+    //   onPressed: onTap,
+    //   child: Container(
+    //     width: MediaQuery.of(context).size.width,
+    //     child: Text(
+    //       text,
+    //       textAlign: TextAlign.center,
+    //       style: _buttonTextStyle,
+    //     ),
+    //   ),
+    // );
   }
 
-  Widget _buildCheckBoxTile(String title, String subTitle,
-      {bool value, void onChanged(bool checked)}) {
+  Widget _buildCheckBoxTile(String title, String subTitle, {bool? value, void onChanged(bool? checked)?}) {
     return CheckboxListTile(
       activeColor: Colors.yellow,
       checkColor: Colors.black,
@@ -108,7 +120,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         "Control if you want to recieve notifications from Jynx",
                         value: _recieveNotifications,
                         onChanged: (checked) {
-                          setState(() => _recieveNotifications = checked);
+                          setState(() => _recieveNotifications = checked!);
                         },
                       ),
                       SizedBox(height: 30),
@@ -120,6 +132,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           ),
                           onTap: () {
                             context.read<AuthenticationService>().signOut();
+                            Navigator.popUntil(context, (route) => route.isFirst);
                           },
                           context: context,
                           loading: false),
@@ -141,8 +154,7 @@ class SettingsPageAppBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.fromLTRB(_padding,
-          _padding + MediaQuery.of(context).padding.top, _padding, _padding),
+      padding: EdgeInsets.fromLTRB(_padding, _padding + MediaQuery.of(context).padding.top, _padding, _padding),
       width: MediaQuery.of(context).size.width,
       child: Row(
         children: [
@@ -159,10 +171,7 @@ class SettingsPageAppBar extends StatelessWidget {
           ),
           Text(
             "Settings",
-            style: TextStyle(
-                fontFamily: HelveticaFont.Bold,
-                fontSize: 16,
-                color: Colors.white),
+            style: TextStyle(fontFamily: HelveticaFont.Bold, fontSize: 16, color: Colors.white),
           ),
         ],
       ),

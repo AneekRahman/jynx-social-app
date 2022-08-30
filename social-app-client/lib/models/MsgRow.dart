@@ -1,8 +1,8 @@
 class MsgRow {
-  String msgUid;
-  String msg;
-  String userUid;
-  int sentTime;
+  String? msgUid;
+  String? msg;
+  String? userUid;
+  int? sentTime;
 
   MsgRow({
     this.msg,

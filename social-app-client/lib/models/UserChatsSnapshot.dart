@@ -1,15 +1,15 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class UserChatsSnapshot {
-  String userChatsDocUid;
-  String chatRoomUid;
-  List members;
-  List allMembers;
-  List lastMsgSeenBy;
-  List requestedMembers;
-  String lastMsgSentTime;
-  Map memberInfo;
-  String type; // PRIVATE, GROUP
+  String? userChatsDocUid;
+  String? chatRoomUid;
+  List? members;
+  List? allMembers;
+  List? lastMsgSeenBy;
+  List? requestedMembers;
+  String? lastMsgSentTime;
+  Map? memberInfo;
+  String? type; // PRIVATE, GROUP
 
   UserChatsSnapshot({
     this.userChatsDocUid,

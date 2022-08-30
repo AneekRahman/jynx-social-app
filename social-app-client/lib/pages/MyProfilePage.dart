@@ -19,7 +19,7 @@ class MyProfilePage extends StatefulWidget {
 }
 
 class _MyProfilePageState extends State<MyProfilePage> {
-  User _currentUser;
+  late User _currentUser;
   MyUserObject _myUserObject = MyUserObject();
 
   void _loadUserInfo() async {
@@ -39,7 +39,7 @@ class _MyProfilePageState extends State<MyProfilePage> {
 
   void _launchUserWebsite() async {
     if (_myUserObject.userMeta == null) return;
-    String url = "https://" + _myUserObject.userMeta["website"];
+    String url = "https://" + _myUserObject.userMeta!["website"]!;
     if (await canLaunch(url)) {
       await launch(url);
     } else {
@@ -76,7 +76,7 @@ class _MyProfilePageState extends State<MyProfilePage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _myUserObject.displayName,
+                      _myUserObject.displayName ?? "",
                       style: TextStyle(
                         fontFamily: HelveticaFont.Bold,
                         color: Colors.white,
@@ -107,9 +107,7 @@ class _MyProfilePageState extends State<MyProfilePage> {
                       ),
                       SizedBox(width: 4),
                       Text(
-                        _myUserObject.userMeta["location"].isNotEmpty
-                            ? _myUserObject.userMeta["location"]
-                            : "Add location",
+                        _myUserObject.userMeta!["location"]!.isNotEmpty ? _myUserObject.userMeta!["location"]! : "Add location",
                         style: TextStyle(
                           fontFamily: HelveticaFont.Roman,
                           color: Colors.white38,
@@ -122,9 +120,7 @@ class _MyProfilePageState extends State<MyProfilePage> {
             SizedBox(height: 10),
             _myUserObject.userMeta != null
                 ? Text(
-                    _myUserObject.userMeta["bio"].isNotEmpty
-                        ? _myUserObject.userMeta["bio"]
-                        : "Add a bio",
+                    _myUserObject.userMeta!["bio"]!.isNotEmpty ? _myUserObject.userMeta!["bio"]! : "Add a bio",
                     style: TextStyle(
                       fontFamily: HelveticaFont.Roman,
                       color: Colors.white70,
@@ -139,9 +135,7 @@ class _MyProfilePageState extends State<MyProfilePage> {
                       _launchUserWebsite();
                     },
                     child: Text(
-                      _myUserObject.userMeta["website"].isNotEmpty
-                          ? _myUserObject.userMeta["website"]
-                          : "Add a website",
+                      _myUserObject.userMeta!["website"]!.isNotEmpty ? _myUserObject.userMeta!["website"]! : "Add a website",
                       style: TextStyle(
                         fontFamily: HelveticaFont.Bold,
                         color: Colors.yellow,
@@ -170,11 +164,7 @@ class _MyProfilePageState extends State<MyProfilePage> {
                   ],
                 ),
                 onTap: () {
-                  Navigator.push(
-                      context,
-                      CupertinoPageRoute(
-                          builder: (context) =>
-                              EditProfile(userObject: _myUserObject)));
+                  Navigator.push(context, CupertinoPageRoute(builder: (context) => EditProfile(userObject: _myUserObject)));
                 },
                 context: context,
                 loading: false),
@@ -186,14 +176,14 @@ class _MyProfilePageState extends State<MyProfilePage> {
 }
 
 class ProfileImageBlock extends StatelessWidget {
+  final String? profilePic;
   const ProfileImageBlock({
-    Key key,
+    Key? key,
     this.profilePic,
   }) : super(key: key);
-  final String profilePic;
   @override
   Widget build(BuildContext context) {
-    bool hasImg = profilePic != null && profilePic.isNotEmpty;
+    bool hasImg = profilePic != null && profilePic!.isNotEmpty;
 
     return Container(
       height: 110,
@@ -206,7 +196,7 @@ class ProfileImageBlock extends StatelessWidget {
       child: hasImg
           ? ClipRRect(
               child: Image.network(
-              profilePic,
+              profilePic!,
               height: 110,
               width: 110,
             ))
@@ -217,7 +207,7 @@ class ProfileImageBlock extends StatelessWidget {
 
 class ProfilePageAppBar extends StatelessWidget {
   const ProfilePageAppBar({
-    Key key,
+    Key? key,
   }) : super(key: key);
 
   @override
@@ -239,8 +229,7 @@ class ProfilePageAppBar extends StatelessWidget {
           ),
           GestureDetector(
             onTap: () {
-              Navigator.push(context,
-                  CupertinoPageRoute(builder: (context) => SettingsPage()));
+              Navigator.push(context, CupertinoPageRoute(builder: (context) => SettingsPage()));
             },
             child: Icon(
               Icons.settings,

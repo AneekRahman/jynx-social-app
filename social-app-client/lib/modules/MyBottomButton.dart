@@ -6,11 +6,10 @@ import 'constants.dart';
 const double _svgWidth = 40;
 
 class MyBottomButton extends StatelessWidget {
-  final Function onTap;
+  final Function() onTap;
   final String text;
   final bool isLoading;
-  MyBottomButton({Key key, this.onTap, this.text, this.isLoading})
-      : super(key: key);
+  MyBottomButton({Key? key, required this.onTap, required this.text, required this.isLoading}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -44,20 +43,17 @@ class MyBottomButton extends StatelessWidget {
 
 class LoadingRotator extends StatefulWidget {
   final bool isLoading;
-  LoadingRotator({this.isLoading});
+  LoadingRotator({required this.isLoading});
 
   @override
   _LoadingRotatorState createState() => _LoadingRotatorState();
 }
 
-class _LoadingRotatorState extends State<LoadingRotator>
-    with TickerProviderStateMixin {
-  AnimationController _rotationController;
+class _LoadingRotatorState extends State<LoadingRotator> with TickerProviderStateMixin {
+  late AnimationController _rotationController;
   @override
   void initState() {
-    _rotationController = AnimationController(
-        duration: const Duration(milliseconds: 1000), vsync: this)
-      ..repeat();
+    _rotationController = AnimationController(duration: const Duration(milliseconds: 1000), vsync: this)..repeat();
     super.initState();
   }
 
@@ -70,8 +66,7 @@ class _LoadingRotatorState extends State<LoadingRotator>
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
-      animation:
-          CurvedAnimation(parent: _rotationController, curve: Curves.ease),
+      animation: CurvedAnimation(parent: _rotationController, curve: Curves.ease),
       builder: (_, child) {
         if (widget.isLoading) {
           return Transform.rotate(
@@ -79,7 +74,7 @@ class _LoadingRotatorState extends State<LoadingRotator>
             child: child,
           );
         } else
-          return child;
+          return child!;
       },
       child: FadeSlideIn(
         isLoading: widget.isLoading,
@@ -98,20 +93,18 @@ class _LoadingRotatorState extends State<LoadingRotator>
 class FadeSlideIn extends StatefulWidget {
   final bool isLoading;
   final Widget child;
-  FadeSlideIn({this.isLoading, this.child});
+  FadeSlideIn({required this.isLoading, required this.child});
 
   @override
   _FadeSlideInState createState() => _FadeSlideInState();
 }
 
-class _FadeSlideInState extends State<FadeSlideIn>
-    with TickerProviderStateMixin {
-  AnimationController _fadeSlideInController;
+class _FadeSlideInState extends State<FadeSlideIn> with TickerProviderStateMixin {
+  late AnimationController _fadeSlideInController;
 
   @override
   void initState() {
-    _fadeSlideInController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 300));
+    _fadeSlideInController = AnimationController(vsync: this, duration: const Duration(milliseconds: 300));
     super.initState();
   }
 
@@ -129,8 +122,7 @@ class _FadeSlideInState extends State<FadeSlideIn>
       _fadeSlideInController.reverse(from: 1);
     }
     return AnimatedBuilder(
-      animation:
-          CurvedAnimation(parent: _fadeSlideInController, curve: Curves.ease),
+      animation: CurvedAnimation(parent: _fadeSlideInController, curve: Curves.ease),
       builder: (_, child) {
         return Opacity(
           opacity: _fadeSlideInController.value,

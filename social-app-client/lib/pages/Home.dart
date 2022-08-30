@@ -19,7 +19,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  User _currentUser;
+  late User _currentUser;
 
   @override
   void initState() {
@@ -42,9 +42,7 @@ class _HomePageState extends State<HomePage> {
             ChatsList(
               currentUser: _currentUser,
               emptyChatListMsg: HomeChatListIntro(),
-              stream: context
-                  .watch<FirestoreService>()
-                  .getUserChatsStream(_currentUser.uid, false),
+              stream: context.watch<FirestoreService>().getUserChatsStream(_currentUser.uid, false),
             ),
           ],
         ),
@@ -58,8 +56,7 @@ class HomeAppBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.fromLTRB(_padding,
-          _padding + MediaQuery.of(context).padding.top, _padding, _padding),
+      padding: EdgeInsets.fromLTRB(_padding, _padding + MediaQuery.of(context).padding.top, _padding, _padding),
       width: MediaQuery.of(context).size.width,
       child: Row(
         children: [
@@ -68,9 +65,8 @@ class HomeAppBar extends StatelessWidget {
               showMaterialModalBottomSheet(
                 backgroundColor: Colors.transparent,
                 context: context,
-                builder: (context, scrollController) => Padding(
-                  padding:
-                      EdgeInsets.only(top: MediaQuery.of(context).padding.top),
+                builder: (context) => Padding(
+                  padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
                   child: MyProfilePage(),
                 ),
               );
@@ -103,7 +99,7 @@ class HomeAppBar extends StatelessWidget {
 
 class SearchBox extends StatelessWidget {
   const SearchBox({
-    Key key,
+    Key? key,
   }) : super(key: key);
 
   @override
@@ -122,8 +118,7 @@ class SearchBox extends StatelessWidget {
           margin: EdgeInsets.symmetric(horizontal: 15),
           height: 40,
           padding: EdgeInsets.symmetric(horizontal: 20),
-          decoration: BoxDecoration(
-              color: Colors.white12, borderRadius: BorderRadius.circular(100)),
+          decoration: BoxDecoration(color: Colors.white12, borderRadius: BorderRadius.circular(100)),
           child: Row(
             children: [
               Icon(Icons.search, color: Colors.white38),
@@ -155,8 +150,7 @@ class HomeChatListIntro extends StatelessWidget {
           Icon(Icons.cake),
           Text(
             "Looks like we need some friends in this chat :D",
-            style: TextStyle(
-                fontFamily: HelveticaFont.Roman, color: Colors.black38),
+            style: TextStyle(fontFamily: HelveticaFont.Roman, color: Colors.black38),
           )
         ],
       ),

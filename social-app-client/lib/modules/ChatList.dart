@@ -12,12 +12,12 @@ import 'package:timeago/timeago.dart' as timeago;
 
 class ChatsList extends StatelessWidget {
   ChatsList({
-    Key key,
-    @required this.currentUser,
-    @required this.stream,
+    Key? key,
+    required this.currentUser,
+    required this.stream,
     this.emptyChatListMsg,
   }) : super(key: key);
-  final Widget emptyChatListMsg;
+  final Widget? emptyChatListMsg;
   final User currentUser;
   List<ChatRow> chatRows = [];
   bool loadingChats = true;
@@ -33,16 +33,15 @@ class ChatsList extends StatelessWidget {
     }
   }
 
-  void _setChatRowsFromStream(
-      List<QueryDocumentSnapshot> usersChatsDocSnapList) {
+  void _setChatRowsFromStream(List<QueryDocumentSnapshot> usersChatsDocSnapList) {
     usersChatsDocSnapList.forEach((snapshot) {
-      ChatRow chatRow = getChatRowFromDocSnapshot(snapshot, currentUser.uid);
+      ChatRow chatRow = getChatRowFromDocSnapshot(snapshot, currentUser.uid)!;
       _removeIfAlreadyAdded(chatRow);
       chatRows.add(chatRow);
     });
 
     // Sort the first 10 results on the client side as well
-    chatRows.sort((a, b) => b.lastMsgSentTime.compareTo(a.lastMsgSentTime));
+    chatRows.sort((a, b) => b.lastMsgSentTime!.compareTo(a.lastMsgSentTime!));
   }
 
   void _buildChatRows(List<QueryDocumentSnapshot> snapshots) {
@@ -67,7 +66,7 @@ class ChatsList extends StatelessWidget {
       stream: stream,
       builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
         if (snapshot.hasData) {
-          _buildChatRows(snapshot.data.docs);
+          _buildChatRows(snapshot.data!.docs);
         }
 
         return Expanded(
@@ -77,11 +76,7 @@ class ChatsList extends StatelessWidget {
                 loading: loadingChats,
               ),
               // Show the end of result widget here
-              emptyChatListMsg != null &&
-                      snapshot.hasData &&
-                      snapshot.data.docs.length == 0
-                  ? emptyChatListMsg
-                  : Container(),
+              emptyChatListMsg != null && snapshot.hasData && snapshot.data!.docs.length == 0 ? emptyChatListMsg! : Container(),
               // Show the ChatList scroll view here
               snapshot.hasData
                   ? Expanded(
@@ -92,8 +87,7 @@ class ChatsList extends StatelessWidget {
                             delegate: SliverChildBuilderDelegate(
                               (context, index) {
                                 ChatRow chatRow = chatRows.elementAt(index);
-                                return FlatButton(
-                                    padding: EdgeInsets.all(0),
+                                return TextButton(
                                     onPressed: () {
                                       Navigator.push(
                                         context,
@@ -122,8 +116,8 @@ class ChatsList extends StatelessWidget {
 
 class ChatsListRow extends StatefulWidget {
   const ChatsListRow({
-    Key key,
-    @required ChatRow chatRow,
+    Key? key,
+    required ChatRow chatRow,
   })  : _chatRow = chatRow,
         super(key: key);
 
@@ -134,7 +128,7 @@ class ChatsListRow extends StatefulWidget {
 }
 
 class _ChatsListRowState extends State<ChatsListRow> {
-  String sentTimeFormattedString;
+  late String sentTimeFormattedString;
   void _recalculateTimePassed() {
     // Every 1 minute
     Timer.periodic(new Duration(minutes: 1), (timer) {
@@ -146,10 +140,8 @@ class _ChatsListRowState extends State<ChatsListRow> {
   }
 
   void _calculateAndSetTimeString() {
-    DateTime sentTime = new DateTime.fromMillisecondsSinceEpoch(
-        int.parse(widget._chatRow.lastMsgSentTime));
-    sentTimeFormattedString =
-        timeago.format(sentTime, locale: 'en_short', allowFromNow: true);
+    DateTime sentTime = new DateTime.fromMillisecondsSinceEpoch(int.parse(widget._chatRow.lastMsgSentTime!));
+    sentTimeFormattedString = timeago.format(sentTime, locale: 'en_short', allowFromNow: true);
   }
 
   @override
@@ -161,11 +153,9 @@ class _ChatsListRowState extends State<ChatsListRow> {
 
   @override
   Widget build(BuildContext context) {
-    final fontFamily =
-        !widget._chatRow.seen ? HelveticaFont.Heavy : HelveticaFont.Medium;
+    final fontFamily = !widget._chatRow.seen! ? HelveticaFont.Heavy : HelveticaFont.Medium;
 
-    bool hasImg = widget._chatRow.otherUsersPic != null &&
-        widget._chatRow.otherUsersPic.isNotEmpty;
+    bool hasImg = widget._chatRow.otherUsersPic != null && widget._chatRow.otherUsersPic!.isNotEmpty;
     return Container(
       padding: EdgeInsets.symmetric(vertical: 16, horizontal: 20),
       child: Row(
@@ -174,7 +164,7 @@ class _ChatsListRowState extends State<ChatsListRow> {
             borderRadius: BorderRadius.circular(100),
             child: hasImg
                 ? Image.network(
-                    widget._chatRow.otherUsersPic,
+                    widget._chatRow.otherUsersPic!,
                     height: 40,
                     width: 40,
                   )
@@ -191,7 +181,7 @@ class _ChatsListRowState extends State<ChatsListRow> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                widget._chatRow.otherUsersName,
+                widget._chatRow.otherUsersName!,
                 style: TextStyle(
                   fontFamily: fontFamily,
                   fontSize: 14,
@@ -204,9 +194,7 @@ class _ChatsListRowState extends State<ChatsListRow> {
               Row(
                 children: [
                   Icon(
-                    !widget._chatRow.seen
-                        ? Icons.chat_bubble
-                        : Icons.chat_bubble_outline,
+                    !widget._chatRow.seen! ? Icons.chat_bubble : Icons.chat_bubble_outline,
                     size: 14,
                     color: Colors.white,
                   ),
@@ -214,7 +202,7 @@ class _ChatsListRowState extends State<ChatsListRow> {
                     width: 5,
                   ),
                   Text(
-                    !widget._chatRow.seen ? "New message" : "Opened",
+                    !widget._chatRow.seen! ? "New message" : "Opened",
                     style: TextStyle(
                       fontFamily: fontFamily,
                       fontSize: 12,

@@ -1,9 +1,9 @@
 class MyUserObject {
-  String userUid;
-  String displayName;
-  String userName;
-  String profilePic;
-  Map<String, String> userMeta = {};
+  String? userUid;
+  String? displayName;
+  String? userName;
+  String? profilePic;
+  Map<String, String>? userMeta = {};
 
   MyUserObject({
     this.userUid,
@@ -20,9 +20,9 @@ class MyUserObject {
     profilePic = json['profilePic'];
     Map metaMap = json["userMeta"];
     if (metaMap != null) {
-      userMeta["bio"] = metaMap["bio"];
-      userMeta["website"] = metaMap["website"];
-      userMeta["location"] = metaMap["location"];
+      userMeta!["bio"] = metaMap["bio"];
+      userMeta!["website"] = metaMap["website"];
+      userMeta!["location"] = metaMap["location"];
     }
   }
 }

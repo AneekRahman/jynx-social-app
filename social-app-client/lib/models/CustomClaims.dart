@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class CustomClaims {
-  String userName;
+  String? userName;
 
   CustomClaims({
     this.userName,
@@ -18,9 +18,8 @@ class CustomClaims {
 
   static Future<CustomClaims> getClaims(forceRefresh) async {
     // If refresh is set to true, a refresh of the id token is forced.
-    final idTokenResult =
-        await FirebaseAuth.instance.currentUser.getIdTokenResult(forceRefresh);
-    final Map claims = idTokenResult.claims;
+    final idTokenResult = await FirebaseAuth.instance.currentUser!.getIdTokenResult(forceRefresh);
+    final Map claims = idTokenResult.claims!;
 
     return CustomClaims.fromJson(claims);
   }

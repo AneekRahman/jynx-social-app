@@ -1,13 +1,13 @@
 class ChatRow {
-  String userChatsDocUid;
-  String chatRoomUid;
-  String otherUsersUid;
-  String otherUsersName;
-  String otherUsersUserName;
-  String otherUsersPic;
-  String lastMsgSentTime;
-  bool seen;
-  bool requested;
+  String? userChatsDocUid;
+  String? chatRoomUid;
+  String? otherUsersUid;
+  String? otherUsersName;
+  String? otherUsersUserName;
+  String? otherUsersPic;
+  String? lastMsgSentTime;
+  bool? seen;
+  bool? requested;
   // status:
   //   : 0 means not seen by the user
   //   : 1 means seen

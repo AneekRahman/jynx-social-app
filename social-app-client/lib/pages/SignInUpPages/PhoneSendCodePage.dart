@@ -7,23 +7,21 @@ import 'package:provider/provider.dart';
 
 class PhoneSendCodePage extends StatefulWidget {
   final Function saveSentPhoneNo;
-  PhoneSendCodePage({this.saveSentPhoneNo});
+  PhoneSendCodePage({required this.saveSentPhoneNo});
   @override
   _PhoneSendCodePageState createState() => _PhoneSendCodePageState();
 }
 
 class _PhoneSendCodePageState extends State<PhoneSendCodePage> {
   TextEditingController _phoneTextEditController = TextEditingController();
-  String _dialCode, _phoneNo, _msg = "";
+  String? _dialCode, _phoneNo, _msg = "";
   bool _loading = false;
 
   void _sendCode() async {
     // If already loading, return
     if (_loading) return;
     // If the phoneNo is null or not exactly 6 digits show an error
-    if (_phoneNo == null ||
-        _phoneNo.isEmpty ||
-        _phoneNo.length - _dialCode.length <= 0) {
+    if (_phoneNo == null || _phoneNo!.isEmpty || _phoneNo!.length - _dialCode!.length <= 0) {
       setState(() {
         _msg = "Enter a phone number";
       });

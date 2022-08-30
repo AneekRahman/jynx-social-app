@@ -6,8 +6,8 @@ class LifecycleEventHandler extends WidgetsBindingObserver {
   final AsyncCallback suspendingCallBack;
 
   LifecycleEventHandler({
-    this.resumeCallBack,
-    this.suspendingCallBack,
+    required this.resumeCallBack,
+    required this.suspendingCallBack,
   });
 
   @override

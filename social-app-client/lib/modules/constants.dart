@@ -4,6 +4,15 @@ import 'package:social_app/models/ChatRow.dart';
 import 'package:social_app/models/MyUserObject.dart';
 import 'package:social_app/models/UserChatsSnapshot.dart';
 
+class MyServer {
+  static const String SERVER_API = "http://192.168.0.101:5000/jynx-chat/us-central1/api";
+  static const String SIGNUP = "/signup";
+  static Map<String, String> JSON_HEADER = {
+    "content-type": "application/json",
+    "accept": "application/json",
+  };
+}
+
 final normalTextStyle = TextStyle(
   fontFamily: HelveticaFont.Roman,
 );
@@ -37,24 +46,20 @@ final otpInputDecoration = InputDecoration(
 OutlineInputBorder outlineInputBorder(bool focused) {
   return OutlineInputBorder(
     borderRadius: BorderRadius.circular(15),
-    borderSide:
-        BorderSide(color: focused ? Colors.blueAccent : Color(0xFF757575)),
+    borderSide: BorderSide(color: focused ? Colors.blueAccent : Color(0xFF757575)),
   );
 }
 
-ChatRow getChatRowFromDocSnapshot(
-    QueryDocumentSnapshot snapshot, String currentUserUid) {
-  UserChatsSnapshot userChatsSnapshot =
-      UserChatsSnapshot.fromSnapshot(snapshot);
+ChatRow? getChatRowFromDocSnapshot(QueryDocumentSnapshot snapshot, String currentUserUid) {
+  UserChatsSnapshot userChatsSnapshot = UserChatsSnapshot.fromSnapshot(snapshot);
 
   // For private chats
   if (userChatsSnapshot.type == "PRIVATE") {
-    ChatRow chatRow;
+    ChatRow? chatRow;
     // Check if available in the members list
-    userChatsSnapshot.memberInfo.forEach((key, value) {
+    userChatsSnapshot.memberInfo!.forEach((key, value) {
       if (key != currentUserUid) {
-        MyUserObject userObject = MyUserObject.fromJson(
-            {...userChatsSnapshot.memberInfo[key], "userUid": key});
+        MyUserObject userObject = MyUserObject.fromJson({...userChatsSnapshot.memberInfo![key], "userUid": key});
         chatRow = ChatRow(
             userChatsDocUid: snapshot.id,
             chatRoomUid: userChatsSnapshot.chatRoomUid,
@@ -63,9 +68,8 @@ ChatRow getChatRowFromDocSnapshot(
             otherUsersUid: userObject.userUid,
             otherUsersPic: userObject.profilePic,
             lastMsgSentTime: userChatsSnapshot.lastMsgSentTime,
-            seen: userChatsSnapshot.lastMsgSeenBy.contains(currentUserUid),
-            requested:
-                userChatsSnapshot.requestedMembers.contains(currentUserUid));
+            seen: userChatsSnapshot.lastMsgSeenBy!.contains(currentUserUid),
+            requested: userChatsSnapshot.requestedMembers!.contains(currentUserUid));
       }
     });
 
@@ -73,8 +77,7 @@ ChatRow getChatRowFromDocSnapshot(
   }
 }
 
-Widget buildYellowButton(
-    {Widget child, Function onTap, bool loading, BuildContext context}) {
+Widget buildYellowButton({required Widget child, required Function() onTap, required bool loading, required BuildContext context}) {
   return GestureDetector(
     onTap: onTap,
     child: Container(

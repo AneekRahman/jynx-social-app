@@ -9,8 +9,8 @@ import 'package:social_app/pages/LocationPicker.dart';
 import 'package:social_app/services/firestore_service.dart';
 
 class EditProfile extends StatelessWidget {
-  EditProfile({this.userObject});
   MyUserObject userObject;
+  EditProfile({required this.userObject});
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -33,8 +33,8 @@ class EditProfile extends StatelessWidget {
 }
 
 class EditProfileForm extends StatefulWidget {
-  EditProfileForm({this.userObject});
   MyUserObject userObject;
+  EditProfileForm({required this.userObject});
   @override
   _EditProfileFormState createState() => _EditProfileFormState();
 }
@@ -50,11 +50,11 @@ class _EditProfileFormState extends State<EditProfileForm> {
 
   final RegExp _userNameRegExp = new RegExp("^([a-zA-Z0-9_.]{6,32})\$");
   final RegExp _displayNameRegExp = new RegExp("^([a-zA-Z ]{3,32})\$");
-  User _currentUser;
+  late User _currentUser;
   CustomClaims customClaims = CustomClaims();
   bool _loading = false;
 
-  InputDecoration _getInputDecoration({String labelText, Widget prefix}) {
+  InputDecoration _getInputDecoration({required String labelText, Widget? prefix}) {
     return InputDecoration(
       labelText: labelText,
       labelStyle: _labelTextStyle,
@@ -70,9 +70,9 @@ class _EditProfileFormState extends State<EditProfileForm> {
 
   void _setupInitialData() async {
     customClaims = await CustomClaims.getClaims(false);
-    _userNameController.text = customClaims.userName;
-    _displayNameController.text = _currentUser.displayName;
-    Map userMeta = widget.userObject.userMeta;
+    _userNameController.text = customClaims.userName ?? "";
+    _displayNameController.text = _currentUser.displayName!;
+    Map userMeta = widget.userObject.userMeta!;
     if (userMeta != null) {
       _bioController.text = userMeta["bio"] ?? "";
       _wwwController.text = userMeta["website"] ?? "";
@@ -83,7 +83,7 @@ class _EditProfileFormState extends State<EditProfileForm> {
 
   Future _updateProfile(_context) async {
     if (_loading) return;
-    if (_formKey.currentState.validate()) {
+    if (_formKey.currentState!.validate()) {
       try {
         setState(() {
           _loading = true;
@@ -107,7 +107,7 @@ class _EditProfileFormState extends State<EditProfileForm> {
         if (updateUserName) await CustomClaims.getClaims(true);
       } on FirebaseException catch (error) {
         print("Update Profile Error: " + error.toString());
-        Scaffold.of(_context).showSnackBar(SnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text("Couldn't upldate profile, try again later"),
         ));
       }
@@ -135,7 +135,7 @@ class _EditProfileFormState extends State<EditProfileForm> {
             TextFormField(
               controller: _userNameController,
               validator: (input) {
-                if (input.length < 6 || input.length > 32) {
+                if (input!.length < 6 || input.length > 32) {
                   return "Should be between 6 - 32 characters long";
                 }
                 if (input.isEmpty || !_userNameRegExp.hasMatch(input)) {
@@ -155,7 +155,7 @@ class _EditProfileFormState extends State<EditProfileForm> {
             TextFormField(
               controller: _displayNameController,
               validator: (input) {
-                if (input.length < 3 || input.length > 32) {
+                if (input!.length < 3 || input.length > 32) {
                   return "Should be between 3 - 32 characters long";
                 }
                 if (input.isEmpty || !_displayNameRegExp.hasMatch(input)) {
@@ -214,13 +214,13 @@ class _EditProfileFormState extends State<EditProfileForm> {
 }
 
 class LocationButton extends StatelessWidget {
-  LocationButton({
-    Key key,
-    this.location,
-    this.setLocation,
-  }) : super(key: key);
   String location;
   Function setLocation;
+  LocationButton({
+    Key? key,
+    required this.location,
+    required this.setLocation,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -231,11 +231,10 @@ class LocationButton extends StatelessWidget {
       ),
       child: ListTile(
         onTap: () async {
-          String result = await Navigator.push(context,
-              CupertinoPageRoute(builder: (context) => LocationPicker()));
-          if (result != null) {
-            setLocation(result);
-          }
+          // String result = await Navigator.push(context, CupertinoPageRoute(builder: (context) => LocationPicker()));
+          // if (result != null) {
+          //   setLocation(result);
+          // }
         },
         trailing: location.length > 0
             ? GestureDetector(
@@ -262,8 +261,7 @@ class EditProfileAppBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.fromLTRB(_padding,
-          _padding + MediaQuery.of(context).padding.top, _padding, _padding),
+      padding: EdgeInsets.fromLTRB(_padding, _padding + MediaQuery.of(context).padding.top, _padding, _padding),
       width: MediaQuery.of(context).size.width,
       child: Row(
         children: [
@@ -280,10 +278,7 @@ class EditProfileAppBar extends StatelessWidget {
           ),
           Text(
             "Edit Profile",
-            style: TextStyle(
-                fontFamily: HelveticaFont.Bold,
-                fontSize: 16,
-                color: Colors.white),
+            style: TextStyle(fontFamily: HelveticaFont.Bold, fontSize: 16, color: Colors.white),
           ),
         ],
       ),

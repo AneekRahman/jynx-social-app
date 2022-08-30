@@ -29,9 +29,9 @@ class MyApp extends StatelessWidget {
         Provider<FirestoreService>(
           create: (_) => FirestoreService(FirebaseFirestore.instance),
         ),
-        StreamProvider(
-          create: (context) =>
-              context.read<AuthenticationService>().authStateChanges,
+        StreamProvider<User?>(
+          create: (context) => context.read<AuthenticationService>().authStateChanges,
+          initialData: null,
         ),
       ],
       child: MaterialApp(
@@ -56,17 +56,14 @@ class AuthenticationWrapper extends StatelessWidget {
   static final String routeName = "/AuthenticationWrapper";
   @override
   Widget build(BuildContext context) {
-    final User firebaseUser = context.watch<User>();
+    final User? firebaseUser = context.watch<User?>();
 
     if (firebaseUser != null) {
-      if (firebaseUser.displayName == null ||
-          firebaseUser.displayName.isEmpty) {
+      if (firebaseUser.displayName == null || firebaseUser.displayName!.isEmpty) {
         return IntialSignUpUpdatePage();
       } else {
         return HomePage();
       }
-
-      // return TestPage();
     } else {
       return PhoneSignInPage();
     }
