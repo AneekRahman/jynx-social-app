@@ -5,7 +5,7 @@ import 'package:social_app/models/MyUserObject.dart';
 import 'package:social_app/models/UserChatsSnapshot.dart';
 
 class MyServer {
-  static const String SERVER_API = "http://192.168.0.101:5000/jynx-chat/us-central1/api";
+  static const String SERVER_API = "http://192.168.0.103:5000/jynx-chat/us-central1/api";
   static const String SIGNUP = "/signup";
   static Map<String, String> JSON_HEADER = {
     "content-type": "application/json",

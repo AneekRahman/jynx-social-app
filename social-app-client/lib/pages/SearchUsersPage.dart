@@ -19,7 +19,7 @@ class _SearchUsersPageState extends State<SearchUsersPage> {
   String _msg = "Search for names, usernames";
   List<MyUserObject> _searchUsersList = [];
   bool _loading = false;
-  late User _currentUser;
+  User? _currentUser;
 
   void _searchUsers(String input) async {
     if (_loading) return;
@@ -41,7 +41,7 @@ class _SearchUsersPageState extends State<SearchUsersPage> {
     // Map the results
     for (QueryDocumentSnapshot user in result.docs) {
       Map? data = user.data() as Map;
-      if (user.id != _currentUser.uid)
+      if (user.id != _currentUser!.uid)
         users.add(MyUserObject(
           displayName: data["displayName"],
           userName: data["userName"],

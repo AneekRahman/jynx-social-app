@@ -13,7 +13,7 @@ class OthersProfilePage extends StatefulWidget {
 }
 
 class _OthersProfilePageState extends State<OthersProfilePage> {
-  late User _currentUser;
+  User? _currentUser;
   late CustomClaims customClaims;
 
   void _loadUserInfo() {
@@ -49,7 +49,7 @@ class _OthersProfilePageState extends State<OthersProfilePage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _currentUser.displayName!,
+                      _currentUser!.displayName!,
                       style: TextStyle(
                         fontFamily: HelveticaFont.Black,
                         color: Colors.white,

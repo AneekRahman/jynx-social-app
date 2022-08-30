@@ -61,6 +61,13 @@ class AuthenticationService {
     }
   }
 
+  Future<Map<dynamic, dynamic>> currentUserClaims(forceRefresh) async {
+    // If refresh is set to true, a refresh of the id token is forced.
+    final idTokenResult = await _firebaseAuth.currentUser!.getIdTokenResult(forceRefresh);
+
+    return idTokenResult.claims!;
+  }
+
   Future<String> emailSignIn({required String email, required String password}) async {
     try {
       await _firebaseAuth.signInWithEmailAndPassword(email: email, password: password);

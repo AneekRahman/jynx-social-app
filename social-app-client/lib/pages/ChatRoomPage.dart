@@ -84,7 +84,7 @@ class ChatRoomPage extends StatefulWidget {
 }
 
 class _ChatRoomPageState extends State<ChatRoomPage> {
-  late User _currentUser;
+  User? _currentUser;
   List<MsgRow> _msgRows = [];
   bool _initializingChatRoom = true;
 
@@ -113,13 +113,13 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   void _initializeChatRoom() async {
     if (widget.chatRow == null) {
       // Search for an already made private chatroom for these 2 users
-      ChatRow? chatRow = await context.read<FirestoreService>().findPrivateChatWithUser(_currentUser.uid, widget.otherUser!.userUid!);
+      ChatRow? chatRow = await context.read<FirestoreService>().findPrivateChatWithUser(_currentUser!.uid, widget.otherUser!.userUid!);
       if (chatRow != null) widget.chatRow = chatRow;
     }
 
     // If chatRoom found, then make sure to update the seen of lastMsg if already not seen
     if (widget.chatRow != null && widget.chatRow!.chatRoomUid != null && !widget.chatRow!.seen!) {
-      context.read<FirestoreService>().setSeenUserChatsDocument(widget.chatRow!.userChatsDocUid!, _currentUser.uid);
+      context.read<FirestoreService>().setSeenUserChatsDocument(widget.chatRow!.userChatsDocUid!, _currentUser!.uid);
       widget.chatRow!.seen = true;
     }
     // Let the user now start chatting
@@ -166,13 +166,13 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                                     MsgRow msgRow = _msgRows.elementAt(index);
                                     // Check if previous post was also from the same user
                                     bool firstMsgOfUser = true;
-                                    if (index == 0 || _msgRows.elementAt(index - 1).msgUid == _currentUser.uid) {
+                                    if (index == 0 || _msgRows.elementAt(index - 1).msgUid == _currentUser!.uid) {
                                       firstMsgOfUser = false;
                                     }
 
                                     return MessageBubble(
                                       msgRow: msgRow,
-                                      isUser: msgRow.userUid == _currentUser.uid,
+                                      isUser: msgRow.userUid == _currentUser!.uid,
                                       firstMsgOfUser: firstMsgOfUser,
                                     );
                                   },
@@ -190,12 +190,12 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                 : _buildLoadingAnim(),
             ChatRequestActions(
               chatRow: widget.chatRow!,
-              currentUser: _currentUser,
+              currentUser: _currentUser!,
             ),
             ChatBottomBar(
                 rootContext: context,
                 chatRow: widget.chatRow!,
-                currentUser: _currentUser,
+                currentUser: _currentUser!,
                 otherUser: widget.otherUser!,
                 setChatRoomUid: (String chatRoomUid) {
                   setState(() {

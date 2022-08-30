@@ -8,6 +8,8 @@ import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+import '../../services/auth_service.dart';
+
 class IntialSignUpUpdatePage extends StatefulWidget {
   @override
   _IntialSignUpUpdatePageState createState() => _IntialSignUpUpdatePageState();
@@ -24,13 +26,13 @@ class _IntialSignUpUpdatePageState extends State<IntialSignUpUpdatePage> {
   bool _loading = false;
 
   void _finishAccount(_context) async {
-    if (_loading) return;
+    if (_loading && _user == null) return;
     if (_formKey.currentState!.validate()) {
       setState(() {
         _loading = true;
       });
       try {
-        String idToken = await _user!.getIdToken(); // TODO Fix invalid JWT
+        String idToken = await _user!.getIdToken();
         http.Response response = await http.post(
           Uri.parse(MyServer.SERVER_API + MyServer.SIGNUP),
           headers: {"Authorization": idToken, ...MyServer.JSON_HEADER},
@@ -40,11 +42,13 @@ class _IntialSignUpUpdatePageState extends State<IntialSignUpUpdatePage> {
           }),
         );
         if (response.statusCode == 200) {
-          // Force refresh the Id token to get the userName in the future
-          await CustomClaims.getClaims(true);
           ScaffoldMessenger.of(_context).showSnackBar(SnackBar(
             content: Text("Welcome, $_displayName!"),
           ));
+          // Update the displayName
+          await _user!.updateDisplayName(_displayName);
+          // Force refresh the Id token to get the userName in the future
+          await context.read<AuthenticationService>().currentUserClaims(true);
         } else {
           Map jsonObject = json.decode(response.body);
           ScaffoldMessenger.of(_context).showSnackBar(SnackBar(
@@ -67,6 +71,9 @@ class _IntialSignUpUpdatePageState extends State<IntialSignUpUpdatePage> {
   void initState() {
     _firestoreInstance = FirebaseFirestore.instance;
     _user = context.read<User>();
+
+    // TODO Fix the displayName: null error
+    print("GOT: " + _user.toString());
     super.initState();
   }
 
@@ -143,7 +150,7 @@ class _IntialSignUpUpdatePageState extends State<IntialSignUpUpdatePage> {
                 return MyBottomButton(
                   isLoading: _loading,
                   text: "Finish Account",
-                  onTap: () {
+                  onTap: () async {
                     _finishAccount(context);
                   },
                 );

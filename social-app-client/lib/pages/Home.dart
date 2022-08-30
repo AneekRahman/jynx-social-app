@@ -19,7 +19,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  late User _currentUser;
+  User? _currentUser;
 
   @override
   void initState() {
@@ -40,9 +40,9 @@ class _HomePageState extends State<HomePage> {
           children: [
             HomeAppBar(),
             ChatsList(
-              currentUser: _currentUser,
+              currentUser: _currentUser!,
               emptyChatListMsg: HomeChatListIntro(),
-              stream: context.watch<FirestoreService>().getUserChatsStream(_currentUser.uid, false),
+              stream: context.watch<FirestoreService>().getUserChatsStream(_currentUser!.uid, false),
             ),
           ],
         ),

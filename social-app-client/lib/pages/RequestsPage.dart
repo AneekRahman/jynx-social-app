@@ -12,7 +12,7 @@ class RequestsPage extends StatefulWidget {
 }
 
 class _RequestsPageState extends State<RequestsPage> {
-  late User _currentUser;
+  User? _currentUser;
 
   @override
   void initState() {
@@ -31,8 +31,8 @@ class _RequestsPageState extends State<RequestsPage> {
             HomeAppBar(),
             Expanded(
               child: ChatsList(
-                currentUser: _currentUser,
-                stream: context.watch<FirestoreService>().getUserChatsRequestedStream(_currentUser.uid, false),
+                currentUser: _currentUser!,
+                stream: context.watch<FirestoreService>().getUserChatsRequestedStream(_currentUser!.uid, false),
               ),
             ),
           ],

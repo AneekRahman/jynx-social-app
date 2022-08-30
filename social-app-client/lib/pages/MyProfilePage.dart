@@ -19,15 +19,15 @@ class MyProfilePage extends StatefulWidget {
 }
 
 class _MyProfilePageState extends State<MyProfilePage> {
-  late User _currentUser;
+  User? _currentUser;
   MyUserObject _myUserObject = MyUserObject();
 
   void _loadUserInfo() async {
     _currentUser = context.read<User>();
     CustomClaims customClaims = await CustomClaims.getClaims(false);
     _myUserObject.userName = customClaims.userName;
-    _myUserObject.displayName = _currentUser.displayName;
-    _myUserObject.profilePic = _currentUser.photoURL;
+    _myUserObject.displayName = _currentUser!.displayName;
+    _myUserObject.profilePic = _currentUser!.photoURL;
     setState(() => {});
   }
 

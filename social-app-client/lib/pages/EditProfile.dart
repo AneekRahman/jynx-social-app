@@ -50,7 +50,7 @@ class _EditProfileFormState extends State<EditProfileForm> {
 
   final RegExp _userNameRegExp = new RegExp("^([a-zA-Z0-9_.]{6,32})\$");
   final RegExp _displayNameRegExp = new RegExp("^([a-zA-Z ]{3,32})\$");
-  late User _currentUser;
+  User? _currentUser;
   CustomClaims customClaims = CustomClaims();
   bool _loading = false;
 
@@ -71,8 +71,8 @@ class _EditProfileFormState extends State<EditProfileForm> {
   void _setupInitialData() async {
     customClaims = await CustomClaims.getClaims(false);
     _userNameController.text = customClaims.userName ?? "";
-    _displayNameController.text = _currentUser.displayName!;
-    Map userMeta = widget.userObject.userMeta!;
+    _displayNameController.text = _currentUser!.displayName!;
+    Map userMeta = widget.userObject.userMeta!; // TODO fix null
     if (userMeta != null) {
       _bioController.text = userMeta["bio"] ?? "";
       _wwwController.text = userMeta["website"] ?? "";
@@ -92,7 +92,7 @@ class _EditProfileFormState extends State<EditProfileForm> {
         bool updateUserName = customClaims.userName != _userNameController.text;
 
         await context.read<FirestoreService>().updateCurrentUser(
-              _currentUser,
+              _currentUser!,
               {
                 "displayName": _displayNameController.text,
                 "userName": _userNameController.text,

@@ -37,10 +37,10 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
-          primarySwatch: Colors.yellow,
-          accentColor: Colors.yellow,
+          primarySwatch: Colors.purple,
+          accentColor: Colors.purple,
           visualDensity: VisualDensity.adaptivePlatformDensity,
-          unselectedWidgetColor: Colors.yellow,
+          unselectedWidgetColor: Colors.purple,
         ),
         routes: {
           AuthenticationWrapper.routeName: (context) => AuthenticationWrapper(),
