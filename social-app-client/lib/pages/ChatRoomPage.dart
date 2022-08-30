@@ -1,6 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:social_app/models/ChatRow.dart';
@@ -11,7 +9,7 @@ import 'package:social_app/services/firestore_service.dart';
 import 'package:social_app/services/rtd_service.dart';
 import 'package:provider/provider.dart';
 
-import '../models/ChatBottomBar.dart';
+import '../modules/ChatBottomBar.dart';
 import '../modules/MessageBubble.dart';
 
 const kMessageTextFieldDecoration = InputDecoration(
@@ -32,18 +30,16 @@ class ChatTopBar extends StatelessWidget {
   UserProfileObject otherUser;
   ChatTopBar({this.chatRow, required this.otherUser});
 
-  final double _padding = 20;
-
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.fromLTRB(_padding, _padding + MediaQuery.of(context).padding.top, _padding, _padding),
+      padding: EdgeInsets.fromLTRB(10, 10 + MediaQuery.of(context).padding.top, 20, 10),
       child: Row(
         children: <Widget>[
           GestureDetector(
             onTap: () => Navigator.pop(context),
             child: Padding(
-              padding: const EdgeInsets.all(8.0),
+              padding: const EdgeInsets.all(18.0),
               child: Icon(
                 Icons.arrow_back_ios,
                 size: 18,
@@ -51,14 +47,37 @@ class ChatTopBar extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
               children: <Widget>[
-                Text(
-                  otherUser.displayName!,
-                  style: TextStyle(fontFamily: HelveticaFont.Bold, fontSize: 14, color: Colors.black),
+                Container(
+                  height: 40,
+                  width: 40,
+                  margin: EdgeInsets.only(right: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.white10,
+                    borderRadius: BorderRadius.circular(10000),
+                    border: Border.all(color: Colors.yellow, width: 2),
+                  ),
+                  child: otherUser.photoURL!.isNotEmpty
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.all(Radius.circular(100)),
+                          child: Image.network(
+                            otherUser.photoURL!,
+                            height: 40,
+                            width: 40,
+                          ))
+                      : Container(),
                 ),
-                Text("@" + otherUser.userName!, style: TextStyle(fontFamily: HelveticaFont.Bold, fontSize: 10, color: Colors.black38))
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      otherUser.displayName!,
+                      style: TextStyle(fontFamily: HelveticaFont.Bold, fontSize: 16, color: Colors.black),
+                    ),
+                    Text("@" + otherUser.userName!, style: TextStyle(fontFamily: HelveticaFont.Bold, fontSize: 14, color: Colors.black38))
+                  ],
+                ),
               ],
             ),
           ),

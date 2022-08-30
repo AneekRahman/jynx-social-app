@@ -2,13 +2,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../modules/ChatRequestActions.dart';
-import '../modules/constants.dart';
+import 'ChatRequestActions.dart';
+import 'constants.dart';
 import '../pages/ChatRoomPage.dart';
 import '../services/firestore_service.dart';
 import '../services/rtd_service.dart';
-import 'ChatRow.dart';
-import 'UserProfileObject.dart';
+import '../models/ChatRow.dart';
+import '../models/UserProfileObject.dart';
 
 class ChatBottomBar extends StatefulWidget {
   BuildContext rootContext;
@@ -112,9 +112,15 @@ class _ChatBottomBarState extends State<ChatBottomBar> {
               children: [
                 Expanded(
                   child: TextField(
+                    textCapitalization: TextCapitalization.sentences,
                     style: TextStyle(fontFamily: HelveticaFont.Roman),
                     controller: chatMsgTextController,
                     decoration: kMessageTextFieldDecoration,
+                    onChanged: ((value) {
+                      setState(() {
+                        _textInputValue = value;
+                      });
+                    }),
                   ),
                 ),
                 GestureDetector(
@@ -130,8 +136,9 @@ class _ChatBottomBarState extends State<ChatBottomBar> {
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 14),
                     child: Icon(
-                      Icons.fast_forward,
-                      color: Colors.black38,
+                      Icons.send,
+                      size: 30,
+                      color: _textInputValue.isEmpty ? Colors.black38 : Colors.purpleAccent,
                     ),
                   ),
                 ),

@@ -11,12 +11,12 @@ import 'dart:convert';
 
 import '../../services/auth_service.dart';
 
-class IntialSignUpUpdatePage extends StatefulWidget {
+class FinalSignUpUpdatePage extends StatefulWidget {
   @override
-  _IntialSignUpUpdatePageState createState() => _IntialSignUpUpdatePageState();
+  _FinalSignUpUpdatePageState createState() => _FinalSignUpUpdatePageState();
 }
 
-class _IntialSignUpUpdatePageState extends State<IntialSignUpUpdatePage> {
+class _FinalSignUpUpdatePageState extends State<FinalSignUpUpdatePage> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final RegExp _userNameRegExp = new RegExp("^([a-zA-Z0-9_.]{6,32})\$");
   final RegExp _displayNameRegExp = new RegExp("^([a-zA-Z ]{3,32})\$");
