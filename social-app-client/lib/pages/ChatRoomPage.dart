@@ -133,7 +133,6 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   void _setMsgRowsFromStream(dynamic chatRoomMsgsObject) {
     if (chatRoomMsgsObject != null)
       chatRoomMsgsObject.forEach((key, value) {
-        print("GOT: ${key}");
         MsgRow msgRow = MsgRow.fromJson({...chatRoomMsgsObject[key], 'msgUid': key});
         _removeIfAlreadyAdded(msgRow);
         _msgRows.add(msgRow);

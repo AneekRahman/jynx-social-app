@@ -47,9 +47,10 @@ class _ChatsListState extends State<ChatsList> {
   }
 
   void _buildChatRows(List<QueryDocumentSnapshot> snapshots) {
-    print(" GOT: UPDATE FROM STREAM FOR USER " + chatRows.length.toString());
+    print(" GOT: _buildChatRows " + snapshots.length.toString());
 
     snapshots.forEach((snapshot) {
+      print("GOT: ${snapshot.id}");
       ChatRow chatRow = getChatRowFromDocSnapshot(snapshot, widget.currentUser.uid)!;
       _removeIfAlreadyAdded(chatRow);
       chatRows.add(chatRow);
@@ -59,17 +60,23 @@ class _ChatsListState extends State<ChatsList> {
     chatRows.sort((a, b) => b.lastMsgSentTime!.compareTo(a.lastMsgSentTime!));
 
     // If this is the first time and the rows are pulled from the stream
-    if (_lastDocument == null) {
+    if (_lastDocument == null && snapshots.length > 0) {
       _lastDocument = snapshots[snapshots.length - 1];
+      //  TODO DO this better
+      if (snapshots.length < Constants.CHAT_LIST_READ_LIMIT) {
+        Future.delayed(const Duration(milliseconds: 500), () {
+          // This is the first time, so try to load again and remove the loading icon
+          _loadMoreChats();
+        });
+      }
     }
     // Update the loading Animation
     loadingChats = false;
   }
 
   void _loadMoreChats() async {
-    if (loadingChats) return;
+    if (loadingChats || _reachedEndOfResults) return;
 
-    print("GOT:  NEED TO LOAD LMOROEOEE");
     setState(() {
       loadingChats = true;
     });
@@ -78,6 +85,7 @@ class _ChatsListState extends State<ChatsList> {
         await context.read<FirestoreService>().getNewChatListChats(currentUserUid: widget.currentUser.uid, lastDocument: _lastDocument);
 
     if (snapshot.docs.isNotEmpty) {
+      print(" GOT: _loadMoreChats CHAT LOADED AGAIN AFTER THE STREAM " + snapshot.docs.length.toString());
       _buildChatRows(snapshot.docs);
       // Save the lastDocument
       _lastDocument = snapshot.docs[snapshot.docs.length - 1];
@@ -109,6 +117,8 @@ class _ChatsListState extends State<ChatsList> {
       builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
         if (snapshot.hasData) {
           _buildChatRows(snapshot.data!.docs);
+        } else {
+          _reachedEndOfResults = true;
         }
 
         return Expanded(
@@ -167,7 +177,12 @@ class _ChatsListState extends State<ChatsList> {
                                       ),
                                     ),
                             ),
-                          )
+                          ),
+                          // SliverToBoxAdapter(
+                          //   child: SizedBox(
+                          //     height: MediaQuery.of(context).size.height,
+                          //   ),
+                          // ),
                         ],
                       ),
                     )

@@ -15,7 +15,8 @@ class MyServer {
 }
 
 class Constants {
-  static const int CHAT_LIST_READ_LIMIT = 2;
+  static const int CHAT_LIST_READ_LIMIT = 10;
+  static const int CHAT_ROOM_MESSAGES_READ_LIMIT = 10;
 }
 
 final normalTextStyle = TextStyle(
