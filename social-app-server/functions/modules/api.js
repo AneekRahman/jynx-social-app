@@ -168,7 +168,7 @@ api.post(
                   website: "",
                   searchKeywords: [
                     ...createKeywords(userName.toLowerCase()),
-                    ...createKeywords(displayName)
+                    ...createKeywords(displayName.toLowerCase())
                   ],
                   meta: {
                     seenWelcomeMessage: false,

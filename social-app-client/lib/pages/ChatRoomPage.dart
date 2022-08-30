@@ -32,16 +32,24 @@ class ChatTopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(10, 10 + MediaQuery.of(context).padding.top, 20, 10),
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(
+            color: Colors.black.withOpacity(.05),
+            width: 1.0,
+          ),
+        ),
+      ),
+      padding: EdgeInsets.fromLTRB(10, 20 + MediaQuery.of(context).padding.top, 20, 10),
       child: Row(
         children: <Widget>[
           GestureDetector(
             onTap: () => Navigator.pop(context),
             child: Padding(
-              padding: const EdgeInsets.all(18.0),
+              padding: const EdgeInsets.all(14.0),
               child: Icon(
-                Icons.arrow_back_ios,
+                Icons.arrow_back_ios_new_outlined,
                 size: 18,
               ),
             ),
@@ -50,32 +58,45 @@ class ChatTopBar extends StatelessWidget {
             child: Row(
               children: <Widget>[
                 Container(
-                  height: 40,
-                  width: 40,
+                  height: 45,
+                  width: 45,
                   margin: EdgeInsets.only(right: 10),
-                  decoration: BoxDecoration(
-                    color: Colors.white10,
-                    borderRadius: BorderRadius.circular(10000),
-                    border: Border.all(color: Colors.yellow, width: 2),
-                  ),
+                  decoration: otherUser.photoURL!.isNotEmpty
+                      ? BoxDecoration(
+                          color: Colors.white10,
+                          borderRadius: BorderRadius.circular(10000),
+                          border: Border.all(color: Colors.yellow, width: 2),
+                        )
+                      : null,
                   child: otherUser.photoURL!.isNotEmpty
                       ? ClipRRect(
-                          borderRadius: BorderRadius.all(Radius.circular(100)),
                           child: Image.network(
                             otherUser.photoURL!,
-                            height: 40,
-                            width: 40,
-                          ))
-                      : Container(),
+                            height: 45,
+                            width: 45,
+                            fit: BoxFit.cover,
+                          ),
+                          borderRadius: BorderRadius.all(Radius.circular(100)),
+                        )
+                      : Container(
+                          height: 45,
+                          width: 45,
+                          decoration: otherUser.photoURL!.isNotEmpty
+                              ? BoxDecoration(
+                                  color: Colors.black12,
+                                  borderRadius: BorderRadius.circular(10000),
+                                )
+                              : null,
+                        ),
                 ),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       otherUser.displayName!,
-                      style: TextStyle(fontFamily: HelveticaFont.Bold, fontSize: 16, color: Colors.black),
+                      style: TextStyle(fontFamily: HelveticaFont.Medium, fontSize: 16, color: Colors.black),
                     ),
-                    Text("@" + otherUser.userName!, style: TextStyle(fontFamily: HelveticaFont.Bold, fontSize: 14, color: Colors.black38))
+                    Text("@" + otherUser.userName!, style: TextStyle(fontFamily: HelveticaFont.Roman, fontSize: 14, color: Colors.black38))
                   ],
                 ),
               ],

@@ -223,20 +223,24 @@ class SearchUserRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(100),
-            child: Container(
-              color: Colors.white12,
-              height: 40,
-              width: 40,
-              child: _userObject.photoURL!.isNotEmpty
-                  ? Image.network(
+          Container(
+            height: 50,
+            width: 50,
+            child: _userObject.photoURL!.isNotEmpty
+                ? ClipRRect(
+                    child: Image.network(
                       _userObject.photoURL!,
-                      height: 40,
-                      width: 40,
-                    )
-                  : Container(),
-            ),
+                      height: 50,
+                      width: 50,
+                      fit: BoxFit.cover,
+                    ),
+                    borderRadius: BorderRadius.all(Radius.circular(100)),
+                  )
+                : Image.asset(
+                    "assets/user.png",
+                    height: 40,
+                    width: 40,
+                  ),
           ),
           Expanded(
             child: Padding(

@@ -51,13 +51,25 @@ class _ChatsListRowState extends State<ChatsListRow> {
       padding: EdgeInsets.symmetric(vertical: 16, horizontal: 20),
       child: Row(
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(100),
+          Container(
+            height: 45,
+            width: 45,
+            decoration: hasImg
+                ? BoxDecoration(
+                    color: Colors.white10,
+                    borderRadius: BorderRadius.circular(10000),
+                    border: Border.all(color: Colors.yellow, width: 2),
+                  )
+                : null,
             child: hasImg
-                ? Image.network(
-                    widget._chatRow.otherUser.photoURL!,
-                    height: 40,
-                    width: 40,
+                ? ClipRRect(
+                    child: Image.network(
+                      widget._chatRow.otherUser.photoURL!,
+                      height: 45,
+                      width: 45,
+                      fit: BoxFit.cover,
+                    ),
+                    borderRadius: BorderRadius.all(Radius.circular(100)),
                   )
                 : Image.asset(
                     "assets/user.png",
@@ -66,7 +78,7 @@ class _ChatsListRowState extends State<ChatsListRow> {
                   ),
           ),
           SizedBox(
-            width: 10,
+            width: 16,
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -87,7 +99,7 @@ class _ChatsListRowState extends State<ChatsListRow> {
                   Icon(
                     !widget._chatRow.seen! ? Icons.chat_bubble : Icons.chat_bubble_outline,
                     size: 14,
-                    color: Colors.white,
+                    color: !widget._chatRow.seen! ? Colors.yellow : Colors.white,
                   ),
                   SizedBox(
                     width: 5,
@@ -97,7 +109,7 @@ class _ChatsListRowState extends State<ChatsListRow> {
                     style: TextStyle(
                       fontFamily: fontFamily,
                       fontSize: 12,
-                      color: Colors.white,
+                      color: !widget._chatRow.seen! ? Colors.yellow : Colors.white,
                     ),
                   ),
                 ],
@@ -112,7 +124,7 @@ class _ChatsListRowState extends State<ChatsListRow> {
             style: TextStyle(
               fontFamily: fontFamily,
               fontSize: 12,
-              color: Colors.white,
+              color: Colors.yellow,
             ),
           )
         ],

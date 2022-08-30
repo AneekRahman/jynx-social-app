@@ -11,18 +11,30 @@ exports.onUserUpdated = functions.firestore
     const userDataBefore = change.before.data();
     const userDataAfter = change.after.data();
 
-    // Make updatedInfoUsers cron jobs for photoURL(only if the oldPhotoURL = "") and displayName changes
+    // if photoURL(only if the oldPhotoURL = "") and displayName changes are detected
     if (
       (userDataBefore.photoURL === "" && userDataAfter.photoURL !== "") ||
       userDataBefore.displayName !== userDataAfter.displayName ||
       userDataBefore.userName !== userDataAfter.userName
-    ) {
-      return await admin
+      ) {
+      // Make updatedInfoUsers cron jobs for 
+       await admin
         .firestore()
         .collection("updatedInfoUsers")
         .doc(userUid)
         .set({
           lastUpdated: admin.firestore.FieldValue.serverTimestamp(),
+        });
+      
+      return await admin
+        .firestore()
+        .collection("users")
+        .doc(userUid)
+        .update({
+          searchKeywords: [
+            ...createKeywords(userDataAfter.userName.toLowerCase()),
+            ...createKeywords(userDataAfter.displayName.toLowerCase())
+          ],
         });
     } else {
       return Promise.resolve();
@@ -71,7 +83,7 @@ const updateUsersAllChats = async (userUid) => {
 };
 
 exports.UserChatsInfoUpdateCron = functions.pubsub // .runWith({ memory: "1GB" })
-  .schedule("every 2 minutes")
+  .schedule("every 7 minutes")
   .onRun(async (context) => {
     // Loop through all documents in the collections (updatedUsers)
     admin
@@ -140,3 +152,18 @@ exports.UserChatsInfoUpdateCron = functions.pubsub // .runWith({ memory: "1GB" }
 //   // Once the thumbnail has been uploaded delete the local file to free up disk space.
 //   fs.unlinkSync(tempFilePath);
 // };
+
+// My Non API Functions -----------------------
+
+const createKeywords = (text) => {
+    let keywordsList = [];
+    // Split the text into words if there are spaces
+    text.split(" ").forEach((word) => {
+      let tempWord = "";
+      word.split("").forEach((letter) => {
+        tempWord += letter;
+        if (!keywordsList.includes(tempWord)) keywordsList.push(tempWord);
+      });
+    });
+    return keywordsList;
+  };
