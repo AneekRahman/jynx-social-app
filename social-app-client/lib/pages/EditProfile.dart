@@ -7,9 +7,12 @@ import 'package:social_app/models/CustomClaims.dart';
 import 'package:social_app/models/UserProfileObject.dart';
 import 'package:social_app/modules/constants.dart';
 import 'package:provider/provider.dart';
-import 'package:social_app/pages/LocationPicker.dart';
+import 'package:social_app/modules/flutter_google_places/flutter_google_places.dart';
 import 'package:social_app/services/firestore_service.dart';
 import 'package:http/http.dart' as http;
+
+import 'dart:async';
+import 'package:google_maps_webservice/places.dart';
 
 import '../services/auth_service.dart';
 
@@ -257,10 +260,17 @@ class LocationButton extends StatelessWidget {
       ),
       child: ListTile(
         onTap: () async {
-          // String result = await Navigator.push(context, CupertinoPageRoute(builder: (context) => LocationPicker()));
-          // if (result != null) {
-          //   setLocation(result);
-          // }
+          Prediction? result = await PlacesAutocomplete.show(
+              context: context,
+              apiKey: "AIzaSyDXy4pdfJRGz9Vy2MbW6C4kSYhAUL9BAwM",
+              mode: Mode.overlay, // Mode.fullscreen
+              language: "en",
+              hint: "Search for places...",
+              components: [new Component(Component.country, "us")]);
+
+          if (result != null) {
+            setLocation(result.description);
+          }
         },
         trailing: location.length > 0
             ? GestureDetector(

@@ -47,5 +47,11 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>io.flutter.embedded_views_preview</key>
+	<string>YES</string>
+  <key>NSLocationAlwaysUsageDescription</key>
+  <string>Your location is required for picking location in your Edit Profile Page</string>
+  <key>NSLocationWhenInUseUsageDescription</key>
+  <string>Your location is required for picking location in your Edit Profile Page</string>
 </dict>
 </plist>

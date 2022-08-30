@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:social_app/models/CustomClaims.dart';
 import 'package:provider/provider.dart';
 import 'package:social_app/models/UserProfileObject.dart';
@@ -11,6 +12,9 @@ import 'package:social_app/pages/EditProfile.dart';
 import 'package:social_app/services/auth_service.dart';
 import 'package:social_app/services/firestore_service.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'dart:io';
+import 'package:path/path.dart' as path;
+import 'package:firebase_storage/firebase_storage.dart';
 
 import 'SettingsPage.dart';
 
@@ -21,12 +25,65 @@ class MyProfilePage extends StatefulWidget {
 
 class _MyProfilePageState extends State<MyProfilePage> {
   User? _currentUser;
+  bool _uploadingPhotoURL = false;
 
   void _launchUserWebsite(String websiteUrl) async {
     String url = "https://" + websiteUrl;
     if (!await launchUrl(Uri.parse(url))) {
       throw 'Could not launch $url';
     }
+  }
+
+  Future _uploadImageToFirebase(File imageFile) async {
+    if (_uploadingPhotoURL) return;
+    setState(() {
+      _uploadingPhotoURL = true;
+    });
+    int sizeInBytes = imageFile.lengthSync();
+    double sizeInMb = sizeInBytes / (1024 * 1024); // Size in MB
+    if (sizeInMb > 2) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("File cannot be larger than 2MB")));
+      return;
+    }
+
+    try {
+      String extension = path.extension(imageFile.path);
+      UploadTask uploadTask = FirebaseStorage.instance.ref('/user-files/${_currentUser!.uid}/profile_picture$extension').putFile(imageFile);
+
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Uploading profile picture...'),
+        duration: Duration(seconds: 15),
+      ));
+      uploadTask.snapshotEvents.listen((event) async {
+        if (event.state == TaskState.running) {
+        } else if (event.state == TaskState.success) {
+          try {
+            // Get the link
+            String downloadLink = await event.ref.getDownloadURL();
+
+            // Update it in the database and firebase auth
+            await context.read<FirestoreService>().updateUser(_currentUser!, {
+              "photoURL": downloadLink,
+            });
+            // Update in auth
+            await _currentUser!.updatePhotoURL(downloadLink);
+            // Refresh the _currentUser
+            await _currentUser!.getIdToken(true);
+          } catch (e) {
+            print(e);
+          }
+          ScaffoldMessenger.of(context).removeCurrentSnackBar();
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Successfully updated profile picture!")));
+        }
+      });
+    } on FirebaseException catch (e) {
+      ScaffoldMessenger.of(context).removeCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message!)));
+      print(e);
+    }
+    setState(() {
+      _uploadingPhotoURL = false;
+    });
   }
 
   @override
@@ -55,8 +112,14 @@ class _MyProfilePageState extends State<MyProfilePage> {
                       ProfilePageAppBar(),
                       Row(
                         children: [
-                          ProfileImageBlock(
-                            photoURL: _myUserObject.photoURL,
+                          GestureDetector(
+                            onTap: () async {
+                              final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+                              _uploadImageToFirebase(File(pickedFile!.path));
+                            },
+                            child: ProfileImageBlock(
+                              photoURL: _myUserObject.photoURL,
+                            ),
                           ),
                           SizedBox(
                             width: 20,
@@ -207,10 +270,13 @@ class ProfileImageBlock extends StatelessWidget {
       child: hasImg
           ? ClipRRect(
               child: Image.network(
-              photoURL!,
-              height: 110,
-              width: 110,
-            ))
+                photoURL!,
+                height: 110,
+                width: 110,
+                fit: BoxFit.cover,
+              ),
+              borderRadius: BorderRadius.all(Radius.circular(100)),
+            )
           : Container(),
     );
   }
