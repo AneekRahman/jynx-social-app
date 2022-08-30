@@ -53,20 +53,16 @@ OutlineInputBorder outlineInputBorder(bool focused) {
 ChatRow? getChatRowFromDocSnapshot(QueryDocumentSnapshot snapshot, String currentUserUid) {
   UserChatsSnapshot userChatsSnapshot = UserChatsSnapshot.fromSnapshot(snapshot);
 
-  // For private chats
-  if (userChatsSnapshot.type == "PRIVATE") {
+  // For private chats only!!!!!
+  if (userChatsSnapshot.type == ChatType.PRIVATE) {
     ChatRow? chatRow;
     // Check if available in the members list
     userChatsSnapshot.memberInfo!.forEach((key, value) {
       if (key != currentUserUid) {
         UserProfileObject userObject = UserProfileObject.fromJson(userChatsSnapshot.memberInfo![key], key);
         chatRow = ChatRow(
-            userChatsDocUid: snapshot.id,
-            chatRoomUid: userChatsSnapshot.chatRoomUid,
-            otherUsersName: userObject.displayName,
-            otherUsersUserName: userObject.userName,
-            otherUsersUid: userObject.userUid,
-            otherUsersPic: userObject.photoURL,
+            chatRoomUid: snapshot.id,
+            otherUser: userObject,
             lastMsgSentTime: userChatsSnapshot.lastMsgSentTime,
             seen: userChatsSnapshot.lastMsgSeenBy!.contains(currentUserUid),
             requested: userChatsSnapshot.requestedMembers!.contains(currentUserUid));

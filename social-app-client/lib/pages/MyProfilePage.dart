@@ -50,7 +50,7 @@ class _MyProfilePageState extends State<MyProfilePage> {
   void initState() {
     // _loadUserInfo();
     // _loadUserMetaData();
-    _currentUser = context.read<User>();
+    _currentUser = context.read<User?>();
     super.initState();
   }
 

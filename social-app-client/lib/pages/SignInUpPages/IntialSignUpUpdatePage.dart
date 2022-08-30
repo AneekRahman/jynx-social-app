@@ -61,9 +61,10 @@ class _IntialSignUpUpdatePageState extends State<IntialSignUpUpdatePage> {
           content: Text("There was an error while, try again!"),
         ));
       }
-      setState(() {
-        _loading = false;
-      });
+      if (mounted)
+        setState(() {
+          _loading = false;
+        });
     }
   }
 

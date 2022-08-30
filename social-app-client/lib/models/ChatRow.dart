@@ -1,10 +1,10 @@
+import 'dart:convert';
+
+import 'package:social_app/models/UserProfileObject.dart';
+
 class ChatRow {
-  String? userChatsDocUid;
-  String? chatRoomUid;
-  String? otherUsersUid;
-  String? otherUsersName;
-  String? otherUsersUserName;
-  String? otherUsersPic;
+  late String chatRoomUid;
+  late UserProfileObject otherUser;
   String? lastMsgSentTime;
   bool? seen;
   bool? requested;
@@ -13,26 +13,23 @@ class ChatRow {
   //   : 1 means seen
 
   ChatRow({
-    this.userChatsDocUid,
-    this.chatRoomUid,
-    this.otherUsersUid,
-    this.otherUsersName,
-    this.otherUsersPic,
+    required this.chatRoomUid,
+    required this.otherUser,
     this.lastMsgSentTime,
-    this.otherUsersUserName,
     this.seen,
     this.requested,
   });
 
-  ChatRow.fromJson(Map<dynamic, dynamic> json) {
-    userChatsDocUid = json['userChatsDocUid'];
-    chatRoomUid = json['chatRoomUid'];
-    otherUsersUid = json['otherUsersUid'];
-    otherUsersName = json['otherUsersName'];
-    otherUsersPic = json['otherUsersPic'];
-    otherUsersUserName = json['otherUsersUserName'];
-    lastMsgSentTime = json['lastMsgSentTime'];
-    seen = json['seen'];
-    requested = json['requested'];
+  ChatRow.fromJson(Map<String, dynamic> map, String chatRoomUid) {
+    chatRoomUid = map['chatRoomUid'];
+    otherUser = UserProfileObject.fromJson(map["otherUser"], map["userUid"]);
+    lastMsgSentTime = map['lastMsgSentTime'];
+    seen = map['seen'];
+    requested = map['requested'];
   }
+}
+
+class ChatType {
+  static final String PRIVATE = "PRIVATE";
+  static final String GROUP = "GROUP";
 }

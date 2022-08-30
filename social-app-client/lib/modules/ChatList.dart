@@ -94,6 +94,7 @@ class ChatsList extends StatelessWidget {
                                         CupertinoPageRoute(
                                             builder: (context) => ChatRoomPage(
                                                   chatRow: chatRow,
+                                                  otherUser: chatRow.otherUser,
                                                 )),
                                       );
                                     },
@@ -155,7 +156,7 @@ class _ChatsListRowState extends State<ChatsListRow> {
   Widget build(BuildContext context) {
     final fontFamily = !widget._chatRow.seen! ? HelveticaFont.Heavy : HelveticaFont.Medium;
 
-    bool hasImg = widget._chatRow.otherUsersPic != null && widget._chatRow.otherUsersPic!.isNotEmpty;
+    bool hasImg = widget._chatRow.otherUser.photoURL != null && widget._chatRow.otherUser.photoURL!.isNotEmpty;
     return Container(
       padding: EdgeInsets.symmetric(vertical: 16, horizontal: 20),
       child: Row(
@@ -164,7 +165,7 @@ class _ChatsListRowState extends State<ChatsListRow> {
             borderRadius: BorderRadius.circular(100),
             child: hasImg
                 ? Image.network(
-                    widget._chatRow.otherUsersPic!,
+                    widget._chatRow.otherUser.photoURL!,
                     height: 40,
                     width: 40,
                   )
@@ -181,7 +182,7 @@ class _ChatsListRowState extends State<ChatsListRow> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                widget._chatRow.otherUsersName!,
+                widget._chatRow.otherUser.displayName!,
                 style: TextStyle(
                   fontFamily: fontFamily,
                   fontSize: 14,

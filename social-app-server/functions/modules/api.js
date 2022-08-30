@@ -164,6 +164,12 @@ api.post(
                   displayName: displayName,
                   photoURL: "",
                   userBio: "",
+                  location: "",
+                  website: "",
+                  searchKeywords: [
+                    ...createKeywords(userName.toLowerCase()),
+                    ...createKeywords(displayName)
+                  ],
                   meta: {
                     seenWelcomeMessage: false,
                     // Time is stored in seconds.
@@ -190,6 +196,175 @@ api.post(
     return Promise.resolve();
   }
 );
+
+
+api.post(
+  "/update-username",
+  [
+    body("userName")
+      .not()
+      .isEmpty()
+      .isString()
+      .trim()
+      .isLength({ min: 6, max: 32 })
+      .withMessage("Username must be between 6 - 32 characters")
+      .custom(
+        (field) =>
+          field !== "sign-up" &&
+          field !== "login" &&
+          field !== "404" &&
+          field !== "create-post" &&
+          field !== "edit" &&
+          field !== "forgot-password"
+      )
+      .withMessage("Username is invalid")
+      .matches(/^[a-zA-Z0-9_.]+$/)
+      .withMessage(
+        "Username invalid. Username must be Alpha-Numeric, underscores and dots"
+      ),
+  ],
+  async (req, res) => {
+    const user = req.user;
+    const newUserName = req.body.userName.trim();
+
+    // Express validator
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ code: 400, message: errors[0] });
+    }
+
+    // Get users oldUserName
+    const userRecord = await admin
+      .auth()
+      .getUser(user.uid)
+      .catch((err) => {
+        throw err;
+      });
+    const oldUserName = userRecord.customClaims.userName;
+    const newCustomClaims = userRecord.customClaims;
+    // Add the newUserName to the newCustomClaims
+    newCustomClaims.userName = newUserName;
+
+    // Check if both userNames are the same
+    if (newUserName === oldUserName)
+      return res.send(400).json({
+        code: 400,
+        message: "The new username is the same!",
+      });
+
+    // Run a transaction
+    await admin
+      .firestore()
+      .runTransaction((transaction) => {
+        return (
+          transaction
+            .get(admin.firestore().collection("users").doc(user.uid))
+            .then((document) => {
+              // Check if userName is being updated too often (less than 24 * 60 * 60 seconds or 1 day)
+              if (
+                Date.now() / 1000 - document.data().meta.userNameLastUpdated <
+                24 * 60 * 60
+              ) {
+                // eslint-disable-next-line prefer-promise-reject-errors
+                return Promise.reject({
+                  code: 400,
+                  message: "Username can only be updated once per day!",
+                });
+              }
+              // If the userName being updated too fast, successfully proceed
+              return Promise.resolve();
+            })
+            .then(() =>
+              transaction.get(
+                admin
+                  .firestore()
+                  .collection("takenUserNames")
+                  .doc(newUserName.toLowerCase())
+              )
+            )
+            .then((document) => {
+              // Check if newUserName already taken by someone else
+              if (document.exists) {
+                // eslint-disable-next-line prefer-promise-reject-errors
+                return Promise.reject({
+                  code: 400,
+                  message: "Username already exists!",
+                });
+              }
+
+              // If the document doesn't exist, successfully proceed
+              return Promise.resolve();
+            })
+            // Update the customClaims with the newUserName
+            .then(() =>
+              admin.auth().setCustomUserClaims(user.uid, newCustomClaims)
+            )
+            // Create a new takenUserNames record to avoid double userNames
+            .then(() =>
+              transaction.set(
+                admin
+                  .firestore()
+                  .collection("takenUserNames")
+                  .doc(newUserName.toLowerCase()),
+                {
+                  userUid: user.uid,
+                  userName: newUserName,
+                }
+              )
+            )
+            // Delete the old takenUserNames record
+            .then(() =>
+              transaction.delete(
+                admin
+                  .firestore()
+                  .collection("takenUserNames")
+                  .doc(oldUserName.toLowerCase())
+              )
+            )
+            // Finally update the newUserName in the firestore
+            .then(() =>
+              transaction.set(
+                admin.firestore().collection("users").doc(user.uid),
+                {
+                  userName: newUserName,
+                  userNameLowerCase: newUserName.toLowerCase(),
+                  meta: {
+                    userNameLastUpdated: Math.floor(Date.now() / 1000),
+                  },
+                },
+                { merge: true }
+              )
+            )
+        );
+      })
+      .then(() => {
+        return res.status(200).json({
+          code: 200,
+          message: "Successfully updated username!",
+        });
+      })
+      .catch(async (error) => {
+        return res.status(error.code || 500).json(error);
+      });
+  }
+);
+
+
+
+// My Non API Functions -----------------------
+
+const createKeywords = (text) => {
+    let keywordsList = [];
+    // Split the text into words if there are spaces
+    text.split(" ").forEach((word) => {
+      let tempWord = "";
+      word.split("").forEach((letter) => {
+        tempWord += letter;
+        if (!keywordsList.includes(tempWord)) keywordsList.push(tempWord);
+      });
+    });
+    return keywordsList;
+  };
 
 // Use Express middleware to intercept all requests
 exports.api = functions.https.onRequest(api);

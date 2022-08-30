@@ -147,10 +147,22 @@ class HomeChatListIntro extends StatelessWidget {
     return Container(
       child: Column(
         children: [
-          Icon(Icons.cake),
-          Text(
-            "Looks like we need some friends in this chat :D",
-            style: TextStyle(fontFamily: HelveticaFont.Roman, color: Colors.black38),
+          Icon(
+            Icons.fastfood_outlined,
+            color: Colors.white.withAlpha(50),
+            size: 100,
+          ),
+          Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Text(
+              "Looks like we need some \nfriends in this chat :D",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: HelveticaFont.Roman,
+                fontSize: 20,
+                color: Colors.white.withAlpha(50),
+              ),
+            ),
           )
         ],
       ),

@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class UserChatsSnapshot {
-  String? userChatsDocUid;
   String? chatRoomUid;
   List? members;
   List? allMembers;
@@ -12,7 +11,6 @@ class UserChatsSnapshot {
   String? type; // PRIVATE, GROUP
 
   UserChatsSnapshot({
-    this.userChatsDocUid,
     this.chatRoomUid,
     this.members,
     this.allMembers,
@@ -24,8 +22,7 @@ class UserChatsSnapshot {
   });
 
   UserChatsSnapshot.fromSnapshot(QueryDocumentSnapshot snapshot) {
-    userChatsDocUid = snapshot.id;
-    chatRoomUid = snapshot.get("chatRoomUid");
+    chatRoomUid = snapshot.id;
     members = snapshot.get("members");
     allMembers = snapshot.get("allMembers");
     requestedMembers = snapshot.get("requestedMembers");

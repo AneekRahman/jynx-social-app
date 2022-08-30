@@ -50,43 +50,36 @@ class FirestoreService {
     }
   }
 
-  Future<Map<String, String>> createRequestedUserChats({
+  Future createRequestedUserChats({
     required UserProfileObject otherUserObject,
     required User currentUser,
   }) async {
-    try {
-      CustomClaims claims = await CustomClaims.getClaims(false);
-      // Create a new UID
-      String? chatRoomUid = FirebaseDatabase.instance.ref().push().key;
-      // Create a Firestore document
-      await _firestoreInstance.collection("userChats").doc(chatRoomUid).set({
-        "allMembers": [otherUserObject.userUid, currentUser.uid],
-        "members": [currentUser.uid],
-        "lastMsgSeenBy": [currentUser.uid],
-        "requestedMembers": [otherUserObject.userUid],
-        "chatRoomUid": chatRoomUid,
-        "lastMsgSentTime": new DateTime.now().millisecondsSinceEpoch.toString(),
-        "memberInfo": {
-          currentUser.uid: {
-            "userName": claims.userName,
-            "displayName": currentUser.displayName,
-            "photoURL": currentUser.photoURL ?? "",
-            "userDeleted": false,
-          },
-          otherUserObject.userUid: {
-            "userName": otherUserObject.userName,
-            "displayName": otherUserObject.displayName,
-            "photoURL": otherUserObject.photoURL ?? "",
-            "userDeleted": false,
-          }
-        },
-        "type": "PRIVATE"
-      });
+    CustomClaims claims = await CustomClaims.getClaims(false);
 
-      return {"status": "success", "chatRoomUid": chatRoomUid!};
-    } catch (e) {
-      return {"status": "error", "errorMsg": e.toString()};
-    }
+    String? chatRoomUid = FirebaseDatabase.instance.ref().push().key;
+    await _firestoreInstance.collection("userChats").doc(chatRoomUid).set({
+      "allMembers": [otherUserObject.userUid, currentUser.uid], // Requested + Accepted members
+      "requestedMembers": [otherUserObject.userUid], // Requested members
+      "members": [currentUser.uid], // Accepted members
+      "lastMsgSeenBy": [currentUser.uid], // Last msg seen by which of the users
+      "lastMsgSentTime": new DateTime.now().millisecondsSinceEpoch.toString(),
+      "type": ChatType.PRIVATE, // PRIVATE or GROUP
+      "memberInfo": {
+        currentUser.uid: {
+          "userName": claims.userName,
+          "displayName": currentUser.displayName,
+          "photoURL": currentUser.photoURL ?? "",
+          "userDeleted": false,
+        },
+        otherUserObject.userUid: {
+          "userName": otherUserObject.userName,
+          "displayName": otherUserObject.displayName,
+          "photoURL": otherUserObject.photoURL ?? "",
+          "userDeleted": false,
+        }
+      },
+    });
+    return chatRoomUid;
   }
 
   Future setNewMsgUserChatsSeenReset(String userChatsDocumentUid, String currentUserUid, String lastMsgSentTime) async {

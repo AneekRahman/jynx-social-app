@@ -31,30 +31,23 @@ class _SearchUsersPageState extends State<SearchUsersPage> {
     // code to convert the first character to uppercase
     List searchKeys = input.split(" ");
     if (searchKeys.length > 10) searchKeys = searchKeys.sublist(0, 9);
-    QuerySnapshot result = await FirebaseFirestore.instance
-        .collection("users")
-        .orderBy("displayName")
-        .where("searchKeywords", arrayContainsAny: searchKeys)
-        .limit(10)
-        .get();
+    QuerySnapshot result =
+        await FirebaseFirestore.instance.collection("users").where("searchKeywords", arrayContainsAny: searchKeys).limit(10).get();
 
     // Map the results
     for (QueryDocumentSnapshot user in result.docs) {
-      Map? data = user.data() as Map;
-      if (user.id != _currentUser!.uid)
-        users.add(UserProfileObject(
-          displayName: data["displayName"],
-          userName: data["userName"],
-          photoURL: data["photoURL"],
-          userUid: user.id,
-        ));
+      Map<String, dynamic> data = user.data() as Map<String, dynamic>;
+
+      if (user.id != _currentUser!.uid) users.add(UserProfileObject.fromJson(data, user.id));
     }
     // Update the UI
     setState(() {
-      if (result.docs.length == 0)
+      if (result.docs.length == 0) {
         _msg = "No results";
-      else
+      } else {
         _msg = _initialMsg;
+      }
+
       _loading = false;
       _searchUsersList = users;
     });
@@ -194,7 +187,7 @@ class SearchBox extends StatelessWidget {
         height: 40,
         decoration: BoxDecoration(color: Colors.white12, borderRadius: BorderRadius.circular(100)),
         child: TextField(
-          onChanged: (input) {
+          onSubmitted: (input) {
             _setSearchInput(input);
           },
           autofocus: true,
@@ -234,11 +227,15 @@ class SearchUserRow extends StatelessWidget {
             borderRadius: BorderRadius.circular(100),
             child: Container(
               color: Colors.white12,
-              child: Image.network(
-                _userObject.photoURL ?? "",
-                height: 40,
-                width: 40,
-              ),
+              height: 40,
+              width: 40,
+              child: _userObject.photoURL!.isNotEmpty
+                  ? Image.network(
+                      _userObject.photoURL!,
+                      height: 40,
+                      width: 40,
+                    )
+                  : Container(),
             ),
           ),
           Expanded(
