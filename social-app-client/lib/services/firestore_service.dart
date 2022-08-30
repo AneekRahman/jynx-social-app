@@ -1,14 +1,11 @@
-import 'dart:convert';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_database/firebase_database.dart';
-import 'package:flutter/material.dart';
+import 'package:firebase_database/firebase_database.dart' as rtdDatabase;
+
 import 'package:social_app/models/ChatRow.dart';
 import 'package:social_app/models/CustomClaims.dart';
 import 'package:social_app/models/UserProfileObject.dart';
 import 'package:social_app/modules/constants.dart';
-import 'package:http/http.dart' as http;
 
 class FirestoreService {
   final FirebaseFirestore _firestoreInstance;
@@ -19,12 +16,33 @@ class FirestoreService {
     // return MyUserObject.fromJson(snapshot.data());
   }
 
+  Future<QuerySnapshot> getNewChatListChats({QueryDocumentSnapshot? lastDocument, required String currentUserUid}) {
+    Query query;
+    // If searchKey is empty, serially get the products
+    query = _firestoreInstance
+        .collection("userChats")
+        .where("members", arrayContains: currentUserUid)
+        .orderBy("lastMsgSentTime", descending: true)
+        .limit(Constants.CHAT_LIST_READ_LIMIT);
+
+    if (lastDocument != null) {
+      query = _firestoreInstance
+          .collection("userChats")
+          .where("members", arrayContains: currentUserUid)
+          .orderBy("lastMsgSentTime", descending: true)
+          .limit(Constants.CHAT_LIST_READ_LIMIT)
+          .startAfterDocument(lastDocument);
+    }
+
+    return query.get();
+  }
+
   Stream<QuerySnapshot> getUserChatsStream(String currentUserUid, requestedChats) {
     return _firestoreInstance
         .collection("userChats")
         .where("members", arrayContains: currentUserUid)
         .orderBy("lastMsgSentTime", descending: true)
-        .limit(10)
+        .limit(Constants.CHAT_LIST_READ_LIMIT)
         .snapshots();
   }
 
@@ -33,7 +51,7 @@ class FirestoreService {
         .collection("userChats")
         .where("requestedMembers", arrayContains: currentUserUid)
         .orderBy("lastMsgSentTime", descending: true)
-        .limit(10)
+        .limit(Constants.CHAT_LIST_READ_LIMIT)
         .snapshots();
   }
 
@@ -60,7 +78,7 @@ class FirestoreService {
   }) async {
     CustomClaims claims = await CustomClaims.getClaims(false);
 
-    String? chatRoomUid = FirebaseDatabase.instance.ref().push().key;
+    String? chatRoomUid = rtdDatabase.FirebaseDatabase.instance.ref().push().key;
     await _firestoreInstance.collection("userChats").doc(chatRoomUid).set({
       "allMembers": [otherUserObject.userUid, currentUser.uid], // Requested + Accepted members
       "requestedMembers": [otherUserObject.userUid], // Requested members

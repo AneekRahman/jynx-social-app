@@ -14,6 +14,10 @@ class MyServer {
   };
 }
 
+class Constants {
+  static const int CHAT_LIST_READ_LIMIT = 2;
+}
+
 final normalTextStyle = TextStyle(
   fontFamily: HelveticaFont.Roman,
 );

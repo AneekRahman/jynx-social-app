@@ -48,7 +48,11 @@ class _ChatsListRowState extends State<ChatsListRow> {
 
     bool hasImg = widget._chatRow.otherUser.photoURL != null && widget._chatRow.otherUser.photoURL!.isNotEmpty;
     return Container(
-      padding: EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+      padding: EdgeInsets.symmetric(
+        vertical: 16,
+        // vertical: 160,
+        horizontal: 20,
+      ),
       child: Row(
         children: [
           Container(
