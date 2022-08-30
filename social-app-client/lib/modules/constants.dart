@@ -5,8 +5,9 @@ import 'package:social_app/models/UserChatsSnapshot.dart';
 import 'package:social_app/models/UserProfileObject.dart';
 
 class MyServer {
-  static const String SERVER_API = "http://192.168.0.103:5000/jynx-chat/us-central1/api";
+  static const String SERVER_API = "http://192.168.0.100:5000/jynx-chat/us-central1/api";
   static const String SIGNUP = "/signup";
+  static const String UPDATE_USERNAME = "/update-username";
   static Map<String, String> JSON_HEADER = {
     "content-type": "application/json",
     "accept": "application/json",
@@ -84,7 +85,18 @@ Widget buildYellowButton({required Widget child, required Function() onTap, requ
         color: Colors.yellow,
         borderRadius: BorderRadius.circular(1000),
       ),
-      child: child,
+      child: !loading
+          ? child
+          : Center(
+              child: SizedBox(
+                height: 20,
+                width: 20,
+                child: CircularProgressIndicator(
+                  color: Colors.black,
+                  strokeWidth: 3,
+                ),
+              ),
+            ),
     ),
   );
 }

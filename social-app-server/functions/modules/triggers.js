@@ -1,9 +1,5 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
-const path = require("path"); // For storage
-const spawn = require("child-process-promise").spawn; // For storage
-const os = require("os"); // For storage
-const fs = require("fs"); // For storage
 const _ = require("lodash");
 
 /* ------------ FIRESTORE TRIGGERS ------------ */
@@ -74,7 +70,7 @@ const updateUsersAllChats = async (userUid) => {
   await Promise.all(batches);
 };
 
-exports.PostUserInfoUpdateCron = functions.pubsub // .runWith({ memory: "1GB" })
+exports.UserChatsInfoUpdateCron = functions.pubsub // .runWith({ memory: "1GB" })
   .schedule("every 2 minutes")
   .onRun(async (context) => {
     // Loop through all documents in the collections (updatedUsers)
@@ -89,7 +85,9 @@ exports.PostUserInfoUpdateCron = functions.pubsub // .runWith({ memory: "1GB" })
           updateUsersAllChats(document.id);
         });
       })
-      .catch((error) => {});
+      .catch((error) => {
+        throw error;
+      });
   });
 
 /* ------------- PUBSUB CRON JOBS (END) ------------- */

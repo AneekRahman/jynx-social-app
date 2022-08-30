@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -7,6 +9,9 @@ import 'package:social_app/modules/constants.dart';
 import 'package:provider/provider.dart';
 import 'package:social_app/pages/LocationPicker.dart';
 import 'package:social_app/services/firestore_service.dart';
+import 'package:http/http.dart' as http;
+
+import '../services/auth_service.dart';
 
 class EditProfile extends StatelessWidget {
   UserProfileObject userObject;
@@ -81,33 +86,56 @@ class _EditProfileFormState extends State<EditProfileForm> {
   Future _updateProfile(_context) async {
     if (_loading) return;
     if (_formKey.currentState!.validate()) {
+      setState(() {
+        _loading = true;
+      });
+
+      bool updateUserName = customClaims.userName!.trim() != _userNameController.text.trim();
+      String newDisplayName = _displayNameController.text.trim();
+      String newUserName = _userNameController.text.trim();
+
       try {
-        setState(() {
-          _loading = true;
+        // If the userName was changed, then update it!
+        if (updateUserName) {
+          String idToken = await _currentUser!.getIdToken();
+          // Update userName using Server API
+          http.Response response = await http.post(
+            Uri.parse(MyServer.SERVER_API + MyServer.UPDATE_USERNAME),
+            headers: {"Authorization": idToken, ...MyServer.JSON_HEADER},
+            body: json.encode({
+              "userName": newUserName,
+            }),
+          );
+          if (response.statusCode != 200) {
+            // ERROR From Server
+            Map jsonObject = json.decode(response.body);
+            ScaffoldMessenger.of(_context).showSnackBar(SnackBar(
+              content: Text(jsonObject["message"] ?? "There was an error, try again!"),
+            ));
+          }
+        }
+        // Update the displayName
+        await _currentUser!.updateDisplayName(newDisplayName);
+        // Force refresh the Id token to get the userName in the future
+        await context.read<AuthenticationService>().currentUserClaims(true);
+        // Update in Firestore
+        await context.read<FirestoreService>().updateUser(_currentUser!, {
+          "displayName": newDisplayName,
+          "location": _location,
+          "userBio": _bioController.text,
+          "website": _wwwController.text,
         });
 
-        bool updateUserName = customClaims.userName != _userNameController.text;
-
-        await context.read<FirestoreService>().updateCurrentUser(
-              _currentUser!,
-              {
-                "displayName": _displayNameController.text,
-                "userName": _userNameController.text,
-                "location": _location,
-                "bio": _bioController.text,
-                "website": _wwwController.text,
-              },
-              updateUserName: updateUserName,
-            );
-
-        // Force refresh the Id token to get the customClaims userName
-        if (updateUserName) await CustomClaims.getClaims(true);
-      } on FirebaseException catch (error) {
-        print("Update Profile Error: " + error.toString());
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text("Couldn't upldate profile, try again later"),
+          content: Text("Updated profile!"),
+        ));
+      } on FirebaseException catch (e) {
+        print(e.toString());
+        ScaffoldMessenger.of(_context).showSnackBar(SnackBar(
+          content: Text("There was an error while, try again!"),
         ));
       }
+
       if (this.mounted)
         setState(() {
           _loading = false;
@@ -190,16 +218,17 @@ class _EditProfileFormState extends State<EditProfileForm> {
             Builder(
               builder: (_context) {
                 return buildYellowButton(
-                    child: Text(
-                      "Update",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontFamily: HelveticaFont.Bold),
-                    ),
-                    onTap: () {
-                      _updateProfile(_context);
-                    },
-                    context: context,
-                    loading: _loading);
+                  child: Text(
+                    "Update",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontFamily: HelveticaFont.Bold),
+                  ),
+                  onTap: () {
+                    _updateProfile(_context);
+                  },
+                  context: context,
+                  loading: _loading,
+                );
               },
             ),
             SizedBox(height: 30),

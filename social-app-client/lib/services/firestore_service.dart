@@ -1,10 +1,14 @@
+import 'dart:convert';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter/material.dart';
 import 'package:social_app/models/ChatRow.dart';
 import 'package:social_app/models/CustomClaims.dart';
 import 'package:social_app/models/UserProfileObject.dart';
 import 'package:social_app/modules/constants.dart';
+import 'package:http/http.dart' as http;
 
 class FirestoreService {
   final FirebaseFirestore _firestoreInstance;
@@ -125,44 +129,8 @@ class FirestoreService {
     });
   }
 
-  Future updateCurrentUser(User user, object, {required bool updateUserName}) async {
-    print("PRINNTING: " + object.toString());
+  Future updateUser(User user, newValues) async {
     // Try to Save the /users/ and /takenUserNames/ documents
-    await _firestoreInstance.runTransaction((transaction) async {
-      final newObject = {
-        "displayName": object["displayName"].trim(),
-        "searchKeywords": [
-          ...createKeywords(object["userName"].trim()),
-          ...createKeywords(object["displayName"].trim()),
-        ],
-        "userMeta": {
-          "location": object["location"],
-          "bio": object["bio"],
-          "website": object["website"],
-        }
-      };
-      // Only update userName if not the same
-      if (updateUserName) newObject["userName"] = object["userName"].trim();
-      // Update in /users/
-      transaction.update(
-        _firestoreInstance.collection("users").doc(user.uid),
-        newObject,
-      );
-      // Create the userName record in /takenUserNames/ if not the same
-      if (updateUserName)
-        transaction.set(
-          _firestoreInstance.collection("takenUserNames").doc(object["userName"].toLowerCase().trim()),
-          {"userUid": user.uid},
-        );
-    });
-
-    // Update the FirebaseAuthentication user
-    await user.updateProfile(
-      displayName: object["displayName"],
-      photoURL: object["photoURL"],
-    );
-
-    // Await 2 seconds for the trigger functions to set the custom claims
-    await Future.delayed(Duration(seconds: 1));
+    await _firestoreInstance.collection("users").doc(user.uid).update(newValues);
   }
 }

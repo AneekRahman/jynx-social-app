@@ -11,3 +11,5 @@ admin.initializeApp({
 // Exporting ---------------
 
 exports.api = require("./modules/api").api;
+exports.onUserUpdated = require("./modules/triggers").onUserUpdated;
+exports.UserChatsInfoUpdateCron = require("./modules/triggers").UserChatsInfoUpdateCron;

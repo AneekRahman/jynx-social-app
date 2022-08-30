@@ -22,34 +22,15 @@ class MyProfilePage extends StatefulWidget {
 class _MyProfilePageState extends State<MyProfilePage> {
   User? _currentUser;
 
-  // void _loadUserMetaData() async {
-  //   UserDocumentStream userDocumentStream = context.watch<FirestoreService>().getUserDocumentStream(_currentUser!.uid);
-  //   MyUserObject userObject = MyUserObject.fromJson(userDocumentStream.data());
-  //   setState(() => _myUserObject = userObject);
-  // }
-
   void _launchUserWebsite(String websiteUrl) async {
     String url = "https://" + websiteUrl;
-    if (await canLaunch(url)) {
-      await launch(url);
-    } else {
+    if (!await launchUrl(Uri.parse(url))) {
       throw 'Could not launch $url';
     }
   }
 
-  // void _loadUserInfo() async {
-  //   _currentUser = context.read<User>();
-  //   CustomClaims customClaims = await CustomClaims.getClaims(false);
-  //   _myUserObject.userName = customClaims.userName;
-  //   _myUserObject.displayName = _currentUser!.displayName;
-  //   _myUserObject.photoURL = _currentUser!.photoURL;
-  //   setState(() => {});
-  // }
-
   @override
   void initState() {
-    // _loadUserInfo();
-    // _loadUserMetaData();
     _currentUser = context.read<User?>();
     super.initState();
   }
@@ -80,27 +61,29 @@ class _MyProfilePageState extends State<MyProfilePage> {
                           SizedBox(
                             width: 20,
                           ),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                _myUserObject.displayName ?? "",
-                                style: TextStyle(
-                                  fontFamily: HelveticaFont.Bold,
-                                  color: Colors.white,
-                                  fontSize: 18,
+                          Flexible(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _myUserObject.displayName ?? "",
+                                  style: TextStyle(
+                                    fontFamily: HelveticaFont.Bold,
+                                    color: Colors.white,
+                                    fontSize: 18,
+                                  ),
                                 ),
-                              ),
-                              SizedBox(height: 6),
-                              Text(
-                                _myUserObject.userName ?? "",
-                                style: TextStyle(
-                                  fontFamily: HelveticaFont.Medium,
-                                  color: Colors.white,
-                                  fontSize: 14,
+                                SizedBox(height: 6),
+                                Text(
+                                  _myUserObject.userName ?? "",
+                                  style: TextStyle(
+                                    fontFamily: HelveticaFont.Medium,
+                                    color: Colors.white,
+                                    fontSize: 14,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ],
                       ),
@@ -133,7 +116,7 @@ class _MyProfilePageState extends State<MyProfilePage> {
                       SizedBox(height: 10),
                       GestureDetector(
                         onTap: () {
-                          if (_myUserObject.location!.isEmpty) {
+                          if (_myUserObject.userBio!.isEmpty) {
                             Navigator.push(context, CupertinoPageRoute(builder: (context) => EditProfile(userObject: _myUserObject)));
                           }
                         },
@@ -149,7 +132,7 @@ class _MyProfilePageState extends State<MyProfilePage> {
                       SizedBox(height: 10),
                       GestureDetector(
                         onTap: () {
-                          if (_myUserObject.location!.isEmpty) {
+                          if (_myUserObject.website!.isEmpty) {
                             Navigator.push(context, CupertinoPageRoute(builder: (context) => EditProfile(userObject: _myUserObject)));
                           } else {
                             _launchUserWebsite(_myUserObject.website!);

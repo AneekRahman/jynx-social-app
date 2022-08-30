@@ -268,7 +268,7 @@ api.post(
                 // eslint-disable-next-line prefer-promise-reject-errors
                 return Promise.reject({
                   code: 400,
-                  message: "Username can only be updated once per day!",
+                  message: "Username can only be updated once per day. The rest will be updated.",
                 });
               }
               // If the userName being updated too fast, successfully proceed
@@ -288,7 +288,7 @@ api.post(
                 // eslint-disable-next-line prefer-promise-reject-errors
                 return Promise.reject({
                   code: 400,
-                  message: "Username already exists!",
+                  message: "This username already exists!",
                 });
               }
 
