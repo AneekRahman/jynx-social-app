@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import './OTP/OtpPage.dart';
 import './PhoneSendCodePage.dart';
 
@@ -40,9 +41,12 @@ class _PhoneSignInPageState extends State<PhoneSignInPage> {
         } else
           return true;
       },
-      child: Scaffold(
-        body: SafeArea(
-          child: _getStepPage(),
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: const SystemUiOverlayStyle(statusBarColor: Colors.transparent, statusBarIconBrightness: Brightness.dark),
+        child: Scaffold(
+          body: SafeArea(
+            child: _getStepPage(),
+          ),
         ),
       ),
     );

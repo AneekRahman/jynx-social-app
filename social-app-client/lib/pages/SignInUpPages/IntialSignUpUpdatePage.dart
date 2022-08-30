@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:social_app/models/CustomClaims.dart';
 import 'package:social_app/modules/MyBottomButton.dart';
 import 'package:social_app/modules/constants.dart';
@@ -72,92 +73,92 @@ class _IntialSignUpUpdatePageState extends State<IntialSignUpUpdatePage> {
   void initState() {
     _firestoreInstance = FirebaseFirestore.instance;
     _user = context.read<User>();
-
-    // TODO Fix the displayName: null error
-    print("GOT: " + _user.toString());
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                child: Form(
-                  key: _formKey,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Column(
-                      children: [
-                        SizedBox(height: 20),
-                        Text("Complete Account", style: headingStyle),
-                        SizedBox(height: 10),
-                        Text(
-                          'Select a new username and enter your full name \nto complete the account creation',
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.caption,
-                        ),
-                        SizedBox(height: 40),
-                        TextFormField(
-                          onChanged: (value) => _userName = value.trim(),
-                          validator: (input) {
-                            if (input!.length < 6 || input.length > 32) {
-                              return "Should be between 6 - 32 characters long";
-                            }
-                            if (input.isEmpty || !_userNameRegExp.hasMatch(input)) {
-                              return "Usernames must only be Alpha-Numeric, dots or underscores";
-                            }
-                          },
-                          autofocus: true,
-                          style: TextStyle(fontFamily: HelveticaFont.Roman, fontSize: 20),
-                          decoration: InputDecoration(
-                              labelText: "Username",
-                              prefix: Text("@"),
-                              prefixStyle: TextStyle(color: Colors.black45, fontSize: 18),
-                              floatingLabelBehavior: FloatingLabelBehavior.always,
-                              hintText: "john_doe123",
-                              contentPadding: EdgeInsets.fromLTRB(0, 0, 0, 10)),
-                        ),
-                        SizedBox(height: 20),
-                        TextFormField(
-                          onChanged: (value) => _displayName = value.trim(),
-                          validator: (input) {
-                            if (input!.length < 3 || input.length > 32) {
-                              return "Should be between 3 - 32 characters long";
-                            }
-                            if (input.isEmpty || !_displayNameRegExp.hasMatch(input)) {
-                              return "Names cannot contain numbers or special characters";
-                            }
-                          },
-                          style: TextStyle(fontFamily: HelveticaFont.Roman, fontSize: 20),
-                          textCapitalization: TextCapitalization.words,
-                          decoration: InputDecoration(
-                              labelText: "Full Name",
-                              floatingLabelBehavior: FloatingLabelBehavior.always,
-                              hintText: "eg: John Doe",
-                              contentPadding: EdgeInsets.fromLTRB(0, 0, 0, 10)),
-                        ),
-                      ],
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(statusBarColor: Colors.transparent, statusBarIconBrightness: Brightness.dark),
+      child: Scaffold(
+        body: SafeArea(
+          child: Column(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Form(
+                    key: _formKey,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Column(
+                        children: [
+                          SizedBox(height: 20),
+                          Text("Complete Account", style: headingStyle),
+                          SizedBox(height: 10),
+                          Text(
+                            'Select a new username and enter your full name \nto complete the account creation',
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.caption,
+                          ),
+                          SizedBox(height: 40),
+                          TextFormField(
+                            onChanged: (value) => _userName = value.trim(),
+                            validator: (input) {
+                              if (input!.length < 6 || input.length > 32) {
+                                return "Should be between 6 - 32 characters long";
+                              }
+                              if (input.isEmpty || !_userNameRegExp.hasMatch(input)) {
+                                return "Usernames must only be Alpha-Numeric, dots or underscores";
+                              }
+                            },
+                            autofocus: true,
+                            style: TextStyle(fontFamily: HelveticaFont.Roman, fontSize: 20),
+                            decoration: InputDecoration(
+                                labelText: "Username",
+                                prefix: Text("@"),
+                                prefixStyle: TextStyle(color: Colors.black45, fontSize: 18),
+                                floatingLabelBehavior: FloatingLabelBehavior.always,
+                                hintText: "john_doe123",
+                                contentPadding: EdgeInsets.fromLTRB(0, 0, 0, 10)),
+                          ),
+                          SizedBox(height: 20),
+                          TextFormField(
+                            onChanged: (value) => _displayName = value.trim(),
+                            validator: (input) {
+                              if (input!.length < 3 || input.length > 32) {
+                                return "Should be between 3 - 32 characters long";
+                              }
+                              if (input.isEmpty || !_displayNameRegExp.hasMatch(input)) {
+                                return "Names cannot contain numbers or special characters";
+                              }
+                            },
+                            style: TextStyle(fontFamily: HelveticaFont.Roman, fontSize: 20),
+                            textCapitalization: TextCapitalization.words,
+                            decoration: InputDecoration(
+                                labelText: "Full Name",
+                                floatingLabelBehavior: FloatingLabelBehavior.always,
+                                hintText: "eg: John Doe",
+                                contentPadding: EdgeInsets.fromLTRB(0, 0, 0, 10)),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-            Builder(
-              builder: (context) {
-                return MyBottomButton(
-                  isLoading: _loading,
-                  text: "Finish Account",
-                  onTap: () async {
-                    _finishAccount(context);
-                  },
-                );
-              },
-            )
-          ],
+              Builder(
+                builder: (context) {
+                  return MyBottomButton(
+                    isLoading: _loading,
+                    text: "Finish Account",
+                    onTap: () async {
+                      _finishAccount(context);
+                    },
+                  );
+                },
+              )
+            ],
+          ),
         ),
       ),
     );

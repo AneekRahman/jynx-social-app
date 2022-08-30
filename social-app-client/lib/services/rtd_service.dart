@@ -10,7 +10,7 @@ class RealtimeDatabaseService {
       _firebaseDatabase.ref().child("userChats/$userUid").orderByChild("lastMsgSentTime").limitToLast(10).onValue;
 
   Stream getChatRoomStream(String chatRoomUid) {
-    return _firebaseDatabase.ref().child('chatRooms/$chatRoomUid').orderByChild("sentTime").limitToLast(15).onValue;
+    return _firebaseDatabase.ref().child('chatRooms/$chatRoomUid').orderByChild("sentTime").limitToLast(10).onValue;
   }
 
   Future sendMessageInRoom(String chatRoomUid, dynamic msgJson) async {

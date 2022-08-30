@@ -69,13 +69,13 @@ class FirestoreService {
           "userName": claims.userName,
           "displayName": currentUser.displayName,
           "photoURL": currentUser.photoURL ?? "",
-          "userDeleted": false,
+          "searchable": true,
         },
         otherUserObject.userUid: {
           "userName": otherUserObject.userName,
           "displayName": otherUserObject.displayName,
           "photoURL": otherUserObject.photoURL ?? "",
-          "userDeleted": false,
+          "searchable": true,
         }
       },
     });

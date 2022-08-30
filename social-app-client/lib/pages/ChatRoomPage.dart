@@ -83,9 +83,9 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
 
   void _removeIfAlreadyAdded(MsgRow msgRow) {
     for (int i = 0; i < _msgRows.length; i++) {
-      MsgRow msgRow = _msgRows.elementAt(i);
-      if (msgRow != null && msgRow.msgUid == msgRow.msgUid) {
-        final index = _msgRows.indexOf(msgRow);
+      MsgRow element = _msgRows.elementAt(i);
+      if (element != null && msgRow.msgUid == element.msgUid) {
+        final index = _msgRows.indexOf(element);
         _msgRows.removeAt(index);
       }
     }
@@ -94,6 +94,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   void _setMsgRowsFromStream(dynamic chatRoomMsgsObject) {
     if (chatRoomMsgsObject != null)
       chatRoomMsgsObject.forEach((key, value) {
+        print("GOT: ${key}");
         MsgRow msgRow = MsgRow.fromJson({...chatRoomMsgsObject[key], 'msgUid': key});
         _removeIfAlreadyAdded(msgRow);
         _msgRows.add(msgRow);
@@ -107,7 +108,12 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
     if (widget.chatRow == null) {
       // Search for an already made private chatroom for these 2 users
       ChatRow? chatRow = await context.read<FirestoreService>().findPrivateChatWithUser(_currentUser.uid, widget.otherUser.userUid);
-      if (chatRow != null) widget.chatRow = chatRow;
+      print(chatRow);
+      if (chatRow != null) {
+        setState(() {
+          widget.chatRow = chatRow;
+        });
+      }
     }
 
     // If chatRoom found, then make sure to update the seen of lastMsg if already not seen
@@ -141,46 +147,50 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
               chatRow: widget.chatRow,
               otherUser: widget.otherUser,
             ),
-            widget.chatRow != null
-                ? Expanded(
-                    child: StreamBuilder(
-                      stream: context.watch<RealtimeDatabaseService>().getChatRoomStream(widget.chatRow!.chatRoomUid!),
-                      builder: (context, AsyncSnapshot snapshot) {
-                        if (snapshot.hasData && !_initializingChatRoom) {
-                          _setMsgRowsFromStream(snapshot.data!.snapshot.value);
+            !_initializingChatRoom
+                ? widget.chatRow != null
+                    ? Expanded(
+                        child: StreamBuilder(
+                          stream: context.watch<RealtimeDatabaseService>().getChatRoomStream(widget.chatRow!.chatRoomUid),
+                          builder: (context, AsyncSnapshot snapshot) {
+                            if (snapshot.hasData && !snapshot.hasError) {
+                              _setMsgRowsFromStream(snapshot.data!.snapshot.value);
 
-                          return CustomScrollView(
-                            reverse: true,
-                            physics: BouncingScrollPhysics(),
-                            slivers: [
-                              SliverList(
-                                delegate: SliverChildBuilderDelegate(
-                                  (context, index) {
-                                    MsgRow msgRow = _msgRows.elementAt(index);
-                                    // Check if previous post was also from the same user
-                                    bool firstMsgOfUser = true;
-                                    if (index == 0 || _msgRows.elementAt(index - 1).msgUid == _currentUser.uid) {
-                                      firstMsgOfUser = false;
-                                    }
+                              return CustomScrollView(
+                                reverse: true,
+                                physics: BouncingScrollPhysics(),
+                                slivers: [
+                                  SliverList(
+                                    delegate: SliverChildBuilderDelegate(
+                                      (context, index) {
+                                        MsgRow msgRow = _msgRows.elementAt(index);
+                                        // Check if previous post was also from the same user
+                                        bool firstMsgOfUser = true;
+                                        if (index == 0 || _msgRows.elementAt(index - 1).msgUid == _currentUser.uid) {
+                                          firstMsgOfUser = false;
+                                        }
 
-                                    return MessageBubble(
-                                      msgRow: msgRow,
-                                      isUser: msgRow.userUid == _currentUser.uid,
-                                      firstMsgOfUser: firstMsgOfUser,
-                                    );
-                                  },
-                                  childCount: _msgRows.length,
-                                ),
-                              )
-                            ],
-                          );
-                        } else {
-                          return _buildLoadingAnim();
-                        }
-                      },
-                    ),
-                  )
-                : Container(),
+                                        return MessageBubble(
+                                          msgRow: msgRow,
+                                          isUser: msgRow.userUid == _currentUser.uid,
+                                          firstMsgOfUser: firstMsgOfUser,
+                                        );
+                                      },
+                                      childCount: _msgRows.length,
+                                    ),
+                                  )
+                                ],
+                              );
+                            } else if (snapshot.hasError) {
+                              return Center(child: Text("Error! Go back and reload the page!"));
+                            } else {
+                              return _buildLoadingAnim();
+                            }
+                          },
+                        ),
+                      )
+                    : Center(child: Text("You haven't messaged yet!"))
+                : _buildLoadingAnim(),
             // ChatRequestActions(
             //   chatRow: widget.chatRow!,
             //   currentUser: _currentUser,
@@ -251,49 +261,51 @@ class ChatBottomBar extends StatelessWidget {
   bool _alreadySending = false;
 
   Future _createRequestAndSendMsg(context) async {
-    final String chatRoomUid =
-        await rootContext.read<FirestoreService>().createRequestedUserChats(otherUserObject: otherUser, currentUser: currentUser);
+    try {
+      final String chatRoomUid =
+          await rootContext.read<FirestoreService>().createRequestedUserChats(otherUserObject: otherUser, currentUser: currentUser);
 
-    // Successfully created new requestedUserChat
-    chatRow = ChatRow(chatRoomUid: chatRoomUid, otherUser: otherUser);
-    // Set the newly created chatRoomUid
-    setChatRoomUid(chatRoomUid);
-    // Lastly send the message
-    await _sendMessageToChatRoom(context);
-    // } catch (e) {
-    //   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-    //     content: Text("Unable to send the message to the user currently 2"),
-    //   ));
-    //   throw e;
-    // }
+      // Successfully created new requestedUserChat
+      chatRow = ChatRow(chatRoomUid: chatRoomUid, otherUser: otherUser);
+      // Set the newly created chatRoomUid
+      setChatRoomUid(chatRoomUid);
+      // Lastly send the message
+      await _sendMessageToChatRoom(context);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text("Unable to send the message to the user currently 2"),
+      ));
+      throw e;
+    }
   }
 
   Future _sendMessageToChatRoom(context) async {
-    int lastMsgSentTime = new DateTime.now().millisecondsSinceEpoch;
-    // Send a message in the RealtimeDatabase chatRoom
-    rootContext.read<RealtimeDatabaseService>().sendMessageInRoom(
-      chatRow!.chatRoomUid!,
-      {"msg": _textInputValue, "sentTime": lastMsgSentTime, "userUid": currentUser.uid},
-    );
-    // Update the userChats document and reset the lastMsgSeen array and sentTime
-    rootContext.read<FirestoreService>().setNewMsgUserChatsSeenReset(
-          chatRow!.chatRoomUid!,
-          currentUser.uid,
-          lastMsgSentTime.toString(),
-        );
-    // } catch (e) {
-    //   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-    //     content: Text("There was a network issue while sending the message 2"),
-    //   ));
-    //   throw e;
-    // }
+    try {
+      int lastMsgSentTime = new DateTime.now().millisecondsSinceEpoch;
+      // Send a message in the RealtimeDatabase chatRoom
+      rootContext.read<RealtimeDatabaseService>().sendMessageInRoom(
+        chatRow!.chatRoomUid,
+        {"msg": _textInputValue, "sentTime": lastMsgSentTime, "userUid": currentUser.uid},
+      );
+      // Update the userChats document and reset the lastMsgSeen array and sentTime
+      rootContext.read<FirestoreService>().setNewMsgUserChatsSeenReset(
+            chatRow!.chatRoomUid,
+            currentUser.uid,
+            lastMsgSentTime.toString(),
+          );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text("There was a network issue while sending the message 2"),
+      ));
+      throw e;
+    }
   }
 
   void _onSendHandler(context) async {
     if (_alreadySending) return;
     _alreadySending = true;
 
-    if (chatRow != null && chatRow!.chatRoomUid == null) {
+    if (chatRow != null) {
       await _sendMessageToChatRoom(context);
     } else {
       // Send a message to the chatRoomUid
