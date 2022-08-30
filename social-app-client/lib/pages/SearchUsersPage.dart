@@ -3,8 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:social_app/models/UserProfileObject.dart';
 import 'package:social_app/modules/LoadingBar.dart';
-import 'package:social_app/models/MyUserObject.dart';
 import 'package:social_app/modules/constants.dart';
 import 'package:social_app/pages/ChatRoomPage.dart';
 import 'package:provider/provider.dart';
@@ -17,7 +17,7 @@ class SearchUsersPage extends StatefulWidget {
 class _SearchUsersPageState extends State<SearchUsersPage> {
   final String _initialMsg = "Search for names, usernames";
   String _msg = "Search for names, usernames";
-  List<MyUserObject> _searchUsersList = [];
+  List<UserProfileObject> _searchUsersList = [];
   bool _loading = false;
   User? _currentUser;
 
@@ -27,7 +27,7 @@ class _SearchUsersPageState extends State<SearchUsersPage> {
     setState(() {
       _loading = true;
     });
-    List<MyUserObject> users = [];
+    List<UserProfileObject> users = [];
     // code to convert the first character to uppercase
     List searchKeys = input.split(" ");
     if (searchKeys.length > 10) searchKeys = searchKeys.sublist(0, 9);
@@ -42,10 +42,10 @@ class _SearchUsersPageState extends State<SearchUsersPage> {
     for (QueryDocumentSnapshot user in result.docs) {
       Map? data = user.data() as Map;
       if (user.id != _currentUser!.uid)
-        users.add(MyUserObject(
+        users.add(UserProfileObject(
           displayName: data["displayName"],
           userName: data["userName"],
-          profilePic: data["profilePic"],
+          photoURL: data["photoURL"],
           userUid: user.id,
         ));
     }
@@ -214,7 +214,7 @@ class SearchBox extends StatelessWidget {
 }
 
 class SearchUserRow extends StatelessWidget {
-  final MyUserObject _userObject;
+  final UserProfileObject _userObject;
   const SearchUserRow({Key? key, userObject})
       : _userObject = userObject,
         super(key: key);
@@ -235,7 +235,7 @@ class SearchUserRow extends StatelessWidget {
             child: Container(
               color: Colors.white12,
               child: Image.network(
-                _userObject.profilePic ?? "",
+                _userObject.photoURL ?? "",
                 height: 40,
                 width: 40,
               ),

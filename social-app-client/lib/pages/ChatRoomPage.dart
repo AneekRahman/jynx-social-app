@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:social_app/models/ChatRow.dart';
 import 'package:social_app/models/MsgRow.dart';
-import 'package:social_app/models/MyUserObject.dart';
+import 'package:social_app/models/UserProfileObject.dart';
 import 'package:social_app/modules/constants.dart';
 import 'package:social_app/services/firestore_service.dart';
 import 'package:social_app/services/rtd_service.dart';
@@ -26,7 +26,7 @@ Center _buildLoadingAnim() {
 
 class ChatTopBar extends StatelessWidget {
   ChatRow chatRow;
-  MyUserObject otherUser;
+  UserProfileObject otherUser;
   ChatTopBar({required this.chatRow, required this.otherUser});
 
   final double _padding = 20;
@@ -77,7 +77,7 @@ class ChatTopBar extends StatelessWidget {
 
 class ChatRoomPage extends StatefulWidget {
   ChatRow? chatRow;
-  MyUserObject? otherUser;
+  UserProfileObject? otherUser;
   ChatRoomPage({this.chatRow, this.otherUser});
   @override
   _ChatRoomPageState createState() => _ChatRoomPageState();
@@ -247,7 +247,7 @@ class ChatBottomBar extends StatelessWidget {
   BuildContext rootContext;
   ChatRow chatRow;
   User currentUser;
-  MyUserObject otherUser;
+  UserProfileObject otherUser;
   Function setChatRoomUid;
   ChatBottomBar(
       {Key? key,

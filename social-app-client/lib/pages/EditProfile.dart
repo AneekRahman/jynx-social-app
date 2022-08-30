@@ -2,14 +2,14 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:social_app/models/CustomClaims.dart';
-import 'package:social_app/models/MyUserObject.dart';
+import 'package:social_app/models/UserProfileObject.dart';
 import 'package:social_app/modules/constants.dart';
 import 'package:provider/provider.dart';
 import 'package:social_app/pages/LocationPicker.dart';
 import 'package:social_app/services/firestore_service.dart';
 
 class EditProfile extends StatelessWidget {
-  MyUserObject userObject;
+  UserProfileObject userObject;
   EditProfile({required this.userObject});
   @override
   Widget build(BuildContext context) {
@@ -33,7 +33,7 @@ class EditProfile extends StatelessWidget {
 }
 
 class EditProfileForm extends StatefulWidget {
-  MyUserObject userObject;
+  UserProfileObject userObject;
   EditProfileForm({required this.userObject});
   @override
   _EditProfileFormState createState() => _EditProfileFormState();
@@ -71,13 +71,10 @@ class _EditProfileFormState extends State<EditProfileForm> {
   void _setupInitialData() async {
     customClaims = await CustomClaims.getClaims(false);
     _userNameController.text = customClaims.userName ?? "";
-    _displayNameController.text = _currentUser!.displayName!;
-    Map userMeta = widget.userObject.userMeta!; // TODO fix null
-    if (userMeta != null) {
-      _bioController.text = userMeta["bio"] ?? "";
-      _wwwController.text = userMeta["website"] ?? "";
-      _location = userMeta["location"] ?? "";
-    }
+    _displayNameController.text = _currentUser!.displayName ?? "";
+    _bioController.text = widget.userObject.userBio ?? "";
+    _wwwController.text = widget.userObject.website ?? "";
+    _location = widget.userObject.location ?? "";
     setState(() => {});
   }
 

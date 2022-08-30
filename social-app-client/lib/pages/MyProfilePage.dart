@@ -1,10 +1,11 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:social_app/models/CustomClaims.dart';
-import 'package:social_app/models/MyUserObject.dart';
 import 'package:provider/provider.dart';
+import 'package:social_app/models/UserProfileObject.dart';
 import 'package:social_app/modules/constants.dart';
 import 'package:social_app/pages/EditProfile.dart';
 import 'package:social_app/services/auth_service.dart';
@@ -20,26 +21,15 @@ class MyProfilePage extends StatefulWidget {
 
 class _MyProfilePageState extends State<MyProfilePage> {
   User? _currentUser;
-  MyUserObject _myUserObject = MyUserObject();
-
-  void _loadUserInfo() async {
-    _currentUser = context.read<User>();
-    CustomClaims customClaims = await CustomClaims.getClaims(false);
-    _myUserObject.userName = customClaims.userName;
-    _myUserObject.displayName = _currentUser!.displayName;
-    _myUserObject.profilePic = _currentUser!.photoURL;
-    setState(() => {});
-  }
 
   // void _loadUserMetaData() async {
-  //   UserDocumentStream userDocumentStream = context.watch<UserDocumentStream>();
+  //   UserDocumentStream userDocumentStream = context.watch<FirestoreService>().getUserDocumentStream(_currentUser!.uid);
   //   MyUserObject userObject = MyUserObject.fromJson(userDocumentStream.data());
   //   setState(() => _myUserObject = userObject);
   // }
 
-  void _launchUserWebsite() async {
-    if (_myUserObject.userMeta == null) return;
-    String url = "https://" + _myUserObject.userMeta!["website"]!;
+  void _launchUserWebsite(String websiteUrl) async {
+    String url = "https://" + websiteUrl;
     if (await canLaunch(url)) {
       await launch(url);
     } else {
@@ -47,10 +37,20 @@ class _MyProfilePageState extends State<MyProfilePage> {
     }
   }
 
+  // void _loadUserInfo() async {
+  //   _currentUser = context.read<User>();
+  //   CustomClaims customClaims = await CustomClaims.getClaims(false);
+  //   _myUserObject.userName = customClaims.userName;
+  //   _myUserObject.displayName = _currentUser!.displayName;
+  //   _myUserObject.photoURL = _currentUser!.photoURL;
+  //   setState(() => {});
+  // }
+
   @override
   void initState() {
-    _loadUserInfo();
+    // _loadUserInfo();
     // _loadUserMetaData();
+    _currentUser = context.read<User>();
     super.initState();
   }
 
@@ -58,132 +58,160 @@ class _MyProfilePageState extends State<MyProfilePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Color(0xFF1f1f1f),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ProfilePageAppBar(),
-            Row(
-              children: [
-                ProfileImageBlock(
-                  profilePic: _myUserObject.profilePic,
-                ),
-                SizedBox(
-                  width: 20,
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _myUserObject.displayName ?? "",
-                      style: TextStyle(
-                        fontFamily: HelveticaFont.Bold,
-                        color: Colors.white,
-                        fontSize: 18,
-                      ),
-                    ),
-                    SizedBox(height: 6),
-                    Text(
-                      _myUserObject.userName ?? "",
-                      style: TextStyle(
-                        fontFamily: HelveticaFont.Medium,
-                        color: Colors.white,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            SizedBox(height: 20),
-            _myUserObject.userMeta != null
-                ? Row(
+      body: _currentUser != null
+          ? StreamBuilder(
+              stream: context.watch<FirestoreService>().getUserDocumentStream(_currentUser!.uid),
+              builder: (context, AsyncSnapshot<DocumentSnapshot> snapshot) {
+                if (snapshot.data == null) return Container();
+                UserProfileObject _myUserObject =
+                    UserProfileObject.fromJson(snapshot.data!.data() as Map<String, dynamic>, snapshot.data!.id);
+
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(
-                        Icons.location_on,
-                        color: Colors.white,
-                        size: 18,
+                      ProfilePageAppBar(),
+                      Row(
+                        children: [
+                          ProfileImageBlock(
+                            photoURL: _myUserObject.photoURL,
+                          ),
+                          SizedBox(
+                            width: 20,
+                          ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _myUserObject.displayName ?? "",
+                                style: TextStyle(
+                                  fontFamily: HelveticaFont.Bold,
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                ),
+                              ),
+                              SizedBox(height: 6),
+                              Text(
+                                _myUserObject.userName ?? "",
+                                style: TextStyle(
+                                  fontFamily: HelveticaFont.Medium,
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
-                      SizedBox(width: 4),
-                      Text(
-                        _myUserObject.userMeta!["location"]!.isNotEmpty ? _myUserObject.userMeta!["location"]! : "Add location",
-                        style: TextStyle(
-                          fontFamily: HelveticaFont.Roman,
-                          color: Colors.white38,
-                          fontSize: 14,
+                      SizedBox(height: 20),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.location_on,
+                            color: Colors.white,
+                            size: 18,
+                          ),
+                          SizedBox(width: 4),
+                          GestureDetector(
+                            onTap: () {
+                              if (_myUserObject.location!.isEmpty) {
+                                Navigator.push(context, CupertinoPageRoute(builder: (context) => EditProfile(userObject: _myUserObject)));
+                              }
+                            },
+                            child: Text(
+                              _myUserObject.location!.isNotEmpty ? _myUserObject.location! : "Add location",
+                              style: TextStyle(
+                                fontFamily: HelveticaFont.Roman,
+                                color: Colors.white38,
+                                fontSize: 14,
+                              ),
+                            ),
+                          )
+                        ],
+                      ),
+                      SizedBox(height: 10),
+                      GestureDetector(
+                        onTap: () {
+                          if (_myUserObject.location!.isEmpty) {
+                            Navigator.push(context, CupertinoPageRoute(builder: (context) => EditProfile(userObject: _myUserObject)));
+                          }
+                        },
+                        child: Text(
+                          _myUserObject.userBio!.isNotEmpty ? _myUserObject.userBio! : "Add a bio",
+                          style: TextStyle(
+                            fontFamily: HelveticaFont.Roman,
+                            color: Colors.white70,
+                            fontSize: 14,
+                          ),
                         ),
                       ),
+                      SizedBox(height: 10),
+                      GestureDetector(
+                        onTap: () {
+                          if (_myUserObject.location!.isEmpty) {
+                            Navigator.push(context, CupertinoPageRoute(builder: (context) => EditProfile(userObject: _myUserObject)));
+                          } else {
+                            _launchUserWebsite(_myUserObject.website!);
+                          }
+                        },
+                        child: Text(
+                          _myUserObject.website!.isNotEmpty ? _myUserObject.website! : "Add a website",
+                          style: TextStyle(
+                            fontFamily: HelveticaFont.Bold,
+                            color: Colors.yellow,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 20),
+                      buildYellowButton(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.settings,
+                                size: 18,
+                              ),
+                              SizedBox(width: 10),
+                              Text(
+                                "Edit Profile",
+                                style: TextStyle(
+                                  fontFamily: HelveticaFont.Bold,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                          onTap: () {
+                            Navigator.push(context, CupertinoPageRoute(builder: (context) => EditProfile(userObject: _myUserObject)));
+                          },
+                          context: context,
+                          loading: false),
                     ],
-                  )
-                : Container(),
-            SizedBox(height: 10),
-            _myUserObject.userMeta != null
-                ? Text(
-                    _myUserObject.userMeta!["bio"]!.isNotEmpty ? _myUserObject.userMeta!["bio"]! : "Add a bio",
-                    style: TextStyle(
-                      fontFamily: HelveticaFont.Roman,
-                      color: Colors.white70,
-                      fontSize: 14,
-                    ),
-                  )
-                : Container(),
-            SizedBox(height: 10),
-            _myUserObject.userMeta != null
-                ? GestureDetector(
-                    onTap: () {
-                      _launchUserWebsite();
-                    },
-                    child: Text(
-                      _myUserObject.userMeta!["website"]!.isNotEmpty ? _myUserObject.userMeta!["website"]! : "Add a website",
-                      style: TextStyle(
-                        fontFamily: HelveticaFont.Bold,
-                        color: Colors.yellow,
-                        fontSize: 14,
-                      ),
-                    ),
-                  )
-                : Container(),
-            SizedBox(height: 20),
-            buildYellowButton(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.settings,
-                      size: 18,
-                    ),
-                    SizedBox(width: 10),
-                    Text(
-                      "Edit Profile",
-                      style: TextStyle(
-                        fontFamily: HelveticaFont.Bold,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
-                ),
-                onTap: () {
-                  Navigator.push(context, CupertinoPageRoute(builder: (context) => EditProfile(userObject: _myUserObject)));
-                },
-                context: context,
-                loading: false),
-          ],
-        ),
-      ),
+                  ),
+                );
+              })
+          : Center(
+              child: SizedBox(
+                height: 30,
+                width: 30,
+                child: CircularProgressIndicator(),
+              ),
+            ),
     );
   }
 }
 
 class ProfileImageBlock extends StatelessWidget {
-  final String? profilePic;
+  final String? photoURL;
   const ProfileImageBlock({
     Key? key,
-    this.profilePic,
+    this.photoURL,
   }) : super(key: key);
   @override
   Widget build(BuildContext context) {
-    bool hasImg = profilePic != null && profilePic!.isNotEmpty;
+    bool hasImg = photoURL != null && photoURL!.isNotEmpty;
 
     return Container(
       height: 110,
@@ -196,7 +224,7 @@ class ProfileImageBlock extends StatelessWidget {
       child: hasImg
           ? ClipRRect(
               child: Image.network(
-              profilePic!,
+              photoURL!,
               height: 110,
               width: 110,
             ))

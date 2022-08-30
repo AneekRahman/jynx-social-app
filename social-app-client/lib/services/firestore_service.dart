@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:social_app/models/ChatRow.dart';
 import 'package:social_app/models/CustomClaims.dart';
-import 'package:social_app/models/MyUserObject.dart';
+import 'package:social_app/models/UserProfileObject.dart';
 import 'package:social_app/modules/constants.dart';
 
 class FirestoreService {
@@ -51,7 +51,7 @@ class FirestoreService {
   }
 
   Future<Map<String, String>> createRequestedUserChats({
-    required MyUserObject otherUserObject,
+    required UserProfileObject otherUserObject,
     required User currentUser,
   }) async {
     try {
@@ -70,13 +70,13 @@ class FirestoreService {
           currentUser.uid: {
             "userName": claims.userName,
             "displayName": currentUser.displayName,
-            "profilePic": currentUser.photoURL ?? "",
+            "photoURL": currentUser.photoURL ?? "",
             "userDeleted": false,
           },
           otherUserObject.userUid: {
             "userName": otherUserObject.userName,
             "displayName": otherUserObject.displayName,
-            "profilePic": otherUserObject.profilePic ?? "",
+            "photoURL": otherUserObject.photoURL ?? "",
             "userDeleted": false,
           }
         },
@@ -164,7 +164,7 @@ class FirestoreService {
     // Update the FirebaseAuthentication user
     await user.updateProfile(
       displayName: object["displayName"],
-      photoURL: object["profilePic"],
+      photoURL: object["photoURL"],
     );
 
     // Await 2 seconds for the trigger functions to set the custom claims

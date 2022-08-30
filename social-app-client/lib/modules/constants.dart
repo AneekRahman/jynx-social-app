@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:social_app/models/ChatRow.dart';
-import 'package:social_app/models/MyUserObject.dart';
 import 'package:social_app/models/UserChatsSnapshot.dart';
+import 'package:social_app/models/UserProfileObject.dart';
 
 class MyServer {
   static const String SERVER_API = "http://192.168.0.103:5000/jynx-chat/us-central1/api";
@@ -59,14 +59,14 @@ ChatRow? getChatRowFromDocSnapshot(QueryDocumentSnapshot snapshot, String curren
     // Check if available in the members list
     userChatsSnapshot.memberInfo!.forEach((key, value) {
       if (key != currentUserUid) {
-        MyUserObject userObject = MyUserObject.fromJson({...userChatsSnapshot.memberInfo![key], "userUid": key});
+        UserProfileObject userObject = UserProfileObject.fromJson(userChatsSnapshot.memberInfo![key], key);
         chatRow = ChatRow(
             userChatsDocUid: snapshot.id,
             chatRoomUid: userChatsSnapshot.chatRoomUid,
             otherUsersName: userObject.displayName,
             otherUsersUserName: userObject.userName,
             otherUsersUid: userObject.userUid,
-            otherUsersPic: userObject.profilePic,
+            otherUsersPic: userObject.photoURL,
             lastMsgSentTime: userChatsSnapshot.lastMsgSentTime,
             seen: userChatsSnapshot.lastMsgSeenBy!.contains(currentUserUid),
             requested: userChatsSnapshot.requestedMembers!.contains(currentUserUid));

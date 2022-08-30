@@ -2,7 +2,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:social_app/models/CustomClaims.dart';
-import 'package:social_app/models/MyUserObject.dart';
 import 'package:provider/provider.dart';
 import 'package:social_app/modules/constants.dart';
 import 'package:social_app/services/auth_service.dart';
@@ -40,7 +39,7 @@ class _OthersProfilePageState extends State<OthersProfilePage> {
             Row(
               children: [
                 ProfileImageBlock(
-                  profilePic: "",
+                  photoURL: "",
                 ),
                 SizedBox(
                   width: 20,
@@ -139,14 +138,14 @@ class _OthersProfilePageState extends State<OthersProfilePage> {
 }
 
 class ProfileImageBlock extends StatelessWidget {
-  final String profilePic;
+  final String photoURL;
   const ProfileImageBlock({
     Key? key,
-    required this.profilePic,
+    required this.photoURL,
   }) : super(key: key);
   @override
   Widget build(BuildContext context) {
-    bool hasImg = profilePic != null && profilePic.isNotEmpty;
+    bool hasImg = photoURL != null && photoURL.isNotEmpty;
 
     return Container(
       height: 110,
@@ -159,7 +158,7 @@ class ProfileImageBlock extends StatelessWidget {
       child: hasImg
           ? ClipRRect(
               child: Image.network(
-              profilePic,
+              photoURL,
               height: 110,
               width: 110,
             ))

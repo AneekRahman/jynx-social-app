@@ -113,11 +113,6 @@ api.post(
       return res.status(400).json({ code: 400, message: errors[0] });
     }
 
-    // Update the displayName of the user
-    await admin.auth().updateUser(user.uid, {
-      displayName: displayName,
-    });
-
     await admin
       .firestore()
       .runTransaction((transaction) => {
