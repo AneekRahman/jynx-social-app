@@ -36,7 +36,7 @@ class ChatTopBar extends StatelessWidget {
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
-            color: Colors.black.withOpacity(.05),
+            color: Colors.black.withOpacity(.02),
             width: 1.0,
           ),
         ),
@@ -61,13 +61,11 @@ class ChatTopBar extends StatelessWidget {
                   height: 45,
                   width: 45,
                   margin: EdgeInsets.only(right: 10),
-                  decoration: otherUser.photoURL!.isNotEmpty
-                      ? BoxDecoration(
-                          color: Colors.white10,
-                          borderRadius: BorderRadius.circular(10000),
-                          border: Border.all(color: Colors.yellow, width: 2),
-                        )
-                      : null,
+                  decoration: BoxDecoration(
+                    color: Colors.white10,
+                    borderRadius: BorderRadius.circular(10000),
+                    border: Border.all(color: Colors.yellow, width: 2),
+                  ),
                   child: otherUser.photoURL!.isNotEmpty
                       ? ClipRRect(
                           child: Image.network(
@@ -81,12 +79,10 @@ class ChatTopBar extends StatelessWidget {
                       : Container(
                           height: 45,
                           width: 45,
-                          decoration: otherUser.photoURL!.isNotEmpty
-                              ? BoxDecoration(
-                                  color: Colors.black12,
-                                  borderRadius: BorderRadius.circular(10000),
-                                )
-                              : null,
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(.07),
+                            borderRadius: BorderRadius.circular(10000),
+                          ),
                         ),
                 ),
                 Column(

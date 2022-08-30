@@ -112,6 +112,8 @@ class _ChatBottomBarState extends State<ChatBottomBar> {
               children: [
                 Expanded(
                   child: TextField(
+                    maxLines: 5,
+                    minLines: 1,
                     textCapitalization: TextCapitalization.sentences,
                     style: TextStyle(fontFamily: HelveticaFont.Roman),
                     controller: chatMsgTextController,
