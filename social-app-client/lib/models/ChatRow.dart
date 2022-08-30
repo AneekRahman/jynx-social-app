@@ -7,17 +7,19 @@ class ChatRow {
   late UserProfileObject otherUser;
   String? lastMsgSentTime;
   bool? seen;
-  bool? requested;
   // status:
   //   : 0 means not seen by the user
   //   : 1 means seen
+  bool? requestedByOtherUser;
+  bool? blockedByThisUser;
 
   ChatRow({
     required this.chatRoomUid,
     required this.otherUser,
     this.lastMsgSentTime,
     this.seen,
-    this.requested,
+    this.requestedByOtherUser,
+    this.blockedByThisUser,
   });
 
   ChatRow.fromJson(Map<String, dynamic> map, String chatRoomUid) {
@@ -25,7 +27,8 @@ class ChatRow {
     otherUser = UserProfileObject.fromJson(map["otherUser"], map["userUid"]);
     lastMsgSentTime = map['lastMsgSentTime'];
     seen = map['seen'];
-    requested = map['requested'];
+    requestedByOtherUser = map['requestedByOtherUser'];
+    blockedByThisUser = map['blockedByThisUser'];
   }
 }
 

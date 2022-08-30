@@ -61,6 +61,7 @@ class FirestoreService {
       "allMembers": [otherUserObject.userUid, currentUser.uid], // Requested + Accepted members
       "requestedMembers": [otherUserObject.userUid], // Requested members
       "members": [currentUser.uid], // Accepted members
+      "blockedMembers": [],
       "lastMsgSeenBy": [currentUser.uid], // Last msg seen by which of the users
       "lastMsgSentTime": new DateTime.now().millisecondsSinceEpoch.toString(),
       "type": ChatType.PRIVATE, // PRIVATE or GROUP
@@ -96,31 +97,32 @@ class FirestoreService {
     });
   }
 
-  Future acceptChatUserRequest(String userChatsDocumentUid, String currentUserUid) async {
+  Future acceptChatUserRequest(String userChatsDocumentUid, String currentUserUid, String otherUserUid) async {
     await _firestoreInstance.collection("userChats").doc(userChatsDocumentUid).update({
-      "members": FieldValue.arrayUnion([currentUserUid]),
+      "members": FieldValue.arrayUnion([currentUserUid, otherUserUid]),
+      "blockedMembers": FieldValue.arrayRemove([otherUserUid]),
       "requestedMembers": FieldValue.arrayRemove([currentUserUid]),
     });
   }
 
   Future blockUser({
     required String userChatsDocumentUid,
-    required String currentUserUid,
     required String blockedUserUid,
   }) async {
-    await _firestoreInstance.collection("users").doc(currentUserUid).collection("blockedUsers").add({
-      "blockedUserUid": blockedUserUid,
-      "time": new DateTime.now().millisecondsSinceEpoch.toString(),
+    await _firestoreInstance.collection("userChats").doc(userChatsDocumentUid).update({
+      "members": FieldValue.arrayRemove([blockedUserUid]),
+      "blockedMembers": FieldValue.arrayUnion([blockedUserUid]),
     });
+  }
 
-    if (userChatsDocumentUid != null) {
-      // Remove from members or requestedMembers and add a list of users who have blocked this chat
-      await _firestoreInstance.collection("userChats").doc(userChatsDocumentUid).update({
-        "members": FieldValue.arrayRemove([currentUserUid]),
-        "requestedMembers": FieldValue.arrayRemove([currentUserUid]),
-        "chatBlockedByUsers": [currentUserUid]
-      });
-    }
+  Future unblockUser({
+    required String userChatsDocumentUid,
+    required String blockedUserUid,
+  }) async {
+    await _firestoreInstance.collection("userChats").doc(userChatsDocumentUid).update({
+      "members": FieldValue.arrayUnion([blockedUserUid]),
+      "blockedMembers": FieldValue.arrayRemove([blockedUserUid]),
+    });
   }
 
   Future updateCurrentUser(User user, object, {required bool updateUserName}) async {

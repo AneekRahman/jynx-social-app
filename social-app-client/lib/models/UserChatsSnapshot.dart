@@ -6,6 +6,7 @@ class UserChatsSnapshot {
   List? allMembers;
   List? lastMsgSeenBy;
   List? requestedMembers;
+  List? blockedMembers;
   String? lastMsgSentTime;
   Map? memberInfo;
   String? type; // PRIVATE, GROUP
@@ -15,6 +16,7 @@ class UserChatsSnapshot {
     this.members,
     this.allMembers,
     this.requestedMembers,
+    this.blockedMembers,
     this.lastMsgSeenBy,
     this.lastMsgSentTime,
     this.memberInfo,
@@ -26,6 +28,7 @@ class UserChatsSnapshot {
     members = snapshot.get("members");
     allMembers = snapshot.get("allMembers");
     requestedMembers = snapshot.get("requestedMembers");
+    blockedMembers = snapshot.get("blockedMembers");
     lastMsgSeenBy = snapshot.get("lastMsgSeenBy");
     lastMsgSentTime = snapshot.get("lastMsgSentTime");
     memberInfo = snapshot.get("memberInfo");

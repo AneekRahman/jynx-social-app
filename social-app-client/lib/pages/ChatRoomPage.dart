@@ -191,10 +191,6 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                       )
                     : Center(child: Text("You haven't messaged yet!"))
                 : _buildLoadingAnim(),
-            // ChatRequestActions(
-            //   chatRow: widget.chatRow!,
-            //   currentUser: _currentUser,
-            // ),
             ChatBottomBar(
                 rootContext: context,
                 chatRow: widget.chatRow,
@@ -228,8 +224,8 @@ class MessageBubble extends StatelessWidget {
           decoration: BoxDecoration(
             color: Color(0xFFF1F1F1F1),
             border: Border(
-              right: isUser ? BorderSide(color: Colors.blueAccent, width: 4) : BorderSide(style: BorderStyle.none),
-              left: isUser ? BorderSide(style: BorderStyle.none) : BorderSide(color: Colors.redAccent, width: 4),
+              right: isUser ? BorderSide(color: Colors.purpleAccent, width: 4) : BorderSide(style: BorderStyle.none),
+              left: isUser ? BorderSide(style: BorderStyle.none) : BorderSide(color: Colors.orange, width: 4),
             ),
           ),
           padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
@@ -246,7 +242,7 @@ class MessageBubble extends StatelessWidget {
   }
 }
 
-class ChatBottomBar extends StatelessWidget {
+class ChatBottomBar extends StatefulWidget {
   BuildContext rootContext;
   ChatRow? chatRow;
   User currentUser;
@@ -256,24 +252,30 @@ class ChatBottomBar extends StatelessWidget {
       {Key? key, this.chatRow, required this.currentUser, required this.otherUser, required this.setChatRoomUid, required this.rootContext})
       : super(key: key);
 
+  @override
+  State<ChatBottomBar> createState() => _ChatBottomBarState();
+}
+
+class _ChatBottomBarState extends State<ChatBottomBar> {
   final chatMsgTextController = TextEditingController();
   String _textInputValue = "";
   bool _alreadySending = false;
 
   Future _createRequestAndSendMsg(context) async {
     try {
-      final String chatRoomUid =
-          await rootContext.read<FirestoreService>().createRequestedUserChats(otherUserObject: otherUser, currentUser: currentUser);
+      final String chatRoomUid = await widget.rootContext
+          .read<FirestoreService>()
+          .createRequestedUserChats(otherUserObject: widget.otherUser, currentUser: widget.currentUser);
 
       // Successfully created new requestedUserChat
-      chatRow = ChatRow(chatRoomUid: chatRoomUid, otherUser: otherUser);
+      widget.chatRow = ChatRow(chatRoomUid: chatRoomUid, otherUser: widget.otherUser);
       // Set the newly created chatRoomUid
-      setChatRoomUid(chatRoomUid);
+      widget.setChatRoomUid(chatRoomUid);
       // Lastly send the message
       await _sendMessageToChatRoom(context);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text("Unable to send the message to the user currently 2"),
+        content: Text("Unable to send the message to the user currently"),
       ));
       throw e;
     }
@@ -283,19 +285,28 @@ class ChatBottomBar extends StatelessWidget {
     try {
       int lastMsgSentTime = new DateTime.now().millisecondsSinceEpoch;
       // Send a message in the RealtimeDatabase chatRoom
-      rootContext.read<RealtimeDatabaseService>().sendMessageInRoom(
-        chatRow!.chatRoomUid,
-        {"msg": _textInputValue, "sentTime": lastMsgSentTime, "userUid": currentUser.uid},
+      widget.rootContext.read<RealtimeDatabaseService>().sendMessageInRoom(
+        widget.chatRow!.chatRoomUid,
+        {"msg": _textInputValue, "sentTime": lastMsgSentTime, "userUid": widget.currentUser.uid},
       );
       // Update the userChats document and reset the lastMsgSeen array and sentTime
-      rootContext.read<FirestoreService>().setNewMsgUserChatsSeenReset(
-            chatRow!.chatRoomUid,
-            currentUser.uid,
+      widget.rootContext.read<FirestoreService>().setNewMsgUserChatsSeenReset(
+            widget.chatRow!.chatRoomUid,
+            widget.currentUser.uid,
             lastMsgSentTime.toString(),
           );
+      // If the chat is still in a requested one
+      if (widget.chatRow!.requestedByOtherUser != null && widget.chatRow!.requestedByOtherUser!) {
+        // Accept the request
+        await widget.rootContext
+            .read<FirestoreService>()
+            .acceptChatUserRequest(widget.chatRow!.chatRoomUid, widget.currentUser.uid, widget.chatRow!.otherUser.userUid);
+        // Update the UI
+        setState(() => widget.chatRow!.requestedByOtherUser = false);
+      }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text("There was a network issue while sending the message 2"),
+        content: Text("There was a network issue while sending the message"),
       ));
       throw e;
     }
@@ -305,7 +316,7 @@ class ChatBottomBar extends StatelessWidget {
     if (_alreadySending) return;
     _alreadySending = true;
 
-    if (chatRow != null) {
+    if (widget.chatRow != null) {
       await _sendMessageToChatRoom(context);
     } else {
       // Send a message to the chatRoomUid
@@ -316,148 +327,177 @@ class ChatBottomBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(vertical: 14, horizontal: 10),
-      child: Material(
-        borderRadius: BorderRadius.circular(4),
-        color: Color(0xFFF1F1F1F1),
-        child: Row(
-          children: [
-            Expanded(
-              child: TextField(
-                style: TextStyle(fontFamily: HelveticaFont.Roman),
-                controller: chatMsgTextController,
-                decoration: kMessageTextFieldDecoration,
-              ),
-            ),
-            GestureDetector(
-              onTap: () async {
-                // Save the input value
-                _textInputValue = chatMsgTextController.text;
-                // Reset the text input field
-                chatMsgTextController.clear();
-                // Don't send any message if _alreadySending or if message is empty
-                if (_textInputValue.isEmpty || _alreadySending) return;
-                _onSendHandler(context);
-              },
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 14),
-                child: Icon(
-                  Icons.fast_forward,
-                  color: Colors.black38,
+    return Column(
+      children: [
+        widget.chatRow != null
+            ? ChatRequestActions(
+                chatRow: widget.chatRow!,
+                currentUser: widget.currentUser,
+              )
+            : Container(),
+        Container(
+          padding: EdgeInsets.symmetric(vertical: 14, horizontal: 10),
+          child: Material(
+            borderRadius: BorderRadius.circular(4),
+            color: Color(0xFFF1F1F1F1),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    style: TextStyle(fontFamily: HelveticaFont.Roman),
+                    controller: chatMsgTextController,
+                    decoration: kMessageTextFieldDecoration,
+                  ),
                 ),
-              ),
+                GestureDetector(
+                  onTap: () async {
+                    // Save the input value
+                    _textInputValue = chatMsgTextController.text;
+                    // Reset the text input field
+                    chatMsgTextController.clear();
+                    // Don't send any message if _alreadySending or if message is empty
+                    if (_textInputValue.isEmpty || _alreadySending) return;
+                    _onSendHandler(context);
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 14),
+                    child: Icon(
+                      Icons.fast_forward,
+                      color: Colors.black38,
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
-      ),
+      ],
     );
   }
 }
 
-// class ChatRequestActions extends StatefulWidget {
-//   ChatRequestActions({required this.currentUser, required this.chatRow});
-//   User currentUser;
-//   ChatRow chatRow;
+class ChatRequestActions extends StatefulWidget {
+  ChatRequestActions({required this.currentUser, required this.chatRow});
+  User currentUser;
+  ChatRow chatRow;
 
-//   @override
-//   _ChatRequestActionsState createState() => _ChatRequestActionsState();
-// }
+  @override
+  _ChatRequestActionsState createState() => _ChatRequestActionsState();
+}
 
-// class _ChatRequestActionsState extends State<ChatRequestActions> {
-//   bool _loading = false;
+class _ChatRequestActionsState extends State<ChatRequestActions> {
+  bool _loading = false;
 
-//   Future _acceptRequest() async {
-//     if (_loading || widget.chatRow!.chatRoomUid == null) return;
-//     setState(() => _loading = true);
-//     try {
-//       // Accept the request
-//       await context.read<FirestoreService>().acceptChatUserRequest(widget.chatRow!.chatRoomUid, widget.currentUser.uid);
-//       // Update the UI
-//       setState(() => widget.chatRow!.requested = false);
-//     } catch (e) {
-//       throw e;
-//     }
-//     // Update the UI
-//     setState(() => _loading = false);
-//   }
+  Future _acceptRequest() async {
+    if (_loading || widget.chatRow.chatRoomUid == null) return;
+    setState(() => _loading = true);
+    try {
+      // Accept the request
+      await context
+          .read<FirestoreService>()
+          .acceptChatUserRequest(widget.chatRow.chatRoomUid, widget.currentUser.uid, widget.chatRow.otherUser.userUid);
+      // Update the UI
+      setState(() => widget.chatRow.requestedByOtherUser = false);
+    } catch (e) {
+      throw e;
+    }
+    // Update the UI
+    setState(() => _loading = false);
+  }
 
-//   // Future _blockUser() async {
-//   //   if (_loading || widget.chatRow!.chatRoomUid == null) return;
-//   //   setState(() => _loading = true);
-//   //   try {
-//   //     // Accept the request
-//   //     await context.read<FirestoreService>().blockUser(
-//   //         userChatsDocumentUid: widget.chatRow!.chatRowUid,
-//   //         currentUserUid: widget.currentUser.uid,
-//   //         blockedUserUid: widget.chatRow!.chatRowUid);
-//   //     // Update the UI
-//   //     setState(() => widget.chatRow!.requested = false);
-//   //   } catch (e) {
-//   //     throw e;
-//   //   }
-//   //   // Update the UI
-//   //   setState(() => _loading = false);
-//   // }
+  Future _blockUnblockUser() async {
+    if (_loading || widget.chatRow.chatRoomUid == null) return;
+    setState(() => _loading = true);
+    try {
+      // Accept the request
+      if (!widget.chatRow.blockedByThisUser!) {
+        await context
+            .read<FirestoreService>()
+            .blockUser(userChatsDocumentUid: widget.chatRow.chatRoomUid, blockedUserUid: widget.chatRow.otherUser.userUid);
+      } else {
+        await context
+            .read<FirestoreService>()
+            .unblockUser(userChatsDocumentUid: widget.chatRow.chatRoomUid, blockedUserUid: widget.chatRow.otherUser.userUid);
+      }
+      // Update the UI
+      setState(() {
+        widget.chatRow.blockedByThisUser = !widget.chatRow.blockedByThisUser!;
+      });
+    } catch (e) {
+      throw e;
+    }
+    // Update the UI
+    setState(() => _loading = false);
+  }
 
-//   @override
-//   Widget build(BuildContext context) {
-//     if (widget.chatRow == null || !widget.chatRow!.requested!) return Container();
+  @override
+  Widget build(BuildContext context) {
+    if (widget.chatRow.requestedByOtherUser == null || !widget.chatRow.requestedByOtherUser!) return Container();
 
-//     if (widget.chatRow!.requested!)
-//       return Column(
-//         children: [
-//           Container(
-//             margin: EdgeInsets.only(top: 10),
-//             height: 1,
-//             width: MediaQuery.of(context).size.width,
-//             color: Color(0xFFF1F1F1F1),
-//           ),
-//           Container(
-//             padding: EdgeInsets.fromLTRB(20, 20, 20, 0),
-//             child: !_loading
-//                 ? Row(
-//                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-//                     children: [
-//                       GestureDetector(
-//                         onTap: () {
-//                           _acceptRequest();
-//                         },
-//                         child: Container(
-//                           decoration: BoxDecoration(
-//                             border: Border.all(color: Colors.black12, width: 1),
-//                             borderRadius: BorderRadius.circular(4),
-//                           ),
-//                           padding: EdgeInsets.symmetric(vertical: 12, horizontal: 24),
-//                           child: Text(
-//                             "Accept Request",
-//                             style: TextStyle(fontFamily: HelveticaFont.Bold),
-//                           ),
-//                         ),
-//                       ),
-//                       GestureDetector(
-//                         onTap: () {
-//                           // _blockUser();
-//                         },
-//                         child: Container(
-//                           decoration: BoxDecoration(
-//                             border: Border.all(color: Colors.black12, width: 1),
-//                             borderRadius: BorderRadius.circular(4),
-//                           ),
-//                           padding: EdgeInsets.symmetric(vertical: 12, horizontal: 24),
-//                           child: Text(
-//                             "Block User",
-//                             style: TextStyle(fontFamily: HelveticaFont.Bold),
-//                           ),
-//                         ),
-//                       ),
-//                     ],
-//                   )
-//                 : _buildLoadingAnim(),
-//           ),
-//         ],
-//       );
-//     else
-//       return Container();
-//   }
-// }
+    if (widget.chatRow.requestedByOtherUser! || widget.chatRow.blockedByThisUser!) {
+      return Column(
+        children: [
+          Container(
+            margin: EdgeInsets.only(top: 10),
+            height: 1,
+            width: MediaQuery.of(context).size.width,
+            color: Color(0xFFF1F1F1F1),
+          ),
+          Padding(
+            padding: EdgeInsets.fromLTRB(20, 20, 20, 0),
+            child: Text(
+              widget.chatRow.blockedByThisUser!
+                  ? "You have blocked this user and they will not be able to message you."
+                  : "This message will be moved to your chat list when you accept it or reply here.",
+              style: TextStyle(fontFamily: HelveticaFont.Light),
+            ),
+          ),
+          Container(
+            padding: EdgeInsets.fromLTRB(20, 20, 20, 0),
+            child: !_loading
+                ? Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      GestureDetector(
+                        onTap: () {
+                          _acceptRequest();
+                        },
+                        child: Container(
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.black12, width: 1),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          padding: EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+                          child: Text(
+                            "Accept Request",
+                            style: TextStyle(fontFamily: HelveticaFont.Bold),
+                          ),
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          _blockUnblockUser();
+                        },
+                        child: Container(
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.black12, width: 1),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          padding: EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+                          child: Text(
+                            widget.chatRow.blockedByThisUser! ? "Unblock User" : "Block User",
+                            style: TextStyle(fontFamily: HelveticaFont.Bold),
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
+                : _buildLoadingAnim(),
+          ),
+        ],
+      );
+    } else {
+      return Container();
+    }
+  }
+}

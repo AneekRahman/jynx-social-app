@@ -65,7 +65,8 @@ ChatRow? getChatRowFromDocSnapshot(QueryDocumentSnapshot snapshot, String curren
             otherUser: userObject,
             lastMsgSentTime: userChatsSnapshot.lastMsgSentTime,
             seen: userChatsSnapshot.lastMsgSeenBy!.contains(currentUserUid),
-            requested: userChatsSnapshot.requestedMembers!.contains(currentUserUid));
+            requestedByOtherUser: userChatsSnapshot.requestedMembers!.contains(currentUserUid),
+            blockedByThisUser: userChatsSnapshot.blockedMembers!.contains(key));
       }
     });
 
