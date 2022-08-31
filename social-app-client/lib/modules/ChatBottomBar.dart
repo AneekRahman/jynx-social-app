@@ -29,7 +29,7 @@ class _ChatBottomBarState extends State<ChatBottomBar> {
   String _textInputValue = "";
   bool _alreadySending = false;
 
-  Future _createRequestAndSendMsg(context) async {
+  Future _createRequestAndSendMsg(context, firstMessage) async {
     try {
       final String chatRoomUid = await widget.rootContext
           .read<FirestoreService>()
@@ -40,7 +40,7 @@ class _ChatBottomBarState extends State<ChatBottomBar> {
       // Set the newly created chatRoomUid
       widget.setChatRoomUid(chatRoomUid);
       // Lastly send the message
-      await _sendMessageToChatRoom(context);
+      await _sendMessageToChatRoom(context, firstMessage);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text("Unable to send the message to the user currently"),
@@ -49,20 +49,23 @@ class _ChatBottomBarState extends State<ChatBottomBar> {
     }
   }
 
-  Future _sendMessageToChatRoom(context) async {
+  Future _sendMessageToChatRoom(context, bool firstMessage) async {
     try {
       int lastMsgSentTime = new DateTime.now().millisecondsSinceEpoch;
       // Send a message in the RealtimeDatabase chatRoom
       widget.rootContext.read<RealtimeDatabaseService>().sendMessageInRoom(
-        widget.chatRow!.chatRoomUid,
-        {"msg": _textInputValue, "sentTime": lastMsgSentTime, "userUid": widget.currentUser.uid},
-      );
+          widget.chatRow!.chatRoomUid,
+          {"msg": _textInputValue, "sentTime": lastMsgSentTime, "userUid": widget.currentUser.uid},
+          firstMessage,
+          {widget.chatRow!.otherUser.userUid: true, widget.currentUser.uid: true});
+
       // Update the userChats document and reset the lastMsgSeen array and sentTime
       widget.rootContext.read<FirestoreService>().setNewMsgUserChatsSeenReset(
             widget.chatRow!.chatRoomUid,
             widget.currentUser.uid,
             lastMsgSentTime.toString(),
           );
+
       // If the chat is still in a requested one
       if (widget.chatRow!.requestedByOtherUser != null && widget.chatRow!.requestedByOtherUser!) {
         // Accept the request
@@ -85,10 +88,10 @@ class _ChatBottomBarState extends State<ChatBottomBar> {
     _alreadySending = true;
 
     if (widget.chatRow != null) {
-      await _sendMessageToChatRoom(context);
+      await _sendMessageToChatRoom(context, false);
     } else {
       // Send a message to the chatRoomUid
-      await _createRequestAndSendMsg(context);
+      await _createRequestAndSendMsg(context, true);
     }
     _alreadySending = false;
   }

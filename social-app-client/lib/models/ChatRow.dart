@@ -6,6 +6,7 @@ class ChatRow {
   late String chatRoomUid;
   late UserProfileObject otherUser;
   String? lastMsgSentTime;
+  String? lastMsg;
   bool? seen;
   // status:
   //   : 0 means not seen by the user
@@ -17,6 +18,7 @@ class ChatRow {
     required this.chatRoomUid,
     required this.otherUser,
     this.lastMsgSentTime,
+    this.lastMsg,
     this.seen,
     this.requestedByOtherUser,
     this.blockedByThisUser,
@@ -26,6 +28,7 @@ class ChatRow {
     chatRoomUid = map['chatRoomUid'];
     otherUser = UserProfileObject.fromJson(map["otherUser"], map["userUid"]);
     lastMsgSentTime = map['lastMsgSentTime'];
+    lastMsg = map['lastMsg'];
     seen = map['seen'];
     requestedByOtherUser = map['requestedByOtherUser'];
     blockedByThisUser = map['blockedByThisUser'];

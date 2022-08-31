@@ -189,7 +189,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                 ? widget.chatRow != null
                     ? Expanded(
                         child: StreamBuilder(
-                          stream: context.watch<RealtimeDatabaseService>().getChatRoomStream(widget.chatRow!.chatRoomUid),
+                          stream: context.watch<RealtimeDatabaseService>().getChatRoomMessagesStream(widget.chatRow!.chatRoomUid),
                           builder: (context, AsyncSnapshot snapshot) {
                             if (snapshot.hasData && !snapshot.hasError) {
                               _setMsgRowsFromStream(snapshot.data!.snapshot.value);
@@ -216,7 +216,22 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                                       },
                                       childCount: _msgRows.length,
                                     ),
-                                  )
+                                  ),
+                                  SliverToBoxAdapter(
+                                    child: _msgRows.length == 0 &&
+                                            !widget.chatRow!.blockedByThisUser! &&
+                                            !widget.chatRow!.requestedByOtherUser!
+                                        ? Center(
+                                            child: Padding(
+                                              padding: const EdgeInsets.all(20.0),
+                                              child: Text(
+                                                "This contact has been accepted, you can now start messaging",
+                                                textAlign: TextAlign.center,
+                                              ),
+                                            ),
+                                          )
+                                        : SizedBox(),
+                                  ),
                                 ],
                               );
                             } else if (snapshot.hasError) {
@@ -230,15 +245,18 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                     : Center(child: Text("You haven't messaged yet!"))
                 : _buildLoadingAnim(),
             ChatBottomBar(
-                rootContext: context,
-                chatRow: widget.chatRow,
-                currentUser: _currentUser,
-                otherUser: widget.otherUser,
-                setChatRoomUid: (String chatRoomUid) {
-                  setState(() {
-                    widget.chatRow = ChatRow(chatRoomUid: chatRoomUid, otherUser: widget.otherUser);
-                  });
-                }),
+              rootContext: context,
+              chatRow: widget.chatRow,
+              currentUser: _currentUser,
+              otherUser: widget.otherUser,
+              setChatRoomUid: (
+                String chatRoomUid,
+              ) {
+                setState(() {
+                  widget.chatRow = ChatRow(chatRoomUid: chatRoomUid, otherUser: widget.otherUser);
+                });
+              },
+            ),
           ],
         ),
       ),

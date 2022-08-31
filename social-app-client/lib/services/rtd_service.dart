@@ -6,14 +6,19 @@ class RealtimeDatabaseService {
 
   const RealtimeDatabaseService(this._firebaseDatabase);
 
-  Stream getAllChatHisoryStream(String userUid) =>
-      _firebaseDatabase.ref().child("userChats/$userUid").orderByChild("lastMsgSentTime").limitToLast(10).onValue;
-
-  Stream getChatRoomStream(String chatRoomUid) {
-    return _firebaseDatabase.ref().child('chatRooms/$chatRoomUid').orderByChild("sentTime").limitToLast(10).onValue;
+  Stream getChatRoomMessagesStream(String chatRoomUid) {
+    return _firebaseDatabase.ref().child('chatRooms/$chatRoomUid/messages').orderByChild("sentTime").limitToLast(10).onValue;
   }
 
-  Future sendMessageInRoom(String chatRoomUid, dynamic msgJson) async {
-    await _firebaseDatabase.ref().child('chatRooms/$chatRoomUid').push().set(msgJson);
+  Future sendMessageInRoom(String chatRoomUid, dynamic msgJson, firstMessage, members) async {
+    if (firstMessage) {
+      String? messageUid = FirebaseDatabase.instance.ref().push().key;
+      await _firebaseDatabase.ref().child('chatRooms/$chatRoomUid').set({
+        "members": members,
+        "messages": {messageUid: msgJson}
+      });
+    } else {
+      await _firebaseDatabase.ref().child('chatRooms/$chatRoomUid/messages').push().set(msgJson);
+    }
   }
 }
