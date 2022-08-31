@@ -18,10 +18,9 @@ class AuthenticationService {
 
   Future<String> phoneSignIn({String? smsCode}) async {
     if (this._verificationId == null) return "Error with state, please go back \nand start again";
-    print("_verificationId is: " + _verificationId! + " and code:" + smsCode!);
 
     // Create a PhoneAuthCredential with the code
-    AuthCredential phoneAuthCredential = PhoneAuthProvider.credential(verificationId: _verificationId!, smsCode: smsCode);
+    AuthCredential phoneAuthCredential = PhoneAuthProvider.credential(verificationId: _verificationId!, smsCode: smsCode!);
 
     try {
       // Sign the user in (or link) with the credential

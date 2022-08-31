@@ -154,7 +154,6 @@ class _OtpPageState extends State<OtpPage> {
                   OtpForm(
                     onOtpChange: (smsCode) {
                       _smsCode = smsCode;
-                      print('GOT NEW SMS CODE: $smsCode and Length: ${smsCode.length}');
                     },
                   ),
                   SizedBox(height: 20),
