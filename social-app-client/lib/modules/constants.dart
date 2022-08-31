@@ -5,7 +5,8 @@ import 'package:social_app/models/UserChatsSnapshot.dart';
 import 'package:social_app/models/UserProfileObject.dart';
 
 class MyServer {
-  static const String SERVER_API = "http://192.168.0.100:5000/jynx-chat/us-central1/api";
+  static const String SERVER_API = "https://us-central1-jynx-chat.cloudfunctions.net/api";
+  // static const String SERVER_API = "http://192.168.0.100:5000/jynx-chat/us-central1/api";
   static const String SIGNUP = "/signup";
   static const String UPDATE_USERNAME = "/update-username";
   static Map<String, String> JSON_HEADER = {

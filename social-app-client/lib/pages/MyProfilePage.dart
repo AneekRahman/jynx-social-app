@@ -265,10 +265,10 @@ class _MyProfilePageState extends State<MyProfilePage> {
                           context: context,
                           loading: false),
                       SizedBox(height: 20),
-                      Text(
-                        "Activities",
-                        style: TextStyle(fontFamily: HelveticaFont.Medium, fontSize: 14, color: Colors.white),
-                      ),
+                      // Text(
+                      //   "Activities",
+                      //   style: TextStyle(fontFamily: HelveticaFont.Medium, fontSize: 14, color: Colors.white),
+                      // ),
                     ],
                   ),
                 );

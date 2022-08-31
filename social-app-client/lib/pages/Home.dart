@@ -145,6 +145,7 @@ class HomeChatListIntro extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      margin: EdgeInsets.only(top: 60),
       child: Column(
         children: [
           Icon(

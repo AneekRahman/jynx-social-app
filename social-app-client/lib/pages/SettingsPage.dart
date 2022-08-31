@@ -98,22 +98,22 @@ class _SettingsPageState extends State<SettingsPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildHeader("Security"),
-                      Text(
-                        "By changing the passwords, you automatically log out of other devices",
-                        style: _normalTextStyle,
-                      ),
-                      SizedBox(height: 20),
-                      buildYellowButton(
-                          child: Text(
-                            "Change password",
-                            textAlign: TextAlign.center,
-                            style: TextStyle(fontFamily: HelveticaFont.Bold),
-                          ),
-                          onTap: () {},
-                          context: context,
-                          loading: false),
-                      SizedBox(height: 30),
+                      // _buildHeader("Security"),
+                      // Text(
+                      //   "By changing the passwords, you automatically log out of other devices",
+                      //   style: _normalTextStyle,
+                      // ),
+                      // SizedBox(height: 20),
+                      // buildYellowButton(
+                      //     child: Text(
+                      //       "Change password",
+                      //       textAlign: TextAlign.center,
+                      //       style: TextStyle(fontFamily: HelveticaFont.Bold),
+                      //     ),
+                      //     onTap: () {},
+                      //     context: context,
+                      //     loading: false),
+                      // SizedBox(height: 30),
                       _buildHeader("Notifications"),
                       _buildCheckBoxTile(
                         "Recieve notifications",
