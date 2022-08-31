@@ -87,7 +87,7 @@ class FirestoreService {
       "blockedMembers": [],
       "lastMsgSeenBy": [currentUser.uid], // Last msg seen by which of the users
       "lastMsgSentTime": new DateTime.now().millisecondsSinceEpoch.toString(),
-      "lastMsg": lastMsg ?? "",
+      "lastMsg": lastMsg,
       "type": ChatType.PRIVATE, // PRIVATE or GROUP
       "memberInfo": {
         currentUser.uid: {

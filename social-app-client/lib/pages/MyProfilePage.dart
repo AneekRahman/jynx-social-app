@@ -117,8 +117,38 @@ class _MyProfilePageState extends State<MyProfilePage> {
                               final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
                               _uploadImageToFirebase(File(pickedFile!.path));
                             },
-                            child: ProfileImageBlock(
-                              photoURL: _myUserObject.photoURL,
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                ProfileImageBlock(
+                                  photoURL: _myUserObject.photoURL,
+                                ),
+                                Center(
+                                  child: Container(
+                                    height: 106,
+                                    width: 106,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(1000),
+                                      gradient: LinearGradient(
+                                        colors: [
+                                          Colors.black.withOpacity(1),
+                                          Colors.black.withOpacity(0),
+                                        ],
+                                        begin: Alignment.bottomCenter,
+                                        end: Alignment.topCenter,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                Positioned(
+                                    bottom: 15,
+                                    left: 0,
+                                    right: 0,
+                                    child: Icon(
+                                      Icons.camera_alt_outlined,
+                                      color: Colors.white70,
+                                    ))
+                              ],
                             ),
                           ),
                           SizedBox(
