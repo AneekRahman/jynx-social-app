@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../models/ChatRow.dart';
 import '../services/firestore_service.dart';
+import '../services/rtd_service.dart';
 import 'constants.dart';
 
 Center _buildLoadingAnim() {
@@ -29,9 +30,8 @@ class _ChatRequestActionsState extends State<ChatRequestActions> {
     setState(() => _loading = true);
     try {
       // Accept the request
-      await context
-          .read<FirestoreService>()
-          .acceptChatUserRequest(widget.chatRow.chatRoomUid, widget.currentUser.uid, widget.chatRow.otherUser.userUid);
+      await context.read<FirestoreService>().acceptChatUserRequest(
+          context.read<RealtimeDatabaseService>(), widget.chatRow.chatRoomUid, widget.currentUser.uid, widget.chatRow.otherUser.userUid);
       // Update the UI
       setState(() => widget.chatRow.requestedByOtherUser = false);
     } catch (e) {
@@ -45,15 +45,20 @@ class _ChatRequestActionsState extends State<ChatRequestActions> {
     if (_loading || widget.chatRow.chatRoomUid == null) return;
     setState(() => _loading = true);
     try {
-      // Accept the request
       if (!widget.chatRow.blockedByThisUser!) {
+        // Block in Firestore
         await context
             .read<FirestoreService>()
             .blockUser(userChatsDocumentUid: widget.chatRow.chatRoomUid, blockedUserUid: widget.chatRow.otherUser.userUid);
+        // In Database
+        await context.read<RealtimeDatabaseService>().blockInRTDatabase(widget.chatRow.chatRoomUid, widget.chatRow.otherUser.userUid);
       } else {
+        // Unblock in Firestore
         await context
             .read<FirestoreService>()
             .unblockUser(userChatsDocumentUid: widget.chatRow.chatRoomUid, blockedUserUid: widget.chatRow.otherUser.userUid);
+        // In Database
+        await context.read<RealtimeDatabaseService>().unBlockInRTDatabase(widget.chatRow.chatRoomUid, widget.chatRow.otherUser.userUid);
       }
       // Update the UI
       setState(() {

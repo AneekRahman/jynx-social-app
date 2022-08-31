@@ -1,11 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart' as rtdDatabase;
+import 'package:flutter/material.dart';
 
 import 'package:social_app/models/ChatRow.dart';
 import 'package:social_app/models/CustomClaims.dart';
 import 'package:social_app/models/UserProfileObject.dart';
 import 'package:social_app/modules/constants.dart';
+import 'package:social_app/services/rtd_service.dart';
 
 class FirestoreService {
   final FirebaseFirestore _firestoreInstance;
@@ -127,12 +129,15 @@ class FirestoreService {
     });
   }
 
-  Future acceptChatUserRequest(String userChatsDocumentUid, String currentUserUid, String otherUserUid) async {
+  Future acceptChatUserRequest(
+      RealtimeDatabaseService rtdDatabase, String userChatsDocumentUid, String currentUserUid, String otherUserUid) async {
     await _firestoreInstance.collection("userChats").doc(userChatsDocumentUid).update({
       "members": FieldValue.arrayUnion([currentUserUid, otherUserUid]),
       "blockedMembers": FieldValue.arrayRemove([otherUserUid]),
       "requestedMembers": FieldValue.arrayRemove([currentUserUid]),
     });
+    // In Unblock in Database just in case
+    await rtdDatabase.unBlockInRTDatabase(userChatsDocumentUid, otherUserUid);
   }
 
   Future blockUser({
@@ -140,7 +145,6 @@ class FirestoreService {
     required String blockedUserUid,
   }) async {
     await _firestoreInstance.collection("userChats").doc(userChatsDocumentUid).update({
-      "members": FieldValue.arrayRemove([blockedUserUid]),
       "blockedMembers": FieldValue.arrayUnion([blockedUserUid]),
     });
   }
@@ -150,7 +154,6 @@ class FirestoreService {
     required String blockedUserUid,
   }) async {
     await _firestoreInstance.collection("userChats").doc(userChatsDocumentUid).update({
-      "members": FieldValue.arrayUnion([blockedUserUid]),
       "blockedMembers": FieldValue.arrayRemove([blockedUserUid]),
     });
   }

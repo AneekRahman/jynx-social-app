@@ -53,7 +53,7 @@ class _ChatBottomBarState extends State<ChatBottomBar> {
     try {
       int lastMsgSentTime = new DateTime.now().millisecondsSinceEpoch;
       // Send a message in the RealtimeDatabase chatRoom
-      widget.rootContext.read<RealtimeDatabaseService>().sendMessageInRoom(
+      await widget.rootContext.read<RealtimeDatabaseService>().sendMessageInRoom(
           widget.chatRow!.chatRoomUid,
           {"msg": _textInputValue, "sentTime": lastMsgSentTime, "userUid": widget.currentUser.uid},
           firstMessage,
@@ -70,9 +70,8 @@ class _ChatBottomBarState extends State<ChatBottomBar> {
       // If the chat is still in a requested one
       if (widget.chatRow!.requestedByOtherUser != null && widget.chatRow!.requestedByOtherUser!) {
         // Accept the request
-        await widget.rootContext
-            .read<FirestoreService>()
-            .acceptChatUserRequest(widget.chatRow!.chatRoomUid, widget.currentUser.uid, widget.chatRow!.otherUser.userUid);
+        await widget.rootContext.read<FirestoreService>().acceptChatUserRequest(widget.rootContext.read<RealtimeDatabaseService>(),
+            widget.chatRow!.chatRoomUid, widget.currentUser.uid, widget.chatRow!.otherUser.userUid);
         // Update the UI
         setState(() => widget.chatRow!.requestedByOtherUser = false);
       }
