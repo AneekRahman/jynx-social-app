@@ -109,7 +109,14 @@ class _ChatsListRowState extends State<ChatsListRow> {
                     width: 5,
                   ),
                   Text(
-                    !widget._chatRow.seen! ? "New message" : "Opened",
+                    // !widget._chatRow.seen! ? "New message" : "Opened",
+                    widget._chatRow.lastMsg!.isEmpty
+                        ? !widget._chatRow.seen!
+                            ? "New message"
+                            : "Opened"
+                        : !widget._chatRow.seen!
+                            ? "New: " + widget._chatRow.lastMsg!
+                            : "Read: " + widget._chatRow.lastMsg!,
                     style: TextStyle(
                       fontFamily: fontFamily,
                       fontSize: 12,

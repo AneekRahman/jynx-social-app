@@ -75,6 +75,7 @@ class FirestoreService {
   Future createRequestedUserChats({
     required UserProfileObject otherUserObject,
     required User currentUser,
+    required String lastMsg,
   }) async {
     CustomClaims claims = await CustomClaims.getClaims(false);
 
@@ -86,6 +87,7 @@ class FirestoreService {
       "blockedMembers": [],
       "lastMsgSeenBy": [currentUser.uid], // Last msg seen by which of the users
       "lastMsgSentTime": new DateTime.now().millisecondsSinceEpoch.toString(),
+      "lastMsg": lastMsg ?? "",
       "type": ChatType.PRIVATE, // PRIVATE or GROUP
       "memberInfo": {
         currentUser.uid: {
@@ -105,10 +107,16 @@ class FirestoreService {
     return chatRoomUid;
   }
 
-  Future setNewMsgUserChatsSeenReset(String userChatsDocumentUid, String currentUserUid, String lastMsgSentTime) async {
+  Future setNewMsgUserChatsSeenReset(
+    String userChatsDocumentUid,
+    String currentUserUid,
+    String lastMsgSentTime,
+    String lastMsg,
+  ) async {
     await _firestoreInstance.collection("userChats").doc(userChatsDocumentUid).update({
       "lastMsgSeenBy": [currentUserUid],
-      "lastMsgSentTime": lastMsgSentTime
+      "lastMsgSentTime": lastMsgSentTime,
+      "lastMsg": lastMsg
     });
   }
 

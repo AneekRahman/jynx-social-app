@@ -25,7 +25,7 @@ class ChatRow {
   });
 
   ChatRow.fromJson(Map<String, dynamic> map, String chatRoomUid) {
-    chatRoomUid = map['chatRoomUid'];
+    chatRoomUid = chatRoomUid;
     otherUser = UserProfileObject.fromJson(map["otherUser"], map["userUid"]);
     lastMsgSentTime = map['lastMsgSentTime'];
     lastMsg = map['lastMsg'];

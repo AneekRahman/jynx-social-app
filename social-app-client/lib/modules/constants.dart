@@ -70,6 +70,7 @@ ChatRow? getChatRowFromDocSnapshot(QueryDocumentSnapshot snapshot, String curren
             chatRoomUid: snapshot.id,
             otherUser: userObject,
             lastMsgSentTime: userChatsSnapshot.lastMsgSentTime,
+            lastMsg: userChatsSnapshot.lastMsg,
             seen: userChatsSnapshot.lastMsgSeenBy!.contains(currentUserUid),
             requestedByOtherUser: userChatsSnapshot.requestedMembers!.contains(currentUserUid),
             blockedByThisUser: userChatsSnapshot.blockedMembers!.contains(key));

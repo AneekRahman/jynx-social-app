@@ -33,7 +33,7 @@ class _ChatBottomBarState extends State<ChatBottomBar> {
     try {
       final String chatRoomUid = await widget.rootContext
           .read<FirestoreService>()
-          .createRequestedUserChats(otherUserObject: widget.otherUser, currentUser: widget.currentUser);
+          .createRequestedUserChats(otherUserObject: widget.otherUser, currentUser: widget.currentUser, lastMsg: _textInputValue);
 
       // Successfully created new requestedUserChat
       widget.chatRow = ChatRow(chatRoomUid: chatRoomUid, otherUser: widget.otherUser);
@@ -64,6 +64,7 @@ class _ChatBottomBarState extends State<ChatBottomBar> {
             widget.chatRow!.chatRoomUid,
             widget.currentUser.uid,
             lastMsgSentTime.toString(),
+            _textInputValue,
           );
 
       // If the chat is still in a requested one
