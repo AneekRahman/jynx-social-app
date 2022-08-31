@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../models/MsgRow.dart';
 import 'constants.dart';
-import 'package:timeago/timeago.dart' as timeago;
 
 class MessageBubble extends StatelessWidget {
   final MsgRow msgRow;
@@ -13,7 +12,7 @@ class MessageBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     DateTime sentTime = new DateTime.fromMillisecondsSinceEpoch(msgRow.sentTime!);
-    String sentTimeFormattedString = timeago.format(sentTime, locale: 'en_short', allowFromNow: true);
+    String sentTimeFormattedString = convertToTimeAgo(sentTime);
 
     return Column(
       crossAxisAlignment: isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,

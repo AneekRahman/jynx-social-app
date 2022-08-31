@@ -9,7 +9,6 @@ import 'package:social_app/models/ChatRow.dart';
 import 'package:social_app/modules/LoadingBar.dart';
 import 'package:social_app/modules/constants.dart';
 import 'package:social_app/pages/ChatRoomPage.dart';
-import 'package:timeago/timeago.dart' as timeago;
 
 import '../services/firestore_service.dart';
 import 'ChatListRow.dart';

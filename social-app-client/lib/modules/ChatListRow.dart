@@ -3,7 +3,6 @@ import 'dart:async';
 
 import 'package:social_app/models/ChatRow.dart';
 import 'package:social_app/modules/constants.dart';
-import 'package:timeago/timeago.dart' as timeago;
 
 class ChatsListRow extends StatefulWidget {
   const ChatsListRow({
@@ -22,31 +21,29 @@ class _ChatsListRowState extends State<ChatsListRow> {
   late String sentTimeFormattedString;
   void _recalculateTimePassed() {
     // Every 1 minute
-    Timer.periodic(new Duration(minutes: 1), (timer) {
+    Timer.periodic(new Duration(seconds: 1), (timer) {
+      DateTime sentTime = new DateTime.fromMillisecondsSinceEpoch(int.parse(widget._chatRow.lastMsgSentTime!));
       if (this.mounted)
         setState(() {
-          _calculateAndSetTimeString();
+          sentTimeFormattedString = convertToTimeAgo(sentTime);
         });
     });
-  }
-
-  void _calculateAndSetTimeString() {
-    DateTime sentTime = new DateTime.fromMillisecondsSinceEpoch(int.parse(widget._chatRow.lastMsgSentTime!));
-    sentTimeFormattedString = timeago.format(sentTime, locale: 'en_short', allowFromNow: true);
   }
 
   @override
   void initState() {
     super.initState();
-    _calculateAndSetTimeString();
     _recalculateTimePassed();
   }
 
   @override
   Widget build(BuildContext context) {
     final fontFamily = !widget._chatRow.seen! ? HelveticaFont.Heavy : HelveticaFont.Medium;
-
     bool hasImg = widget._chatRow.otherUser.photoURL != null && widget._chatRow.otherUser.photoURL!.isNotEmpty;
+
+    DateTime sentTime = new DateTime.fromMillisecondsSinceEpoch(int.parse(widget._chatRow.lastMsgSentTime!));
+    sentTimeFormattedString = convertToTimeAgo(sentTime);
+
     return Container(
       padding: EdgeInsets.symmetric(
         vertical: 16,

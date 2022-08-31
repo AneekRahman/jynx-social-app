@@ -81,6 +81,24 @@ ChatRow? getChatRowFromDocSnapshot(QueryDocumentSnapshot snapshot, String curren
   }
 }
 
+String convertToTimeAgo(DateTime dateTime) {
+  Duration diff = DateTime.now().difference(dateTime);
+
+  if (diff.inDays >= 7) {
+    return '${(diff.inDays / 7).floor()}w';
+  } else if (diff.inDays >= 1) {
+    return '${diff.inDays}d';
+  } else if (diff.inHours >= 1) {
+    return '${diff.inHours}h';
+  } else if (diff.inMinutes >= 1) {
+    return '${diff.inMinutes}m';
+  } else if (diff.inSeconds >= 1) {
+    return '${diff.inSeconds}s';
+  } else {
+    return 'just now';
+  }
+}
+
 Widget buildYellowButton({required Widget child, required Function() onTap, required bool loading, required BuildContext context}) {
   return GestureDetector(
     onTap: onTap,
