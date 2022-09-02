@@ -60,13 +60,15 @@ class ChatTopBar extends StatelessWidget {
             ),
           ),
           _buildOtherUserPicNamesRow(context),
-          PopupMenuButton(
-            itemBuilder: (ctx) => [
-              _buildPopupMenuItem(context, 'View profile', Icons.person_outline, 1),
-              _buildPopupMenuItem(context, 'Copy username', Icons.copy, 2),
-              _buildPopupMenuItem(context, chatRow!.blockedByThisUser! ? 'Unblock user' : "Block user", Icons.person_off, 3),
-            ],
-          )
+          chatRow != null
+              ? PopupMenuButton(
+                  itemBuilder: (ctx) => [
+                    _buildPopupMenuItem(context, 'View profile', Icons.person_outline, 1),
+                    _buildPopupMenuItem(context, 'Copy username', Icons.copy, 2),
+                    _buildPopupMenuItem(context, chatRow!.blockedByThisUser! ? 'Unblock user' : "Block user", Icons.person_off, 3),
+                  ],
+                )
+              : SizedBox(),
         ],
       ),
     );
@@ -270,11 +272,14 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
               chatRow: widget.chatRow,
               currentUser: _currentUser,
               otherUser: widget.otherUser,
-              setChatRoomUid: (
-                String chatRoomUid,
-              ) {
+              setNewChatRoomUid: (String chatRoomUid) {
                 setState(() {
-                  widget.chatRow = ChatRow(chatRoomUid: chatRoomUid, otherUser: widget.otherUser);
+                  widget.chatRow = ChatRow(
+                    chatRoomUid: chatRoomUid,
+                    otherUser: widget.otherUser,
+                    requestedByOtherUser: false,
+                    blockedByThisUser: false,
+                  );
                 });
               },
             ),

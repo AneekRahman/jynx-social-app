@@ -14,9 +14,14 @@ class ChatBottomBar extends StatefulWidget {
   ChatRow? chatRow;
   User currentUser;
   UserProfileObject otherUser;
-  Function setChatRoomUid;
+  Function setNewChatRoomUid;
   ChatBottomBar(
-      {Key? key, this.chatRow, required this.currentUser, required this.otherUser, required this.setChatRoomUid, required this.rootContext})
+      {Key? key,
+      this.chatRow,
+      required this.currentUser,
+      required this.otherUser,
+      required this.setNewChatRoomUid,
+      required this.rootContext})
       : super(key: key);
 
   @override
@@ -37,7 +42,7 @@ class _ChatBottomBarState extends State<ChatBottomBar> {
       // Successfully created new requestedUserChat
       widget.chatRow = ChatRow(chatRoomUid: chatRoomUid, otherUser: widget.otherUser);
       // Set the newly created chatRoomUid
-      widget.setChatRoomUid(chatRoomUid);
+      widget.setNewChatRoomUid(chatRoomUid);
       // Lastly send the message
       await _sendMessageToChatRoom(context, firstMessage);
     } catch (e) {
