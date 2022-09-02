@@ -100,7 +100,10 @@ class _MyProfilePageState extends State<MyProfilePage> {
           ? StreamBuilder(
               stream: context.watch<FirestoreService>().getUserDocumentStream(_currentUser!.uid),
               builder: (context, AsyncSnapshot<DocumentSnapshot> snapshot) {
-                if (snapshot.data == null) return Container();
+                if (snapshot.data == null)
+                  return Center(
+                    child: Text("Network error, try again"),
+                  );
                 UserProfileObject _myUserObject =
                     UserProfileObject.fromJson(snapshot.data!.data() as Map<String, dynamic>, snapshot.data!.id);
 

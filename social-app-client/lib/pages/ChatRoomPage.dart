@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 import 'package:social_app/models/ChatRow.dart';
 import 'package:social_app/models/MsgRow.dart';
 import 'package:social_app/models/UserProfileObject.dart';
@@ -11,6 +12,7 @@ import 'package:provider/provider.dart';
 
 import '../modules/ChatBottomBar.dart';
 import '../modules/MessageBubble.dart';
+import 'OthersProfilePage.dart';
 
 const kMessageTextFieldDecoration = InputDecoration(
   contentPadding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
@@ -57,43 +59,78 @@ class ChatTopBar extends StatelessWidget {
           Expanded(
             child: Row(
               children: <Widget>[
-                Container(
-                  height: 45,
-                  width: 45,
-                  margin: EdgeInsets.only(right: 10),
-                  decoration: BoxDecoration(
-                    color: Colors.white10,
-                    borderRadius: BorderRadius.circular(10000),
-                    border: Border.all(color: Colors.yellow, width: 2),
-                  ),
-                  child: otherUser.photoURL!.isNotEmpty
-                      ? ClipRRect(
-                          child: Image.network(
-                            otherUser.photoURL!,
+                GestureDetector(
+                  onTap: () {
+                    showMaterialModalBottomSheet(
+                      backgroundColor: Colors.transparent,
+                      context: context,
+                      builder: (context) => Padding(
+                        padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
+                        child: OthersProfilePage(
+                          otherUsersProfileObject: otherUser,
+                        ),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    height: 45,
+                    width: 45,
+                    margin: EdgeInsets.only(right: 10),
+                    decoration: BoxDecoration(
+                      color: Colors.white10,
+                      borderRadius: BorderRadius.circular(10000),
+                      border: Border.all(color: Colors.yellow, width: 2),
+                    ),
+                    child: otherUser.photoURL!.isNotEmpty
+                        ? ClipRRect(
+                            child: Image.network(
+                              otherUser.photoURL!,
+                              height: 45,
+                              width: 45,
+                              fit: BoxFit.cover,
+                            ),
+                            borderRadius: BorderRadius.all(Radius.circular(100)),
+                          )
+                        : Container(
                             height: 45,
                             width: 45,
-                            fit: BoxFit.cover,
+                            decoration: BoxDecoration(
+                              color: Colors.black.withOpacity(.07),
+                              borderRadius: BorderRadius.circular(10000),
+                            ),
                           ),
-                          borderRadius: BorderRadius.all(Radius.circular(100)),
-                        )
-                      : Container(
-                          height: 45,
-                          width: 45,
-                          decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(.07),
-                            borderRadius: BorderRadius.circular(10000),
+                  ),
+                ),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      showMaterialModalBottomSheet(
+                        backgroundColor: Colors.transparent,
+                        context: context,
+                        builder: (context) => Padding(
+                          padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
+                          child: OthersProfilePage(
+                            otherUsersProfileObject: otherUser,
                           ),
                         ),
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      otherUser.displayName!,
-                      style: TextStyle(fontFamily: HelveticaFont.Medium, fontSize: 16, color: Colors.black),
+                      );
+                    },
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          otherUser.displayName!,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontFamily: HelveticaFont.Medium, fontSize: 16, color: Colors.black),
+                        ),
+                        Text(
+                          "@" + otherUser.userName!,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontFamily: HelveticaFont.Roman, fontSize: 14, color: Colors.black38),
+                        ),
+                      ],
                     ),
-                    Text("@" + otherUser.userName!, style: TextStyle(fontFamily: HelveticaFont.Roman, fontSize: 14, color: Colors.black38))
-                  ],
+                  ),
                 ),
               ],
             ),
@@ -169,6 +206,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   void initState() {
     super.initState();
     _currentUser = context.read<User>();
+    print("GOT: THIS " + widget.otherUser.userUid.toString());
     _initializeChatRoom();
   }
 
