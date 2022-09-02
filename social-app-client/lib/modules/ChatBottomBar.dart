@@ -2,7 +2,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'ChatRequestActions.dart';
 import 'constants.dart';
 import '../pages/ChatRoomPage.dart';
 import '../services/firestore_service.dart';
@@ -100,12 +99,6 @@ class _ChatBottomBarState extends State<ChatBottomBar> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        widget.chatRow != null
-            ? ChatRequestActions(
-                chatRow: widget.chatRow!,
-                currentUser: widget.currentUser,
-              )
-            : Container(),
         Container(
           padding: EdgeInsets.symmetric(vertical: 14, horizontal: 10),
           child: Material(

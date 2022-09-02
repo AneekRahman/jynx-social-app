@@ -9,10 +9,13 @@ import 'package:social_app/modules/constants.dart';
 import 'package:social_app/services/firestore_service.dart';
 import 'package:social_app/services/rtd_service.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter/services.dart';
 
 import '../modules/ChatBottomBar.dart';
 import '../modules/MessageBubble.dart';
 import 'OthersProfilePage.dart';
+
+GlobalKey<_ChatRequestActionsState> _chatRequestActionsGlobalKey = GlobalKey<_ChatRequestActionsState>();
 
 const kMessageTextFieldDecoration = InputDecoration(
   contentPadding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
@@ -57,9 +60,34 @@ class ChatTopBar extends StatelessWidget {
             ),
           ),
           _buildOtherUserPicNamesRow(context),
-          GestureDetector(
-            child: Icon(Icons.more_vert),
+          PopupMenuButton(
+            itemBuilder: (ctx) => [
+              _buildPopupMenuItem(context, 'View profile', Icons.person_outline, 1),
+              _buildPopupMenuItem(context, 'Copy username', Icons.copy, 2),
+              _buildPopupMenuItem(context, chatRow!.blockedByThisUser! ? 'Unblock user' : "Block user", Icons.person_off, 3),
+            ],
+          )
+        ],
+      ),
+    );
+  }
+
+  PopupMenuItem _buildPopupMenuItem(BuildContext context, String title, IconData iconData, int position) {
+    return PopupMenuItem(
+      onTap: () {
+        if (position == 1) _showOtherUsersProfileModal(context);
+        if (position == 2) Clipboard.setData(ClipboardData(text: otherUser.userName));
+        if (position == 3) _chatRequestActionsGlobalKey.currentState!.blockUnblockUser();
+      },
+      value: position,
+      child: Row(
+        children: [
+          Icon(
+            iconData,
+            color: Colors.black,
           ),
+          SizedBox(width: 10),
+          Text(title),
         ],
       ),
     );
@@ -116,8 +144,12 @@ class ChatTopBar extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: GestureDetector(
-              onTap: () {
+            child: TextButton(
+              style: ButtonStyle(
+                alignment: Alignment.centerLeft,
+                padding: MaterialStatePropertyAll(EdgeInsets.all(0)),
+              ),
+              onPressed: () {
                 _showOtherUsersProfileModal(context);
               },
               child: Column(
@@ -226,6 +258,13 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                     ? _buildMessagesStreamBuilder(context)
                     : Center(child: Text("You haven't messaged yet!"))
                 : _buildLoadingAnim(),
+            widget.chatRow != null
+                ? ChatRequestActions(
+                    key: _chatRequestActionsGlobalKey,
+                    chatRow: widget.chatRow!,
+                    currentUser: _currentUser,
+                  )
+                : Container(),
             ChatBottomBar(
               rootContext: context,
               chatRow: widget.chatRow,
@@ -299,5 +338,133 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
         },
       ),
     );
+  }
+}
+
+class ChatRequestActions extends StatefulWidget {
+  ChatRequestActions({Key? key, required this.currentUser, required this.chatRow}) : super(key: key);
+  User currentUser;
+  ChatRow chatRow;
+
+  @override
+  _ChatRequestActionsState createState() => _ChatRequestActionsState();
+}
+
+class _ChatRequestActionsState extends State<ChatRequestActions> {
+  bool _loading = false;
+
+  Future _acceptRequest() async {
+    if (_loading || widget.chatRow.chatRoomUid == null) return;
+    setState(() => _loading = true);
+    try {
+      // Accept the request
+      await context.read<FirestoreService>().acceptChatUserRequest(
+          context.read<RealtimeDatabaseService>(), widget.chatRow.chatRoomUid, widget.currentUser.uid, widget.chatRow.otherUser.userUid);
+      // Update the UI
+      setState(() => widget.chatRow.requestedByOtherUser = false);
+    } catch (e) {
+      throw e;
+    }
+    // Update the UI
+    setState(() => _loading = false);
+  }
+
+  Future blockUnblockUser() async {
+    if (_loading || widget.chatRow.chatRoomUid == null) return;
+    setState(() => _loading = true);
+    try {
+      if (!widget.chatRow.blockedByThisUser!) {
+        // Block in Firestore
+        await context
+            .read<FirestoreService>()
+            .blockUser(userChatsDocumentUid: widget.chatRow.chatRoomUid, blockedUserUid: widget.chatRow.otherUser.userUid);
+        // In Database
+        await context.read<RealtimeDatabaseService>().blockInRTDatabase(widget.chatRow.chatRoomUid, widget.chatRow.otherUser.userUid);
+      } else {
+        // Unblock in Firestore
+        await context
+            .read<FirestoreService>()
+            .unblockUser(userChatsDocumentUid: widget.chatRow.chatRoomUid, blockedUserUid: widget.chatRow.otherUser.userUid);
+        // In Database
+        await context.read<RealtimeDatabaseService>().unBlockInRTDatabase(widget.chatRow.chatRoomUid, widget.chatRow.otherUser.userUid);
+      }
+      // Update the UI
+      setState(() {
+        widget.chatRow.blockedByThisUser = !widget.chatRow.blockedByThisUser!;
+      });
+    } catch (e) {
+      throw e;
+    }
+    // Update the UI
+    setState(() => _loading = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.chatRow.requestedByOtherUser! || widget.chatRow.blockedByThisUser!) {
+      return Column(
+        children: [
+          Container(
+            margin: EdgeInsets.only(top: 10),
+            height: 1,
+            width: MediaQuery.of(context).size.width,
+            color: Color(0xFFF1F1F1F1),
+          ),
+          Padding(
+            padding: EdgeInsets.fromLTRB(20, 20, 20, 0),
+            child: Text(
+              widget.chatRow.blockedByThisUser!
+                  ? "You have blocked this user and they will not be able to message you."
+                  : "This message will be moved to your chat list when you accept it or reply here.",
+              style: TextStyle(fontFamily: HelveticaFont.Light),
+            ),
+          ),
+          Container(
+            padding: EdgeInsets.fromLTRB(20, 20, 20, 0),
+            child: !_loading
+                ? Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      GestureDetector(
+                        onTap: () {
+                          _acceptRequest();
+                        },
+                        child: Container(
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.black12, width: 1),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          padding: EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+                          child: Text(
+                            "Accept Request",
+                            style: TextStyle(fontFamily: HelveticaFont.Bold),
+                          ),
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          blockUnblockUser();
+                        },
+                        child: Container(
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.black12, width: 1),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          padding: EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+                          child: Text(
+                            widget.chatRow.blockedByThisUser! ? "Unblock User" : "Block User",
+                            style: TextStyle(fontFamily: HelveticaFont.Bold),
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
+                : _buildLoadingAnim(),
+          ),
+        ],
+      );
+    } else {
+      return Container();
+    }
   }
 }
