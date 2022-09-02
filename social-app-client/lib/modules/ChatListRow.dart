@@ -55,6 +55,7 @@ class _ChatsListRowState extends State<ChatsListRow> {
           Container(
             height: 45,
             width: 45,
+            margin: EdgeInsets.only(right: 16),
             decoration: hasImg
                 ? BoxDecoration(
                     color: Colors.white10,
@@ -78,9 +79,6 @@ class _ChatsListRowState extends State<ChatsListRow> {
                     width: 40,
                   ),
           ),
-          SizedBox(
-            width: 16,
-          ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -95,44 +93,55 @@ class _ChatsListRowState extends State<ChatsListRow> {
               SizedBox(
                 height: 2,
               ),
-              Row(
-                children: [
-                  Icon(
-                    !widget._chatRow.seen! ? Icons.chat_bubble : Icons.chat_bubble_outline,
-                    size: 14,
-                    color: !widget._chatRow.seen! ? Colors.yellow : Colors.white,
+              Container(
+                height: 18,
+                width: MediaQuery.of(context).size.width - 160,
+                child: Expanded(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Icon(
+                        !widget._chatRow.seen! ? Icons.chat_bubble : Icons.chat_bubble_outline,
+                        size: 14,
+                        color: !widget._chatRow.seen! ? Colors.yellow : Colors.white,
+                      ),
+                      SizedBox(
+                        width: 5,
+                      ),
+                      Expanded(
+                        child: Text(
+                          // !widget._chatRow.seen! ? "New message" : "Opened",
+                          widget._chatRow.lastMsg!.isEmpty
+                              ? !widget._chatRow.seen!
+                                  ? "New message"
+                                  : "Opened"
+                              : !widget._chatRow.seen!
+                                  ? "New: " + widget._chatRow.lastMsg!
+                                  : "Read: " + widget._chatRow.lastMsg!,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontFamily: fontFamily,
+                            fontSize: 12,
+                            color: !widget._chatRow.seen! ? Colors.yellow : Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  SizedBox(
-                    width: 5,
-                  ),
-                  Text(
-                    // !widget._chatRow.seen! ? "New message" : "Opened",
-                    widget._chatRow.lastMsg!.isEmpty
-                        ? !widget._chatRow.seen!
-                            ? "New message"
-                            : "Opened"
-                        : !widget._chatRow.seen!
-                            ? "New: " + widget._chatRow.lastMsg!
-                            : "Read: " + widget._chatRow.lastMsg!,
-                    style: TextStyle(
-                      fontFamily: fontFamily,
-                      fontSize: 12,
-                      color: !widget._chatRow.seen! ? Colors.yellow : Colors.white,
-                    ),
-                  ),
-                ],
+                ),
               ),
             ],
           ),
-          Expanded(
-            child: Container(),
-          ),
-          Text(
-            sentTimeFormattedString,
-            style: TextStyle(
-              fontFamily: fontFamily,
-              fontSize: 12,
-              color: Colors.yellow,
+          Expanded(child: SizedBox()),
+          SizedBox(
+            width: 30,
+            child: Text(
+              sentTimeFormattedString,
+              style: TextStyle(
+                fontFamily: fontFamily,
+                fontSize: 12,
+                color: Colors.yellow,
+              ),
             ),
           )
         ],
