@@ -3,11 +3,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 import 'package:social_app/models/UserProfileObject.dart';
 import 'package:social_app/modules/LoadingBar.dart';
 import 'package:social_app/modules/constants.dart';
 import 'package:social_app/pages/ChatRoomPage.dart';
 import 'package:provider/provider.dart';
+import 'package:social_app/pages/OthersProfilePage.dart';
 
 class SearchUsersPage extends StatefulWidget {
   @override
@@ -93,11 +95,13 @@ class _SearchUsersPageState extends State<SearchUsersPage> {
                           delegate: SliverChildBuilderDelegate((context, index) {
                             return GestureDetector(
                               onTap: () {
-                                Navigator.push(
-                                  context,
-                                  CupertinoPageRoute(
-                                    builder: (context) => ChatRoomPage(
-                                      otherUser: _searchUsersList[index],
+                                showMaterialModalBottomSheet(
+                                  backgroundColor: Colors.transparent,
+                                  context: context,
+                                  builder: (context) => Padding(
+                                    padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
+                                    child: OthersProfilePage(
+                                      otherUsersProfileObject: _searchUsersList[index],
                                     ),
                                   ),
                                 );

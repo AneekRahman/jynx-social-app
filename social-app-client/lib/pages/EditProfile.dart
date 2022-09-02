@@ -266,7 +266,7 @@ class LocationButton extends StatelessWidget {
               mode: Mode.overlay, // Mode.fullscreen
               language: "en",
               hint: "Search for places...",
-              components: [new Component(Component.country, "us")]);
+              components: []);
 
           if (result != null) {
             setLocation(result.description);
