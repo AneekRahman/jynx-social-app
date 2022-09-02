@@ -54,88 +54,13 @@ class _OthersProfilePageState extends State<OthersProfilePage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     ProfilePageAppBar(),
-                    Row(
-                      children: [
-                        ProfileImageBlock(
-                          photoURL: _myUserObject.photoURL,
-                        ),
-                        SizedBox(
-                          width: 20,
-                        ),
-                        Flexible(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                _myUserObject.displayName ?? "",
-                                style: TextStyle(
-                                  fontFamily: HelveticaFont.Bold,
-                                  color: Colors.white,
-                                  fontSize: 18,
-                                ),
-                              ),
-                              SizedBox(height: 6),
-                              Text(
-                                _myUserObject.userName ?? "",
-                                style: TextStyle(
-                                  fontFamily: HelveticaFont.Medium,
-                                  color: Colors.white,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
+                    _buildUserPicNamesRow(_myUserObject),
                     SizedBox(height: 20),
-                    _myUserObject.location!.isNotEmpty
-                        ? Row(
-                            children: [
-                              Icon(
-                                Icons.location_on,
-                                color: Colors.white,
-                                size: 18,
-                              ),
-                              SizedBox(width: 4),
-                              Text(
-                                _myUserObject.location!,
-                                style: TextStyle(
-                                  fontFamily: HelveticaFont.Roman,
-                                  color: Colors.white38,
-                                  fontSize: 14,
-                                ),
-                              )
-                            ],
-                          )
-                        : SizedBox(),
+                    _myUserObject.location!.isNotEmpty ? _buildLocationTextRow(_myUserObject) : SizedBox(),
                     SizedBox(height: 10),
-                    Text(
-                      _myUserObject.userBio!.isNotEmpty ? _myUserObject.userBio! : "There was no bio added...",
-                      style: TextStyle(
-                        fontFamily: HelveticaFont.Roman,
-                        color: Colors.white70,
-                        fontSize: 14,
-                      ),
-                    ),
+                    _buildBioTextRow(_myUserObject),
                     SizedBox(height: 10),
-                    _myUserObject.website!.isNotEmpty
-                        ? GestureDetector(
-                            onTap: () {
-                              if (!_myUserObject.website!.isEmpty) {
-                                _launchUserWebsite(_myUserObject.website!);
-                              }
-                            },
-                            child: Text(
-                              _myUserObject.website!,
-                              style: TextStyle(
-                                fontFamily: HelveticaFont.Bold,
-                                color: Colors.yellow,
-                                fontSize: 14,
-                              ),
-                            ),
-                          )
-                        : SizedBox(),
+                    _myUserObject.website!.isNotEmpty ? _buildWebsiteTextRow(_myUserObject) : SizedBox(),
                     SizedBox(height: 20),
                     buildYellowButton(
                         child: Row(
@@ -176,6 +101,93 @@ class _OthersProfilePageState extends State<OthersProfilePage> {
                 ),
               );
             }));
+  }
+
+  GestureDetector _buildWebsiteTextRow(UserProfileObject _myUserObject) {
+    return GestureDetector(
+      onTap: () {
+        if (!_myUserObject.website!.isEmpty) {
+          _launchUserWebsite(_myUserObject.website!);
+        }
+      },
+      child: Text(
+        _myUserObject.website!,
+        style: TextStyle(
+          fontFamily: HelveticaFont.Bold,
+          color: Colors.yellow,
+          fontSize: 14,
+        ),
+      ),
+    );
+  }
+
+  Text _buildBioTextRow(UserProfileObject _myUserObject) {
+    return Text(
+      _myUserObject.userBio!.isNotEmpty ? _myUserObject.userBio! : "There was no bio added...",
+      style: TextStyle(
+        fontFamily: HelveticaFont.Roman,
+        color: Colors.white70,
+        fontSize: 14,
+      ),
+    );
+  }
+
+  Row _buildLocationTextRow(UserProfileObject _myUserObject) {
+    return Row(
+      children: [
+        Icon(
+          Icons.location_on,
+          color: Colors.white,
+          size: 18,
+        ),
+        SizedBox(width: 4),
+        Text(
+          _myUserObject.location!,
+          style: TextStyle(
+            fontFamily: HelveticaFont.Roman,
+            color: Colors.white38,
+            fontSize: 14,
+          ),
+        )
+      ],
+    );
+  }
+
+  Row _buildUserPicNamesRow(UserProfileObject _myUserObject) {
+    return Row(
+      children: [
+        ProfileImageBlock(
+          photoURL: _myUserObject.photoURL,
+        ),
+        SizedBox(
+          width: 20,
+        ),
+        Flexible(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _myUserObject.displayName ?? "",
+                style: TextStyle(
+                  fontFamily: HelveticaFont.Bold,
+                  color: Colors.white,
+                  fontSize: 18,
+                ),
+              ),
+              SizedBox(height: 6),
+              Text(
+                _myUserObject.userName ?? "",
+                style: TextStyle(
+                  fontFamily: HelveticaFont.Medium,
+                  color: Colors.white,
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 }
 

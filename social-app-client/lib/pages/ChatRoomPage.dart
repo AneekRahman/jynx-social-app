@@ -56,87 +56,86 @@ class ChatTopBar extends StatelessWidget {
               ),
             ),
           ),
-          Expanded(
-            child: Row(
-              children: <Widget>[
-                GestureDetector(
-                  onTap: () {
-                    showMaterialModalBottomSheet(
-                      backgroundColor: Colors.transparent,
-                      context: context,
-                      builder: (context) => Padding(
-                        padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
-                        child: OthersProfilePage(
-                          otherUsersProfileObject: otherUser,
-                        ),
-                      ),
-                    );
-                  },
-                  child: Container(
-                    height: 45,
-                    width: 45,
-                    margin: EdgeInsets.only(right: 10),
-                    decoration: BoxDecoration(
-                      color: Colors.white10,
-                      borderRadius: BorderRadius.circular(10000),
-                      border: Border.all(color: Colors.yellow, width: 2),
-                    ),
-                    child: otherUser.photoURL!.isNotEmpty
-                        ? ClipRRect(
-                            child: Image.network(
-                              otherUser.photoURL!,
-                              height: 45,
-                              width: 45,
-                              fit: BoxFit.cover,
-                            ),
-                            borderRadius: BorderRadius.all(Radius.circular(100)),
-                          )
-                        : Container(
-                            height: 45,
-                            width: 45,
-                            decoration: BoxDecoration(
-                              color: Colors.black.withOpacity(.07),
-                              borderRadius: BorderRadius.circular(10000),
-                            ),
-                          ),
-                  ),
-                ),
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () {
-                      showMaterialModalBottomSheet(
-                        backgroundColor: Colors.transparent,
-                        context: context,
-                        builder: (context) => Padding(
-                          padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
-                          child: OthersProfilePage(
-                            otherUsersProfileObject: otherUser,
-                          ),
-                        ),
-                      );
-                    },
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          otherUser.displayName!,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(fontFamily: HelveticaFont.Medium, fontSize: 16, color: Colors.black),
-                        ),
-                        Text(
-                          "@" + otherUser.userName!,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(fontFamily: HelveticaFont.Roman, fontSize: 14, color: Colors.black38),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+          _buildOtherUserPicNamesRow(context),
           GestureDetector(
             child: Icon(Icons.more_vert),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showOtherUsersProfileModal(BuildContext context) {
+    showMaterialModalBottomSheet(
+      backgroundColor: Colors.transparent,
+      context: context,
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
+        child: OthersProfilePage(
+          otherUsersProfileObject: otherUser,
+        ),
+      ),
+    );
+  }
+
+  Expanded _buildOtherUserPicNamesRow(BuildContext context) {
+    return Expanded(
+      child: Row(
+        children: <Widget>[
+          GestureDetector(
+            onTap: () {
+              _showOtherUsersProfileModal(context);
+            },
+            child: Container(
+              height: 45,
+              width: 45,
+              margin: EdgeInsets.only(right: 10),
+              decoration: BoxDecoration(
+                color: Colors.white10,
+                borderRadius: BorderRadius.circular(10000),
+                border: Border.all(color: Colors.yellow, width: 2),
+              ),
+              child: otherUser.photoURL!.isNotEmpty
+                  ? ClipRRect(
+                      child: Image.network(
+                        otherUser.photoURL!,
+                        height: 45,
+                        width: 45,
+                        fit: BoxFit.cover,
+                      ),
+                      borderRadius: BorderRadius.all(Radius.circular(100)),
+                    )
+                  : Container(
+                      height: 45,
+                      width: 45,
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(.07),
+                        borderRadius: BorderRadius.circular(10000),
+                      ),
+                    ),
+            ),
+          ),
+          Expanded(
+            child: GestureDetector(
+              onTap: () {
+                _showOtherUsersProfileModal(context);
+              },
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    otherUser.displayName!,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontFamily: HelveticaFont.Medium, fontSize: 16, color: Colors.black),
+                  ),
+                  Text(
+                    "@" + otherUser.userName!,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontFamily: HelveticaFont.Roman, fontSize: 14, color: Colors.black38),
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),
@@ -206,7 +205,6 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   void initState() {
     super.initState();
     _currentUser = context.read<User>();
-    print("GOT: THIS " + widget.otherUser.userUid.toString());
     _initializeChatRoom();
   }
 
@@ -225,61 +223,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
             ),
             !_initializingChatRoom
                 ? widget.chatRow != null
-                    ? Expanded(
-                        child: StreamBuilder(
-                          stream: context.watch<RealtimeDatabaseService>().getChatRoomMessagesStream(widget.chatRow!.chatRoomUid),
-                          builder: (context, AsyncSnapshot snapshot) {
-                            if (snapshot.hasData && !snapshot.hasError) {
-                              _setMsgRowsFromStream(snapshot.data!.snapshot.value);
-
-                              return CustomScrollView(
-                                reverse: true,
-                                physics: BouncingScrollPhysics(),
-                                slivers: [
-                                  SliverList(
-                                    delegate: SliverChildBuilderDelegate(
-                                      (context, index) {
-                                        MsgRow msgRow = _msgRows.elementAt(index);
-                                        // Check if previous post was also from the same user
-                                        bool firstMsgOfUser = true;
-                                        if (index == 0 || _msgRows.elementAt(index - 1).msgUid == _currentUser.uid) {
-                                          firstMsgOfUser = false;
-                                        }
-
-                                        return MessageBubble(
-                                          msgRow: msgRow,
-                                          isUser: msgRow.userUid == _currentUser.uid,
-                                          firstMsgOfUser: firstMsgOfUser,
-                                        );
-                                      },
-                                      childCount: _msgRows.length,
-                                    ),
-                                  ),
-                                  SliverToBoxAdapter(
-                                    child: _msgRows.length == 0 &&
-                                            !widget.chatRow!.blockedByThisUser! &&
-                                            !widget.chatRow!.requestedByOtherUser!
-                                        ? Center(
-                                            child: Padding(
-                                              padding: const EdgeInsets.all(20.0),
-                                              child: Text(
-                                                "This contact has been accepted, you can now start messaging",
-                                                textAlign: TextAlign.center,
-                                              ),
-                                            ),
-                                          )
-                                        : SizedBox(),
-                                  ),
-                                ],
-                              );
-                            } else if (snapshot.hasError) {
-                              return Center(child: Text("Error! Go back and reload the page!"));
-                            } else {
-                              return _buildLoadingAnim();
-                            }
-                          },
-                        ),
-                      )
+                    ? _buildMessagesStreamBuilder(context)
                     : Center(child: Text("You haven't messaged yet!"))
                 : _buildLoadingAnim(),
             ChatBottomBar(
@@ -297,6 +241,62 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Expanded _buildMessagesStreamBuilder(BuildContext context) {
+    return Expanded(
+      child: StreamBuilder(
+        stream: context.watch<RealtimeDatabaseService>().getChatRoomMessagesStream(widget.chatRow!.chatRoomUid),
+        builder: (context, AsyncSnapshot snapshot) {
+          if (snapshot.hasData && !snapshot.hasError) {
+            _setMsgRowsFromStream(snapshot.data!.snapshot.value);
+
+            return CustomScrollView(
+              reverse: true,
+              physics: BouncingScrollPhysics(),
+              slivers: [
+                SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      MsgRow msgRow = _msgRows.elementAt(index);
+                      // Check if previous post was also from the same user
+                      bool firstMsgOfUser = true;
+                      if (index == 0 || _msgRows.elementAt(index - 1).msgUid == _currentUser.uid) {
+                        firstMsgOfUser = false;
+                      }
+
+                      return MessageBubble(
+                        msgRow: msgRow,
+                        isUser: msgRow.userUid == _currentUser.uid,
+                        firstMsgOfUser: firstMsgOfUser,
+                      );
+                    },
+                    childCount: _msgRows.length,
+                  ),
+                ),
+                SliverToBoxAdapter(
+                  child: _msgRows.length == 0 && !widget.chatRow!.blockedByThisUser! && !widget.chatRow!.requestedByOtherUser!
+                      ? Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(20.0),
+                            child: Text(
+                              "This contact has been accepted, you can now start messaging",
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        )
+                      : SizedBox(),
+                ),
+              ],
+            );
+          } else if (snapshot.hasError) {
+            return Center(child: Text("Error! Go back and reload the page!"));
+          } else {
+            return _buildLoadingAnim();
+          }
+        },
       ),
     );
   }

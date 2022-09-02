@@ -84,48 +84,52 @@ class _SearchUsersPageState extends State<SearchUsersPage> {
               LoadingBar(
                 loading: _loading,
               ),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: CustomScrollView(
-                      slivers: [
-                        SliverList(
-                          delegate: SliverChildBuilderDelegate((context, index) {
-                            return GestureDetector(
-                              onTap: () {
-                                showMaterialModalBottomSheet(
-                                  backgroundColor: Colors.transparent,
-                                  context: context,
-                                  builder: (context) => Padding(
-                                    padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
-                                    child: OthersProfilePage(
-                                      otherUsersProfileObject: _searchUsersList[index],
-                                    ),
-                                  ),
-                                );
-                              },
-                              child: SearchUserRow(
-                                userObject: _searchUsersList[index],
-                              ),
-                            );
-                          }, childCount: _searchUsersList.length),
-                        ),
-                        SliverToBoxAdapter(
-                          child: Padding(
-                            padding: EdgeInsets.only(top: 15, bottom: 30),
-                            child: Text(
-                              _msg,
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: Colors.white30,
-                                fontFamily: HelveticaFont.Roman,
-                              ),
-                            ),
+              _buildSearchScrollList()
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Expanded _buildSearchScrollList() {
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child: CustomScrollView(
+            slivers: [
+              SliverList(
+                delegate: SliverChildBuilderDelegate((context, index) {
+                  return GestureDetector(
+                    onTap: () {
+                      showMaterialModalBottomSheet(
+                        backgroundColor: Colors.transparent,
+                        context: context,
+                        builder: (context) => Padding(
+                          padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
+                          child: OthersProfilePage(
+                            otherUsersProfileObject: _searchUsersList[index],
                           ),
-                        )
-                      ],
+                        ),
+                      );
+                    },
+                    child: SearchUserRow(
+                      userObject: _searchUsersList[index],
+                    ),
+                  );
+                }, childCount: _searchUsersList.length),
+              ),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.only(top: 15, bottom: 30),
+                  child: Text(
+                    _msg,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white30,
+                      fontFamily: HelveticaFont.Roman,
                     ),
                   ),
                 ),

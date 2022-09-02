@@ -113,136 +113,13 @@ class _MyProfilePageState extends State<MyProfilePage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       ProfilePageAppBar(),
-                      Row(
-                        children: [
-                          GestureDetector(
-                            onTap: () async {
-                              final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
-                              _uploadImageToFirebase(File(pickedFile!.path));
-                            },
-                            child: Stack(
-                              alignment: Alignment.center,
-                              children: [
-                                ProfileImageBlock(
-                                  photoURL: _myUserObject.photoURL,
-                                ),
-                                Center(
-                                  child: Container(
-                                    height: 106,
-                                    width: 106,
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(1000),
-                                      gradient: LinearGradient(
-                                        colors: [
-                                          Colors.black.withOpacity(1),
-                                          Colors.black.withOpacity(0),
-                                        ],
-                                        begin: Alignment.bottomCenter,
-                                        end: Alignment.topCenter,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                Positioned(
-                                    bottom: 15,
-                                    left: 0,
-                                    right: 0,
-                                    child: Icon(
-                                      Icons.camera_alt_outlined,
-                                      color: Colors.white70,
-                                    ))
-                              ],
-                            ),
-                          ),
-                          SizedBox(
-                            width: 20,
-                          ),
-                          Flexible(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  _myUserObject.displayName ?? "",
-                                  style: TextStyle(
-                                    fontFamily: HelveticaFont.Bold,
-                                    color: Colors.white,
-                                    fontSize: 18,
-                                  ),
-                                ),
-                                SizedBox(height: 6),
-                                Text(
-                                  _myUserObject.userName ?? "",
-                                  style: TextStyle(
-                                    fontFamily: HelveticaFont.Medium,
-                                    color: Colors.white,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
+                      _buildUserPicNamesRow(_myUserObject),
                       SizedBox(height: 20),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.location_on,
-                            color: Colors.white,
-                            size: 18,
-                          ),
-                          SizedBox(width: 4),
-                          GestureDetector(
-                            onTap: () {
-                              if (_myUserObject.location!.isEmpty) {
-                                Navigator.push(context, CupertinoPageRoute(builder: (context) => EditProfile(userObject: _myUserObject)));
-                              }
-                            },
-                            child: Text(
-                              _myUserObject.location!.isNotEmpty ? _myUserObject.location! : "Add location",
-                              style: TextStyle(
-                                fontFamily: HelveticaFont.Roman,
-                                color: Colors.white38,
-                                fontSize: 14,
-                              ),
-                            ),
-                          )
-                        ],
-                      ),
+                      _buildLocationTextRow(_myUserObject, context),
                       SizedBox(height: 10),
-                      GestureDetector(
-                        onTap: () {
-                          if (_myUserObject.userBio!.isEmpty) {
-                            Navigator.push(context, CupertinoPageRoute(builder: (context) => EditProfile(userObject: _myUserObject)));
-                          }
-                        },
-                        child: Text(
-                          _myUserObject.userBio!.isNotEmpty ? _myUserObject.userBio! : "Add a bio",
-                          style: TextStyle(
-                            fontFamily: HelveticaFont.Roman,
-                            color: Colors.white70,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
+                      _buildBioTextRow(_myUserObject, context),
                       SizedBox(height: 10),
-                      GestureDetector(
-                        onTap: () {
-                          if (_myUserObject.website!.isEmpty) {
-                            Navigator.push(context, CupertinoPageRoute(builder: (context) => EditProfile(userObject: _myUserObject)));
-                          } else {
-                            _launchUserWebsite(_myUserObject.website!);
-                          }
-                        },
-                        child: Text(
-                          _myUserObject.website!.isNotEmpty ? _myUserObject.website! : "Add a website",
-                          style: TextStyle(
-                            fontFamily: HelveticaFont.Bold,
-                            color: Colors.yellow,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
+                      _buildWebsiteTextRow(_myUserObject, context),
                       SizedBox(height: 20),
                       buildYellowButton(
                           child: Row(
@@ -283,6 +160,147 @@ class _MyProfilePageState extends State<MyProfilePage> {
                 child: CircularProgressIndicator(),
               ),
             ),
+    );
+  }
+
+  GestureDetector _buildWebsiteTextRow(UserProfileObject _myUserObject, BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        if (_myUserObject.website!.isEmpty) {
+          Navigator.push(context, CupertinoPageRoute(builder: (context) => EditProfile(userObject: _myUserObject)));
+        } else {
+          _launchUserWebsite(_myUserObject.website!);
+        }
+      },
+      child: Text(
+        _myUserObject.website!.isNotEmpty ? _myUserObject.website! : "Add a website",
+        style: TextStyle(
+          fontFamily: HelveticaFont.Bold,
+          color: Colors.yellow,
+          fontSize: 14,
+        ),
+      ),
+    );
+  }
+
+  GestureDetector _buildBioTextRow(UserProfileObject _myUserObject, BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        if (_myUserObject.userBio!.isEmpty) {
+          Navigator.push(context, CupertinoPageRoute(builder: (context) => EditProfile(userObject: _myUserObject)));
+        }
+      },
+      child: Text(
+        _myUserObject.userBio!.isNotEmpty ? _myUserObject.userBio! : "Add a bio",
+        style: TextStyle(
+          fontFamily: HelveticaFont.Roman,
+          color: Colors.white70,
+          fontSize: 14,
+        ),
+      ),
+    );
+  }
+
+  Row _buildLocationTextRow(UserProfileObject _myUserObject, BuildContext context) {
+    return Row(
+      children: [
+        Icon(
+          Icons.location_on,
+          color: Colors.white,
+          size: 18,
+        ),
+        SizedBox(width: 4),
+        GestureDetector(
+          onTap: () {
+            if (_myUserObject.location!.isEmpty) {
+              Navigator.push(context, CupertinoPageRoute(builder: (context) => EditProfile(userObject: _myUserObject)));
+            }
+          },
+          child: Text(
+            _myUserObject.location!.isNotEmpty ? _myUserObject.location! : "Add location",
+            style: TextStyle(
+              fontFamily: HelveticaFont.Roman,
+              color: Colors.white38,
+              fontSize: 14,
+            ),
+          ),
+        )
+      ],
+    );
+  }
+
+  Row _buildUserPicNamesRow(UserProfileObject _myUserObject) {
+    return Row(
+      children: [
+        GestureDetector(
+          onTap: () async {
+            final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+            if (pickedFile != null) {
+              _uploadImageToFirebase(File(pickedFile.path));
+            }
+          },
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              ProfileImageBlock(
+                photoURL: _myUserObject.photoURL,
+              ),
+              Center(
+                child: Container(
+                  height: 106,
+                  width: 106,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(1000),
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.black.withOpacity(1),
+                        Colors.black.withOpacity(0),
+                      ],
+                      begin: Alignment.bottomCenter,
+                      end: Alignment.topCenter,
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                  bottom: 15,
+                  left: 0,
+                  right: 0,
+                  child: Icon(
+                    Icons.camera_alt_outlined,
+                    color: Colors.white70,
+                  ))
+            ],
+          ),
+        ),
+        SizedBox(
+          width: 20,
+        ),
+        Flexible(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _myUserObject.displayName ?? "",
+                style: TextStyle(
+                  fontFamily: HelveticaFont.Bold,
+                  color: Colors.white,
+                  fontSize: 18,
+                ),
+              ),
+              SizedBox(height: 6),
+              Text(
+                _myUserObject.userName ?? "",
+                style: TextStyle(
+                  fontFamily: HelveticaFont.Medium,
+                  color: Colors.white,
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

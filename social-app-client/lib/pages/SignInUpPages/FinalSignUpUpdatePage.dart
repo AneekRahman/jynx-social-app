@@ -86,64 +86,7 @@ class _FinalSignUpUpdatePageState extends State<FinalSignUpUpdatePage> {
             children: [
               Expanded(
                 child: SingleChildScrollView(
-                  child: Form(
-                    key: _formKey,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Column(
-                        children: [
-                          SizedBox(height: 20),
-                          Text("Complete Account", style: headingStyle),
-                          SizedBox(height: 10),
-                          Text(
-                            'Select a new username and enter your full name \nto complete the account creation',
-                            textAlign: TextAlign.center,
-                            style: Theme.of(context).textTheme.caption,
-                          ),
-                          SizedBox(height: 40),
-                          TextFormField(
-                            onChanged: (value) => _userName = value.trim(),
-                            validator: (input) {
-                              if (input!.length < 6 || input.length > 32) {
-                                return "Should be between 6 - 32 characters long";
-                              }
-                              if (input.isEmpty || !_userNameRegExp.hasMatch(input)) {
-                                return "Usernames must only be Alpha-Numeric, dots or underscores";
-                              }
-                            },
-                            autofocus: true,
-                            style: TextStyle(fontFamily: HelveticaFont.Roman, fontSize: 20),
-                            decoration: InputDecoration(
-                                labelText: "Username",
-                                prefix: Text("@"),
-                                prefixStyle: TextStyle(color: Colors.black45, fontSize: 18),
-                                floatingLabelBehavior: FloatingLabelBehavior.always,
-                                hintText: "john_doe123",
-                                contentPadding: EdgeInsets.fromLTRB(0, 0, 0, 10)),
-                          ),
-                          SizedBox(height: 20),
-                          TextFormField(
-                            onChanged: (value) => _displayName = value.trim(),
-                            validator: (input) {
-                              if (input!.length < 3 || input.length > 32) {
-                                return "Should be between 3 - 32 characters long";
-                              }
-                              if (input.isEmpty || !_displayNameRegExp.hasMatch(input)) {
-                                return "Names cannot contain numbers or special characters";
-                              }
-                            },
-                            style: TextStyle(fontFamily: HelveticaFont.Roman, fontSize: 20),
-                            textCapitalization: TextCapitalization.words,
-                            decoration: InputDecoration(
-                                labelText: "Full Name",
-                                floatingLabelBehavior: FloatingLabelBehavior.always,
-                                hintText: "eg: John Doe",
-                                contentPadding: EdgeInsets.fromLTRB(0, 0, 0, 10)),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                  child: _buildForm(context),
                 ),
               ),
               Builder(
@@ -159,6 +102,67 @@ class _FinalSignUpUpdatePageState extends State<FinalSignUpUpdatePage> {
               )
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Form _buildForm(BuildContext context) {
+    return Form(
+      key: _formKey,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: Column(
+          children: [
+            SizedBox(height: 20),
+            Text("Complete Account", style: headingStyle),
+            SizedBox(height: 10),
+            Text(
+              'Select a new username and enter your full name \nto complete the account creation',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.caption,
+            ),
+            SizedBox(height: 40),
+            TextFormField(
+              onChanged: (value) => _userName = value.trim(),
+              validator: (input) {
+                if (input!.length < 6 || input.length > 32) {
+                  return "Should be between 6 - 32 characters long";
+                }
+                if (input.isEmpty || !_userNameRegExp.hasMatch(input)) {
+                  return "Usernames must only be Alpha-Numeric, dots or underscores";
+                }
+              },
+              autofocus: true,
+              style: TextStyle(fontFamily: HelveticaFont.Roman, fontSize: 20),
+              decoration: InputDecoration(
+                  labelText: "Username",
+                  prefix: Text("@"),
+                  prefixStyle: TextStyle(color: Colors.black45, fontSize: 18),
+                  floatingLabelBehavior: FloatingLabelBehavior.always,
+                  hintText: "john_doe123",
+                  contentPadding: EdgeInsets.fromLTRB(0, 0, 0, 10)),
+            ),
+            SizedBox(height: 20),
+            TextFormField(
+              onChanged: (value) => _displayName = value.trim(),
+              validator: (input) {
+                if (input!.length < 3 || input.length > 32) {
+                  return "Should be between 3 - 32 characters long";
+                }
+                if (input.isEmpty || !_displayNameRegExp.hasMatch(input)) {
+                  return "Names cannot contain numbers or special characters";
+                }
+              },
+              style: TextStyle(fontFamily: HelveticaFont.Roman, fontSize: 20),
+              textCapitalization: TextCapitalization.words,
+              decoration: InputDecoration(
+                  labelText: "Full Name",
+                  floatingLabelBehavior: FloatingLabelBehavior.always,
+                  hintText: "eg: John Doe",
+                  contentPadding: EdgeInsets.fromLTRB(0, 0, 0, 10)),
+            ),
+          ],
         ),
       ),
     );
