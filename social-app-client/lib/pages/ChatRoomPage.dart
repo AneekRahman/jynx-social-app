@@ -62,6 +62,11 @@ class ChatTopBar extends StatelessWidget {
           _buildOtherUserPicNamesRow(context),
           chatRow != null
               ? PopupMenuButton(
+                  onSelected: ((value) {
+                    if (value == 1) _showOtherUsersProfileModal(context);
+                    if (value == 2) Clipboard.setData(ClipboardData(text: otherUser.userName));
+                    if (value == 3) _chatRequestActionsGlobalKey.currentState!.blockUnblockUser();
+                  }),
                   itemBuilder: (ctx) => [
                     _buildPopupMenuItem(context, 'View profile', Icons.person_outline, 1),
                     _buildPopupMenuItem(context, 'Copy username', Icons.copy, 2),
@@ -74,14 +79,9 @@ class ChatTopBar extends StatelessWidget {
     );
   }
 
-  PopupMenuItem _buildPopupMenuItem(BuildContext context, String title, IconData iconData, int position) {
+  PopupMenuItem _buildPopupMenuItem(BuildContext context, String title, IconData iconData, int value) {
     return PopupMenuItem(
-      onTap: () {
-        if (position == 1) _showOtherUsersProfileModal(context);
-        if (position == 2) Clipboard.setData(ClipboardData(text: otherUser.userName));
-        if (position == 3) _chatRequestActionsGlobalKey.currentState!.blockUnblockUser();
-      },
-      value: position,
+      value: value,
       child: Row(
         children: [
           Icon(
