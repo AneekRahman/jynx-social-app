@@ -103,6 +103,7 @@ class ChatTopBar extends StatelessWidget {
         padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
         child: OthersProfilePage(
           otherUsersProfileObject: otherUser,
+          showMessageButton: false,
         ),
       ),
     );

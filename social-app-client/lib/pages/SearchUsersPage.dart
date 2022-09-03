@@ -111,6 +111,7 @@ class _SearchUsersPageState extends State<SearchUsersPage> {
                           padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
                           child: OthersProfilePage(
                             otherUsersProfileObject: _searchUsersList[index],
+                            showMessageButton: true,
                           ),
                         ),
                       );

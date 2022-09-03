@@ -13,7 +13,8 @@ import 'MyProfilePage.dart';
 
 class OthersProfilePage extends StatefulWidget {
   final UserProfileObject otherUsersProfileObject;
-  const OthersProfilePage({required this.otherUsersProfileObject});
+  final bool showMessageButton;
+  const OthersProfilePage({required this.otherUsersProfileObject, required this.showMessageButton});
   @override
   _OthersProfilePageState createState() => _OthersProfilePageState();
 }
@@ -37,70 +38,77 @@ class _OthersProfilePageState extends State<OthersProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: Color(0xFF1f1f1f),
-        body: StreamBuilder(
-            stream: context.watch<FirestoreService>().getUserDocumentStream(widget.otherUsersProfileObject.userUid),
-            builder: (context, AsyncSnapshot<DocumentSnapshot> snapshot) {
-              if (snapshot.data == null)
-                return Center(
-                  child: Text("Couldn't find user, try again"),
-                );
-              UserProfileObject _myUserObject =
-                  UserProfileObject.fromJson(snapshot.data!.data() as Map<String, dynamic>, snapshot.data!.id);
+      backgroundColor: Color(0xFF1f1f1f),
+      body: StreamBuilder(
+        stream: context.watch<FirestoreService>().getUserDocumentStream(widget.otherUsersProfileObject.userUid),
+        builder: (context, AsyncSnapshot<DocumentSnapshot> snapshot) {
+          if (snapshot.data == null) return SizedBox();
 
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    ProfilePageAppBar(),
-                    _buildUserPicNamesRow(_myUserObject),
-                    SizedBox(height: 20),
-                    _myUserObject.location!.isNotEmpty ? _buildLocationTextRow(_myUserObject) : SizedBox(),
-                    SizedBox(height: 10),
-                    _buildBioTextRow(_myUserObject),
-                    SizedBox(height: 10),
-                    _myUserObject.website!.isNotEmpty ? _buildWebsiteTextRow(_myUserObject) : SizedBox(),
-                    SizedBox(height: 20),
-                    buildYellowButton(
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.chat_bubble,
-                              size: 18,
-                            ),
-                            SizedBox(width: 10),
-                            Text(
-                              "Message",
-                              style: TextStyle(
-                                fontFamily: HelveticaFont.Bold,
-                                fontSize: 14,
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: SizedBox(height: 30, width: 30, child: CircularProgressIndicator(strokeWidth: 2)));
+          } else if (snapshot.hasData) {
+            UserProfileObject _myUserObject = UserProfileObject.fromJson(snapshot.data!.data() as Map<String, dynamic>, snapshot.data!.id);
+
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ProfilePageAppBar(),
+                  _buildUserPicNamesRow(_myUserObject),
+                  SizedBox(height: 20),
+                  _myUserObject.location!.isNotEmpty ? _buildLocationTextRow(_myUserObject) : SizedBox(),
+                  SizedBox(height: 10),
+                  _buildBioTextRow(_myUserObject),
+                  SizedBox(height: 10),
+                  _myUserObject.website!.isNotEmpty ? _buildWebsiteTextRow(_myUserObject) : SizedBox(),
+                  SizedBox(height: 20),
+                  widget.showMessageButton
+                      ? buildYellowButton(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.chat_bubble,
+                                size: 18,
                               ),
-                            ),
-                          ],
-                        ),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            CupertinoPageRoute(
-                              builder: (context) => ChatRoomPage(
-                                otherUser: _myUserObject,
+                              SizedBox(width: 10),
+                              Text(
+                                "Message",
+                                style: TextStyle(
+                                  fontFamily: HelveticaFont.Bold,
+                                  fontSize: 14,
+                                ),
                               ),
-                            ),
-                          );
-                        },
-                        context: context,
-                        loading: false),
-                    SizedBox(height: 20),
-                    // Text(
-                    //   "Activities",
-                    //   style: TextStyle(fontFamily: HelveticaFont.Medium, fontSize: 14, color: Colors.white),
-                    // ),
-                  ],
-                ),
-              );
-            }));
+                            ],
+                          ),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              CupertinoPageRoute(
+                                builder: (context) => ChatRoomPage(
+                                  otherUser: _myUserObject,
+                                ),
+                              ),
+                            );
+                          },
+                          context: context,
+                          loading: false)
+                      : SizedBox(),
+                  SizedBox(height: 20),
+                  // Text(
+                  //   "Activities",
+                  //   style: TextStyle(fontFamily: HelveticaFont.Medium, fontSize: 14, color: Colors.white),
+                  // ),
+                ],
+              ),
+            );
+          } else {
+            return Center(child: Text("There was an error, try again", style: TextStyle(color: Colors.white)));
+          }
+        },
+      ),
+    );
   }
 
   GestureDetector _buildWebsiteTextRow(UserProfileObject _myUserObject) {

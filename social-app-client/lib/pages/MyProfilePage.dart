@@ -100,59 +100,64 @@ class _MyProfilePageState extends State<MyProfilePage> {
           ? StreamBuilder(
               stream: context.watch<FirestoreService>().getUserDocumentStream(_currentUser!.uid),
               builder: (context, AsyncSnapshot<DocumentSnapshot> snapshot) {
-                if (snapshot.data == null)
-                  return Center(
-                    child: Text("Network error, try again"),
-                  );
-                UserProfileObject _myUserObject =
-                    UserProfileObject.fromJson(snapshot.data!.data() as Map<String, dynamic>, snapshot.data!.id);
+                if (snapshot.data == null) return SizedBox();
 
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      ProfilePageAppBar(),
-                      _buildUserPicNamesRow(_myUserObject),
-                      SizedBox(height: 20),
-                      _buildLocationTextRow(_myUserObject, context),
-                      SizedBox(height: 10),
-                      _buildBioTextRow(_myUserObject, context),
-                      SizedBox(height: 10),
-                      _buildWebsiteTextRow(_myUserObject, context),
-                      SizedBox(height: 20),
-                      buildYellowButton(
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.settings,
-                                size: 18,
-                              ),
-                              SizedBox(width: 10),
-                              Text(
-                                "Edit Profile",
-                                style: TextStyle(
-                                  fontFamily: HelveticaFont.Bold,
-                                  fontSize: 14,
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Center(child: SizedBox(height: 30, width: 30, child: CircularProgressIndicator(strokeWidth: 2)));
+                } else if (snapshot.hasData) {
+                  UserProfileObject _myUserObject =
+                      UserProfileObject.fromJson(snapshot.data!.data() as Map<String, dynamic>, snapshot.data!.id);
+
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ProfilePageAppBar(),
+                        _buildUserPicNamesRow(_myUserObject),
+                        SizedBox(height: 20),
+                        _buildLocationTextRow(_myUserObject, context),
+                        SizedBox(height: 10),
+                        _buildBioTextRow(_myUserObject, context),
+                        SizedBox(height: 10),
+                        _buildWebsiteTextRow(_myUserObject, context),
+                        SizedBox(height: 20),
+                        buildYellowButton(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.settings,
+                                  size: 18,
                                 ),
-                              ),
-                            ],
-                          ),
-                          onTap: () {
-                            Navigator.push(context, CupertinoPageRoute(builder: (context) => EditProfile(userObject: _myUserObject)));
-                          },
-                          context: context,
-                          loading: false),
-                      SizedBox(height: 20),
-                      // Text(
-                      //   "Activities",
-                      //   style: TextStyle(fontFamily: HelveticaFont.Medium, fontSize: 14, color: Colors.white),
-                      // ),
-                    ],
-                  ),
-                );
-              })
+                                SizedBox(width: 10),
+                                Text(
+                                  "Edit Profile",
+                                  style: TextStyle(
+                                    fontFamily: HelveticaFont.Bold,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            onTap: () {
+                              Navigator.push(context, CupertinoPageRoute(builder: (context) => EditProfile(userObject: _myUserObject)));
+                            },
+                            context: context,
+                            loading: false),
+                        SizedBox(height: 20),
+                        // Text(
+                        //   "Activities",
+                        //   style: TextStyle(fontFamily: HelveticaFont.Medium, fontSize: 14, color: Colors.white),
+                        // ),
+                      ],
+                    ),
+                  );
+                } else {
+                  return Center(child: Text("There was an error, try again", style: TextStyle(color: Colors.white)));
+                }
+              },
+            )
           : Center(
               child: SizedBox(
                 height: 30,

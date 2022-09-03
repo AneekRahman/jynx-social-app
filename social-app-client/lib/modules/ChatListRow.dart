@@ -51,88 +51,90 @@ class _ChatsListRowState extends State<ChatsListRow> {
         horizontal: 20,
       ),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Container(
-            height: 45,
-            width: 45,
-            margin: EdgeInsets.only(right: 16),
-            decoration: hasImg
-                ? BoxDecoration(
-                    color: Colors.white10,
-                    borderRadius: BorderRadius.circular(10000),
-                    border: Border.all(color: Colors.yellow, width: 2),
-                  )
-                : null,
-            child: hasImg
-                ? ClipRRect(
-                    child: Image.network(
-                      widget._chatRow.otherUser.photoURL!,
-                      height: 45,
-                      width: 45,
-                      fit: BoxFit.cover,
-                    ),
-                    borderRadius: BorderRadius.all(Radius.circular(100)),
-                  )
-                : Image.asset(
-                    "assets/user.png",
-                    height: 40,
-                    width: 40,
-                  ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          Row(
             children: [
-              Text(
-                widget._chatRow.otherUser.displayName!,
-                style: TextStyle(
-                  fontFamily: fontFamily,
-                  fontSize: 14,
-                  color: Colors.white,
-                ),
-              ),
-              SizedBox(
-                height: 2,
-              ),
               Container(
-                height: 18,
-                width: MediaQuery.of(context).size.width - 160,
-                child: Expanded(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Icon(
-                        !widget._chatRow.seen! ? Icons.chat_bubble : Icons.chat_bubble_outline,
-                        size: 14,
-                        color: !widget._chatRow.seen! ? Colors.yellow : Colors.white,
+                height: 45,
+                width: 45,
+                margin: EdgeInsets.only(right: 16),
+                decoration: hasImg
+                    ? BoxDecoration(
+                        color: Colors.white10,
+                        borderRadius: BorderRadius.circular(10000),
+                        border: Border.all(color: Colors.yellow, width: 2),
+                      )
+                    : null,
+                child: hasImg
+                    ? ClipRRect(
+                        child: Image.network(
+                          widget._chatRow.otherUser.photoURL!,
+                          height: 45,
+                          width: 45,
+                          fit: BoxFit.cover,
+                        ),
+                        borderRadius: BorderRadius.all(Radius.circular(100)),
+                      )
+                    : Image.asset(
+                        "assets/user.png",
+                        height: 40,
+                        width: 40,
                       ),
-                      SizedBox(
-                        width: 5,
-                      ),
-                      Expanded(
-                        child: Text(
-                          // !widget._chatRow.seen! ? "New message" : "Opened",
-                          widget._chatRow.lastMsg!.isEmpty
-                              ? !widget._chatRow.seen!
-                                  ? "New message"
-                                  : "Opened"
-                              : !widget._chatRow.seen!
-                                  ? "New: " + widget._chatRow.lastMsg!
-                                  : "Read: " + widget._chatRow.lastMsg!,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontFamily: fontFamily,
-                            fontSize: 12,
-                            color: !widget._chatRow.seen! ? Colors.yellow : Colors.white,
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget._chatRow.otherUser.displayName!,
+                    style: TextStyle(
+                      fontFamily: fontFamily,
+                      fontSize: 14,
+                      color: Colors.white,
+                    ),
+                  ),
+                  SizedBox(
+                    height: 2,
+                  ),
+                  SizedBox(
+                    height: 18,
+                    width: MediaQuery.of(context).size.width - 160,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Icon(
+                          !widget._chatRow.seen! ? Icons.chat_bubble : Icons.chat_bubble_outline,
+                          size: 14,
+                          color: !widget._chatRow.seen! ? Colors.yellow : Colors.white,
+                        ),
+                        SizedBox(
+                          width: 5,
+                        ),
+                        Flexible(
+                          child: Text(
+                            // !widget._chatRow.seen! ? "New message" : "Opened",
+                            widget._chatRow.lastMsg!.isEmpty
+                                ? !widget._chatRow.seen!
+                                    ? "New message"
+                                    : "Opened"
+                                : !widget._chatRow.seen!
+                                    ? "New: " + widget._chatRow.lastMsg!
+                                    : "Read: " + widget._chatRow.lastMsg!,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontFamily: fontFamily,
+                              fontSize: 12,
+                              color: !widget._chatRow.seen! ? Colors.yellow : Colors.white,
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
+                ],
               ),
             ],
           ),
-          Expanded(child: SizedBox()),
           SizedBox(
             width: 30,
             child: Text(
@@ -143,7 +145,7 @@ class _ChatsListRowState extends State<ChatsListRow> {
                 color: Colors.yellow,
               ),
             ),
-          )
+          ),
         ],
       ),
     );
