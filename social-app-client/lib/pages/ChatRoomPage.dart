@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
@@ -6,6 +7,7 @@ import 'package:social_app/models/ChatRow.dart';
 import 'package:social_app/models/MsgRow.dart';
 import 'package:social_app/models/UserProfileObject.dart';
 import 'package:social_app/modules/constants.dart';
+import 'package:social_app/pages/VideoCallPage.dart';
 import 'package:social_app/services/firestore_service.dart';
 import 'package:social_app/services/rtd_service.dart';
 import 'package:provider/provider.dart';
@@ -49,33 +51,44 @@ class ChatTopBar extends StatelessWidget {
       padding: EdgeInsets.fromLTRB(10, 20 + MediaQuery.of(context).padding.top, 20, 10),
       child: Row(
         children: <Widget>[
-          GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: Padding(
-              padding: const EdgeInsets.all(14.0),
-              child: Icon(
-                Icons.arrow_back_ios_new_outlined,
-                size: 18,
-              ),
+          IconButton(
+            onPressed: () => Navigator.pop(context),
+            icon: Icon(
+              Icons.arrow_back_ios_new_outlined,
+              size: 18,
             ),
           ),
           _buildOtherUserPicNamesRow(context),
-          chatRow != null
-              ? PopupMenuButton(
-                  onSelected: ((value) {
-                    if (value == 1) _showOtherUsersProfileModal(context);
-                    if (value == 2) Clipboard.setData(ClipboardData(text: otherUser.userName));
-                    if (value == 3) _chatRequestActionsGlobalKey.currentState!.blockUnblockUser();
-                  }),
-                  itemBuilder: (ctx) => [
-                    _buildPopupMenuItem(context, 'View profile', Icons.person_outline, 1),
-                    _buildPopupMenuItem(context, 'Copy username', Icons.copy, 2),
-                    _buildPopupMenuItem(context, chatRow!.blockedByThisUser! ? 'Unblock user' : "Block user", Icons.person_off, 3),
-                  ],
-                )
-              : SizedBox(),
+          chatRow != null ? _buildChatActionsRow(context) : SizedBox(),
         ],
       ),
+    );
+  }
+
+  Row _buildChatActionsRow(BuildContext context) {
+    return Row(
+      children: [
+        IconButton(
+          onPressed: () => Navigator.push(context, CupertinoPageRoute(builder: (context) => VideoCallPage())),
+          icon: Icon(
+            Icons.call,
+            size: 18,
+          ),
+        ),
+        PopupMenuButton(
+          padding: EdgeInsets.all(0),
+          onSelected: ((value) {
+            if (value == 1) _showOtherUsersProfileModal(context);
+            if (value == 2) Clipboard.setData(ClipboardData(text: otherUser.userName));
+            if (value == 3) _chatRequestActionsGlobalKey.currentState!.blockUnblockUser();
+          }),
+          itemBuilder: (ctx) => [
+            _buildPopupMenuItem(context, 'View profile', Icons.person_outline, 1),
+            _buildPopupMenuItem(context, 'Copy username', Icons.copy, 2),
+            _buildPopupMenuItem(context, chatRow!.blockedByThisUser! ? 'Unblock user' : "Block user", Icons.person_off, 3),
+          ],
+        ),
+      ],
     );
   }
 
@@ -161,12 +174,12 @@ class ChatTopBar extends StatelessWidget {
                   Text(
                     otherUser.displayName!,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontFamily: HelveticaFont.Medium, fontSize: 16, color: Colors.black),
+                    style: TextStyle(fontFamily: HelveticaFont.Medium, fontSize: 14, color: Colors.black),
                   ),
                   Text(
                     "@" + otherUser.userName!,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontFamily: HelveticaFont.Roman, fontSize: 14, color: Colors.black38),
+                    style: TextStyle(fontFamily: HelveticaFont.Roman, fontSize: 12, color: Colors.black38),
                   ),
                 ],
               ),

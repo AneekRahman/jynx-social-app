@@ -38,6 +38,8 @@ dependencies:
   google_maps_webservice: ^0.0.19 # For location
   google_api_headers: ^1.3.0 # For location
   rxdart: ^0.27.5 # For location
+  flutter_inappwebview: ^5.4.3+7
+  permission_handler: ^10.0.0
 
   flutter:
     sdk: flutter
