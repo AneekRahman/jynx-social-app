@@ -31,7 +31,7 @@ class _SearchUsersPageState extends State<SearchUsersPage> {
     });
     List<UserProfileObject> users = [];
     // code to convert the first character to uppercase
-    List searchKeys = input.split(" ");
+    List searchKeys = input.toLowerCase().split(" ");
     if (searchKeys.length > 10) searchKeys = searchKeys.sublist(0, 9);
     QuerySnapshot result =
         await FirebaseFirestore.instance.collection("users").where("searchKeywords", arrayContainsAny: searchKeys).limit(10).get();
@@ -155,6 +155,7 @@ class SearchAppBar extends StatelessWidget {
       width: MediaQuery.of(context).size.width,
       child: Row(
         children: [
+          SizedBox(width: 10),
           GestureDetector(
             onTap: () {
               if (Navigator.canPop(context)) {
@@ -165,6 +166,7 @@ class SearchAppBar extends StatelessWidget {
               child: Icon(
                 Icons.arrow_back_ios,
                 color: Colors.white,
+                size: 20,
               ),
               padding: EdgeInsets.all(4),
             ),
@@ -191,7 +193,7 @@ class SearchBox extends StatelessWidget {
   Widget build(BuildContext context) {
     return Expanded(
       child: Container(
-        margin: EdgeInsets.symmetric(horizontal: 15),
+        margin: EdgeInsets.only(left: 9, right: 15),
         padding: EdgeInsets.symmetric(horizontal: 8),
         height: 40,
         decoration: BoxDecoration(color: Colors.white12, borderRadius: BorderRadius.circular(100)),
