@@ -39,6 +39,10 @@ class FirestoreService {
     return query.get();
   }
 
+  Stream<DocumentSnapshot> getChatRoomStream(String chatRoomUid) {
+    return _firestoreInstance.collection("userChats").doc(chatRoomUid).snapshots();
+  }
+
   Stream<QuerySnapshot> getUserChatsStream(String currentUserUid, requestedChats) {
     return _firestoreInstance
         .collection("userChats")
@@ -67,7 +71,7 @@ class FirestoreService {
           .get();
       if (snapshots.docs.length == 0) return null;
       QueryDocumentSnapshot snapshot = snapshots.docs[0];
-      ChatRow chatrow = getChatRowFromDocSnapshot(snapshot, currentUserUid)!;
+      ChatRow chatrow = makeChatRowFromUserChats(snapshot, currentUserUid, true)!;
       return chatrow;
     } catch (e) {
       throw e;

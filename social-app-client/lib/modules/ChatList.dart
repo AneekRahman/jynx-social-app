@@ -50,7 +50,7 @@ class _ChatsListState extends State<ChatsList> {
 
     snapshots.forEach((snapshot) {
       print("GOT: ${snapshot.id}");
-      ChatRow chatRow = getChatRowFromDocSnapshot(snapshot, widget.currentUser.uid)!;
+      ChatRow chatRow = makeChatRowFromUserChats(snapshot, widget.currentUser.uid, true)!;
       _removeIfAlreadyAdded(chatRow);
       chatRows.add(chatRow);
     });

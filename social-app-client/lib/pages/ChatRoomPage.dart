@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -62,7 +63,14 @@ class ChatTopBar extends StatelessWidget {
       children: [
         chatRow != null
             ? IconButton(
-                onPressed: () => Navigator.push(context, CupertinoPageRoute(builder: (context) => VideoCallPage())),
+                onPressed: () {
+                  if (chatRow.requestedByThisUser != null && !chatRow.requestedByThisUser!) {
+                    Navigator.push(context, CupertinoPageRoute(builder: (context) => VideoCallPage()));
+                  } else {
+                    ScaffoldMessenger.of(context)
+                        .showSnackBar(SnackBar(content: Text("The other user must accept your request before you can start a call!")));
+                  }
+                },
                 icon: Image.asset("assets/icons/Call-icon.png", height: 24, width: 24),
               )
             : SizedBox(),
@@ -184,6 +192,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   late User _currentUser;
   List<MsgRow> _msgRows = [];
   bool _initializingChatRoom = true;
+  ChatRow? _thisChatRow;
 
   void _removeIfAlreadyAdded(MsgRow msgRow) {
     for (int i = 0; i < _msgRows.length; i++) {
@@ -208,21 +217,21 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   }
 
   void _initializeChatRoom() async {
-    if (widget.chatRow == null) {
+    if (_thisChatRow == null) {
       // Search for an already made private chatroom for these 2 users
       ChatRow? chatRow = await context.read<FirestoreService>().findPrivateChatWithUser(_currentUser.uid, widget.otherUser.userUid);
       print(chatRow);
       if (chatRow != null) {
         setState(() {
-          widget.chatRow = chatRow;
+          _thisChatRow = chatRow;
         });
       }
     }
 
     // If chatRoom found, then make sure to update the seen of lastMsg if already not seen
-    if (widget.chatRow != null && widget.chatRow!.chatRoomUid != null && !widget.chatRow!.seen!) {
-      context.read<FirestoreService>().setSeenUserChatsDocument(widget.chatRow!.chatRoomUid, _currentUser.uid);
-      widget.chatRow!.seen = true;
+    if (_thisChatRow != null && _thisChatRow!.chatRoomUid != null && !_thisChatRow!.seen!) {
+      context.read<FirestoreService>().setSeenUserChatsDocument(_thisChatRow!.chatRoomUid, _currentUser.uid);
+      _thisChatRow!.seen = true;
     }
     // Let the user now start chatting
     setState(() {
@@ -234,6 +243,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   void initState() {
     super.initState();
     _currentUser = context.read<User>();
+    if (widget.chatRow != null) _thisChatRow = widget.chatRow!;
     _initializeChatRoom();
   }
 
@@ -242,55 +252,63 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(statusBarColor: Colors.transparent, statusBarIconBrightness: Brightness.dark),
       child: Scaffold(
-        body: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            ChatTopBar(
-              chatRow: widget.chatRow,
-              otherUser: widget.otherUser,
-            ),
-            !_initializingChatRoom
-                ? widget.chatRow != null
-                    ? _buildMessagesStreamBuilder(context)
-                    : Center(child: Text("You haven't messaged yet!"))
-                : _buildLoadingAnim(),
-            widget.chatRow != null && (widget.chatRow!.requestedByOtherUser! || widget.chatRow!.blockedByThisUser!)
-                ? ChatRequestActions(
-                    key: _chatRequestActionsGlobalKey,
-                    chatRow: widget.chatRow!,
+        body: StreamBuilder(
+            stream: _thisChatRow != null ? context.watch<FirestoreService>().getChatRoomStream(_thisChatRow!.chatRoomUid) : null,
+            builder: (context, AsyncSnapshot<DocumentSnapshot> snapshot) {
+              if (snapshot.hasData) {
+                _thisChatRow = makeChatRowFromUserChats(snapshot.data, _currentUser.uid, false)!;
+              }
+
+              return Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  ChatTopBar(
+                    chatRow: _thisChatRow,
+                    otherUser: widget.otherUser,
+                  ),
+                  !_initializingChatRoom
+                      ? _thisChatRow != null
+                          ? _buildMessagesStreamBuilder(context)
+                          : Center(child: Text("You haven't messaged yet!"))
+                      : _buildLoadingAnim(),
+                  _thisChatRow != null && (_thisChatRow!.requestedByOtherUser! || _thisChatRow!.blockedByThisUser!)
+                      ? ChatRequestActions(
+                          key: _chatRequestActionsGlobalKey,
+                          chatRow: _thisChatRow!,
+                          currentUser: _currentUser,
+                          onAccepted: () {
+                            setState(() {
+                              _thisChatRow!.requestedByOtherUser = false;
+                              _thisChatRow!.blockedByThisUser = false;
+                            });
+                          })
+                      : Container(),
+                  ChatBottomBar(
+                    rootContext: context,
+                    chatRow: _thisChatRow,
                     currentUser: _currentUser,
+                    otherUser: widget.otherUser,
                     onAccepted: () {
                       setState(() {
-                        widget.chatRow!.requestedByOtherUser = false;
-                        widget.chatRow!.blockedByThisUser = false;
+                        _thisChatRow!.requestedByOtherUser = false;
+                        _thisChatRow!.blockedByThisUser = false;
                       });
-                    })
-                : Container(),
-            ChatBottomBar(
-              rootContext: context,
-              chatRow: widget.chatRow,
-              currentUser: _currentUser,
-              otherUser: widget.otherUser,
-              onAccepted: () {
-                setState(() {
-                  widget.chatRow!.requestedByOtherUser = false;
-                  widget.chatRow!.blockedByThisUser = false;
-                });
-              },
-              setNewChatRoomUid: (String chatRoomUid) {
-                setState(() {
-                  widget.chatRow = ChatRow(
-                    chatRoomUid: chatRoomUid,
-                    otherUser: widget.otherUser,
-                    requestedByOtherUser: false,
-                    blockedByThisUser: false,
-                  );
-                });
-              },
-            ),
-          ],
-        ),
+                    },
+                    setNewChatRoomUid: (String chatRoomUid) {
+                      setState(() {
+                        _thisChatRow = ChatRow(
+                          chatRoomUid: chatRoomUid,
+                          otherUser: widget.otherUser,
+                          requestedByOtherUser: false,
+                          blockedByThisUser: false,
+                        );
+                      });
+                    },
+                  ),
+                ],
+              );
+            }),
       ),
     );
   }
@@ -298,7 +316,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   Expanded _buildMessagesStreamBuilder(BuildContext context) {
     return Expanded(
       child: StreamBuilder(
-        stream: context.watch<RealtimeDatabaseService>().getChatRoomMessagesStream(widget.chatRow!.chatRoomUid),
+        stream: context.watch<RealtimeDatabaseService>().getChatRoomMessagesStream(_thisChatRow!.chatRoomUid),
         builder: (context, AsyncSnapshot snapshot) {
           if (snapshot.hasData && !snapshot.hasError) {
             _setMsgRowsFromStream(snapshot.data!.snapshot.value);
@@ -335,7 +353,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                   ),
                 ),
                 SliverToBoxAdapter(
-                  child: _msgRows.length == 0 && !widget.chatRow!.blockedByThisUser! && !widget.chatRow!.requestedByOtherUser!
+                  child: _msgRows.length == 0 && !_thisChatRow!.blockedByThisUser! && !_thisChatRow!.requestedByOtherUser!
                       ? Center(
                           child: Padding(
                             padding: const EdgeInsets.all(20.0),

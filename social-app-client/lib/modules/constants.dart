@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:social_app/models/ChatRow.dart';
-import 'package:social_app/models/UserChatsSnapshot.dart';
 import 'package:social_app/models/UserProfileObject.dart';
 
 class MyServer {
@@ -57,8 +56,13 @@ OutlineInputBorder outlineInputBorder(bool focused) {
   );
 }
 
-ChatRow? getChatRowFromDocSnapshot(QueryDocumentSnapshot snapshot, String currentUserUid) {
-  UserChatsSnapshot userChatsSnapshot = UserChatsSnapshot.fromSnapshot(snapshot);
+ChatRow? makeChatRowFromUserChats(snapshot, String currentUserUid, bool isFromQuery) {
+  UserChatsObject userChatsSnapshot;
+  if (isFromQuery) {
+    userChatsSnapshot = UserChatsObject.fromQuerySnapshot(snapshot);
+  } else {
+    userChatsSnapshot = UserChatsObject.fromDocumentSnapshot(snapshot);
+  }
 
   // For private chats only!!!!!
   if (userChatsSnapshot.type == ChatType.PRIVATE) {
