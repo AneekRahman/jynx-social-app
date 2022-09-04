@@ -102,37 +102,51 @@ class _ChatBottomBarState extends State<ChatBottomBar> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
       children: [
+        SizedBox(width: 10),
         Container(
+          margin: EdgeInsets.only(bottom: 14),
+          child: IconButton(
+            onPressed: () {},
+            icon: Image.asset("assets/icons/Camera-icon.png", height: 30, width: 30),
+          ),
+        ),
+        Container(
+          width: MediaQuery.of(context).size.width - 60,
           padding: EdgeInsets.symmetric(vertical: 14, horizontal: 10),
           child: Material(
-            borderRadius: BorderRadius.circular(100),
+            borderRadius: BorderRadius.circular(26),
             color: Color(0xFFF1F1F1F1),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Expanded(
-                  child: TextField(
-                    maxLines: 5,
-                    minLines: 1,
-                    textCapitalization: TextCapitalization.sentences,
-                    style: TextStyle(fontFamily: HelveticaFont.Roman),
-                    controller: chatMsgTextController,
-                    decoration: InputDecoration(
-                      contentPadding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
-                      hintText: 'Type your message here...',
-                      hintStyle: TextStyle(fontFamily: HelveticaFont.Roman, fontSize: 14),
-                      border: InputBorder.none,
+                Flexible(
+                  child: Container(
+                    margin: EdgeInsets.only(bottom: 4),
+                    child: TextField(
+                      maxLines: 5,
+                      minLines: 1,
+                      textCapitalization: TextCapitalization.sentences,
+                      style: TextStyle(fontFamily: HelveticaFont.Roman),
+                      controller: chatMsgTextController,
+                      decoration: InputDecoration(
+                        contentPadding: EdgeInsets.symmetric(vertical: 14.0, horizontal: 20.0),
+                        hintText: 'Type your message here...',
+                        hintStyle: TextStyle(fontFamily: HelveticaFont.Roman, fontSize: 14),
+                        border: InputBorder.none,
+                      ),
+                      onChanged: ((value) {
+                        setState(() {
+                          _textInputValue = value;
+                        });
+                      }),
                     ),
-                    onChanged: ((value) {
-                      setState(() {
-                        _textInputValue = value;
-                      });
-                    }),
                   ),
                 ),
-                GestureDetector(
-                  onTap: () async {
+                IconButton(
+                  onPressed: () async {
                     // Save the input value
                     _textInputValue = chatMsgTextController.text;
                     // Reset the text input field
@@ -141,16 +155,9 @@ class _ChatBottomBarState extends State<ChatBottomBar> {
                     if (_textInputValue.isEmpty || _alreadySending) return;
                     _onSendHandler(context);
                   },
-                  child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 14),
-                      child: Image.asset("assets/icons/Send-icon.png", height: 30, width: 30)
-                      //  Icon(
-                      //   Icons.send,
-                      //   size: 30,
-                      //   color: _textInputValue.isEmpty ? Colors.black38 : Colors.purpleAccent,
-                      // ),
-                      ),
+                  icon: Image.asset("assets/icons/Send-icon.png", height: 30, width: 30),
                 ),
+                SizedBox(width: 10),
               ],
             ),
           ),

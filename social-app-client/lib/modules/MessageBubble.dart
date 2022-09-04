@@ -44,8 +44,8 @@ class MessageBubble extends StatelessWidget {
                             const Color(0xFF3BDDFA),
                           ]
                         : [
-                            const Color(0xFFFF5EA4),
-                            const Color(0xFFEF68D0),
+                            const Color(0xFF9B72FD),
+                            const Color(0xFFBB9BFE),
                           ],
                     begin: Alignment.bottomCenter,
                     end: Alignment.topCenter,

@@ -63,10 +63,7 @@ class ChatTopBar extends StatelessWidget {
       children: [
         IconButton(
           onPressed: () => Navigator.push(context, CupertinoPageRoute(builder: (context) => VideoCallPage())),
-          icon: Icon(
-            Icons.call,
-            size: 18,
-          ),
+          icon: Image.asset("assets/icons/Call-icon.png", height: 24, width: 24),
         ),
         PopupMenuButton(
           padding: EdgeInsets.all(0),
