@@ -14,18 +14,15 @@ exports.onUserUpdated = functions.firestore
     // if photoURL(only if the oldPhotoURL = "") and displayName changes are detected
     if (
       (userDataBefore.photoURL === "" && userDataAfter.photoURL !== "") ||
+      userDataBefore.photoURL !== userDataAfter.photoURL ||
       userDataBefore.displayName !== userDataAfter.displayName ||
       userDataBefore.userName !== userDataAfter.userName
-      ) {
-      // Make updatedInfoUsers cron jobs for 
-       await admin
-        .firestore()
-        .collection("updatedInfoUsers")
-        .doc(userUid)
-        .set({
-          lastUpdated: admin.firestore.FieldValue.serverTimestamp(),
-        });
-      
+    ) {
+      // Make updatedInfoUsers cron jobs for
+      await admin.firestore().collection("updatedInfoUsers").doc(userUid).set({
+        lastUpdated: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
       return await admin
         .firestore()
         .collection("users")
@@ -33,7 +30,7 @@ exports.onUserUpdated = functions.firestore
         .update({
           searchKeywords: [
             ...createKeywords(userDataAfter.userName.toLowerCase()),
-            ...createKeywords(userDataAfter.displayName.toLowerCase())
+            ...createKeywords(userDataAfter.displayName.toLowerCase()),
           ],
         });
     } else {
@@ -61,20 +58,16 @@ const updateUsersAllChats = async (userUid) => {
 
   const batches = _.chunk(usersChats.docs, 500).map((chats) => {
     const newValues = {
-      memberInfo: {}
-    }
+      memberInfo: {},
+    };
     newValues.memberInfo[userUid] = {
       displayName: userData["displayName"],
       photoURL: userData["photoURL"],
       userName: userData["userName"],
-    }
+    };
     const batch = admin.firestore().batch();
     chats.forEach((doc) => {
-      batch.set(
-        doc.ref,
-        newValues,
-        { merge: true }
-      );
+      batch.set(doc.ref, newValues, { merge: true });
     });
     return batch.commit();
   });
@@ -156,14 +149,14 @@ exports.UserChatsInfoUpdateCron = functions.pubsub // .runWith({ memory: "1GB" }
 // My Non API Functions -----------------------
 
 const createKeywords = (text) => {
-    let keywordsList = [];
-    // Split the text into words if there are spaces
-    text.split(" ").forEach((word) => {
-      let tempWord = "";
-      word.split("").forEach((letter) => {
-        tempWord += letter;
-        if (!keywordsList.includes(tempWord)) keywordsList.push(tempWord);
-      });
+  let keywordsList = [];
+  // Split the text into words if there are spaces
+  text.split(" ").forEach((word) => {
+    let tempWord = "";
+    word.split("").forEach((letter) => {
+      tempWord += letter;
+      if (!keywordsList.includes(tempWord)) keywordsList.push(tempWord);
     });
-    return keywordsList;
-  };
+  });
+  return keywordsList;
+};
