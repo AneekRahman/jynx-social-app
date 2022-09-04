@@ -64,7 +64,7 @@ class ChatTopBar extends StatelessWidget {
         chatRow != null
             ? IconButton(
                 onPressed: () {
-                  if (chatRow.requestedByThisUser != null && !chatRow.requestedByThisUser!) {
+                  if (chatRow.requestedByThisUser != null && !chatRow.requestedByThisUser! && !chatRow.blockedByThisUser!) {
                     Navigator.push(context, CupertinoPageRoute(builder: (context) => VideoCallPage()));
                   } else {
                     ScaffoldMessenger.of(context)
@@ -104,17 +104,18 @@ class ChatTopBar extends StatelessWidget {
           ),
           padding: EdgeInsets.all(0),
           onSelected: ((value) {
-            if (chatRow == null) return;
-
             if (value == 1) _showOtherUsersProfileModal(context);
             if (value == 2) Clipboard.setData(ClipboardData(text: otherUser.userName));
-            if (value == 3) _chatRequestActionsGlobalKey.currentState!.blockUnblockUser();
+            if (value == 3 && _chatRequestActionsGlobalKey.currentState != null)
+              _chatRequestActionsGlobalKey.currentState!.blockUnblockUser();
           }),
-          itemBuilder: (ctx) => [
-            _buildPopupMenuItem(context, 'View profile', Icons.person_outline, 1),
-            _buildPopupMenuItem(context, 'Copy username', Icons.copy, 2),
-            _buildPopupMenuItem(context, chatRow!.blockedByThisUser! ? 'Unblock user' : "Block user", Icons.person_off, 3),
-          ],
+          itemBuilder: (ctx) => chatRow != null
+              ? [
+                  _buildPopupMenuItem(context, 'View profile', Icons.person_outline, 1),
+                  _buildPopupMenuItem(context, 'Copy username', Icons.copy, 2),
+                  _buildPopupMenuItem(context, chatRow.blockedByThisUser! ? 'Unblock user' : "Block user", Icons.person_off, 3),
+                ]
+              : [],
         ),
       ],
     );
@@ -192,7 +193,6 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   late User _currentUser;
   List<MsgRow> _msgRows = [];
   bool _initializingChatRoom = true;
-  ChatRow? _thisChatRow;
 
   void _removeIfAlreadyAdded(MsgRow msgRow) {
     for (int i = 0; i < _msgRows.length; i++) {
@@ -217,21 +217,21 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   }
 
   void _initializeChatRoom() async {
-    if (_thisChatRow == null) {
+    if (widget.chatRow == null) {
       // Search for an already made private chatroom for these 2 users
       ChatRow? chatRow = await context.read<FirestoreService>().findPrivateChatWithUser(_currentUser.uid, widget.otherUser.userUid);
       print(chatRow);
       if (chatRow != null) {
         setState(() {
-          _thisChatRow = chatRow;
+          widget.chatRow = chatRow;
         });
       }
     }
 
     // If chatRoom found, then make sure to update the seen of lastMsg if already not seen
-    if (_thisChatRow != null && _thisChatRow!.chatRoomUid != null && !_thisChatRow!.seen!) {
-      context.read<FirestoreService>().setSeenUserChatsDocument(_thisChatRow!.chatRoomUid, _currentUser.uid);
-      _thisChatRow!.seen = true;
+    if (widget.chatRow != null && widget.chatRow!.chatRoomUid != null && !widget.chatRow!.seen!) {
+      context.read<FirestoreService>().setSeenUserChatsDocument(widget.chatRow!.chatRoomUid, _currentUser.uid);
+      widget.chatRow!.seen = true;
     }
     // Let the user now start chatting
     setState(() {
@@ -243,7 +243,6 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   void initState() {
     super.initState();
     _currentUser = context.read<User>();
-    if (widget.chatRow != null) _thisChatRow = widget.chatRow!;
     _initializeChatRoom();
   }
 
@@ -253,10 +252,10 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
       value: const SystemUiOverlayStyle(statusBarColor: Colors.transparent, statusBarIconBrightness: Brightness.dark),
       child: Scaffold(
         body: StreamBuilder(
-            stream: _thisChatRow != null ? context.watch<FirestoreService>().getChatRoomStream(_thisChatRow!.chatRoomUid) : null,
+            stream: widget.chatRow != null ? context.watch<FirestoreService>().getChatRoomStream(widget.chatRow!.chatRoomUid) : null,
             builder: (context, AsyncSnapshot<DocumentSnapshot> snapshot) {
               if (snapshot.hasData) {
-                _thisChatRow = makeChatRowFromUserChats(snapshot.data, _currentUser.uid, false)!;
+                widget.chatRow = makeChatRowFromUserChats(snapshot.data, _currentUser.uid, false)!;
               }
 
               return Column(
@@ -264,40 +263,29 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
                   ChatTopBar(
-                    chatRow: _thisChatRow,
-                    otherUser: widget.otherUser,
+                    chatRow: widget.chatRow,
+                    otherUser: widget.chatRow != null ? widget.chatRow!.otherUser : widget.otherUser,
                   ),
                   !_initializingChatRoom
-                      ? _thisChatRow != null
+                      ? widget.chatRow != null
                           ? _buildMessagesStreamBuilder(context)
                           : Center(child: Text("You haven't messaged yet!"))
                       : _buildLoadingAnim(),
-                  _thisChatRow != null && (_thisChatRow!.requestedByOtherUser! || _thisChatRow!.blockedByThisUser!)
+                  widget.chatRow != null && (widget.chatRow!.requestedByOtherUser! || widget.chatRow!.blockedByThisUser!)
                       ? ChatRequestActions(
                           key: _chatRequestActionsGlobalKey,
-                          chatRow: _thisChatRow!,
+                          chatRow: widget.chatRow!,
                           currentUser: _currentUser,
-                          onAccepted: () {
-                            setState(() {
-                              _thisChatRow!.requestedByOtherUser = false;
-                              _thisChatRow!.blockedByThisUser = false;
-                            });
-                          })
+                        )
                       : Container(),
                   ChatBottomBar(
                     rootContext: context,
-                    chatRow: _thisChatRow,
+                    chatRow: widget.chatRow,
                     currentUser: _currentUser,
                     otherUser: widget.otherUser,
-                    onAccepted: () {
-                      setState(() {
-                        _thisChatRow!.requestedByOtherUser = false;
-                        _thisChatRow!.blockedByThisUser = false;
-                      });
-                    },
                     setNewChatRoomUid: (String chatRoomUid) {
                       setState(() {
-                        _thisChatRow = ChatRow(
+                        widget.chatRow = ChatRow(
                           chatRoomUid: chatRoomUid,
                           otherUser: widget.otherUser,
                           requestedByOtherUser: false,
@@ -316,7 +304,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   Expanded _buildMessagesStreamBuilder(BuildContext context) {
     return Expanded(
       child: StreamBuilder(
-        stream: context.watch<RealtimeDatabaseService>().getChatRoomMessagesStream(_thisChatRow!.chatRoomUid),
+        stream: context.watch<RealtimeDatabaseService>().getChatRoomMessagesStream(widget.chatRow!.chatRoomUid),
         builder: (context, AsyncSnapshot snapshot) {
           if (snapshot.hasData && !snapshot.hasError) {
             _setMsgRowsFromStream(snapshot.data!.snapshot.value);
@@ -353,7 +341,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                   ),
                 ),
                 SliverToBoxAdapter(
-                  child: _msgRows.length == 0 && !_thisChatRow!.blockedByThisUser! && !_thisChatRow!.requestedByOtherUser!
+                  child: _msgRows.length == 0 && !widget.chatRow!.blockedByThisUser! && !widget.chatRow!.requestedByOtherUser!
                       ? Center(
                           child: Padding(
                             padding: const EdgeInsets.all(20.0),
@@ -381,8 +369,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
 class ChatRequestActions extends StatefulWidget {
   User currentUser;
   ChatRow chatRow;
-  Function onAccepted;
-  ChatRequestActions({Key? key, required this.currentUser, required this.chatRow, required this.onAccepted}) : super(key: key);
+  ChatRequestActions({Key? key, required this.currentUser, required this.chatRow}) : super(key: key);
 
   @override
   _ChatRequestActionsState createState() => _ChatRequestActionsState();
@@ -398,13 +385,11 @@ class _ChatRequestActionsState extends State<ChatRequestActions> {
       // Accept the request
       await context.read<FirestoreService>().acceptChatUserRequest(
           context.read<RealtimeDatabaseService>(), widget.chatRow.chatRoomUid, widget.currentUser.uid, widget.chatRow.otherUser.userUid);
-      // Update the UI
-      widget.onAccepted();
     } catch (e) {
       throw e;
     }
     // Update the UI
-    setState(() => _loading = false);
+    if (mounted) setState(() => _loading = false);
   }
 
   Future blockUnblockUser() async {
@@ -426,15 +411,11 @@ class _ChatRequestActionsState extends State<ChatRequestActions> {
         // In Database
         await context.read<RealtimeDatabaseService>().unBlockInRTDatabase(widget.chatRow.chatRoomUid, widget.chatRow.otherUser.userUid);
       }
-      // Update the UI
-      setState(() {
-        widget.chatRow.blockedByThisUser = !widget.chatRow.blockedByThisUser!;
-      });
     } catch (e) {
       throw e;
     }
     // Update the UI
-    setState(() => _loading = false);
+    if (mounted) setState(() => _loading = false);
   }
 
   @override

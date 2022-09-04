@@ -15,14 +15,12 @@ class ChatBottomBar extends StatefulWidget {
   User currentUser;
   UserProfileObject otherUser;
   Function setNewChatRoomUid;
-  Function onAccepted;
   ChatBottomBar({
     Key? key,
     this.chatRow,
     required this.currentUser,
     required this.otherUser,
     required this.setNewChatRoomUid,
-    required this.onAccepted,
     required this.rootContext,
   }) : super(key: key);
 
@@ -79,8 +77,6 @@ class _ChatBottomBarState extends State<ChatBottomBar> {
         // Accept the request
         await widget.rootContext.read<FirestoreService>().acceptChatUserRequest(widget.rootContext.read<RealtimeDatabaseService>(),
             widget.chatRow!.chatRoomUid, widget.currentUser.uid, widget.chatRow!.otherUser.userUid);
-        // Update the UI
-        widget.onAccepted();
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("There was a network issue while sending the message")));

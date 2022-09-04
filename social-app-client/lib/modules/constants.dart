@@ -70,14 +70,15 @@ ChatRow? makeChatRowFromUserChats(snapshot, String currentUserUid, bool isFromQu
     // Check if available in the members list
     userChatsSnapshot.memberInfo!.forEach((key, value) {
       if (key != currentUserUid) {
-        UserProfileObject userObject = UserProfileObject.fromJson(userChatsSnapshot.memberInfo![key], key);
+        UserProfileObject otherUser = UserProfileObject.fromJson(userChatsSnapshot.memberInfo![key], key);
         chatRow = ChatRow(
             chatRoomUid: snapshot.id,
-            otherUser: userObject,
+            otherUser: otherUser,
             lastMsgSentTime: userChatsSnapshot.lastMsgSentTime,
             lastMsg: userChatsSnapshot.lastMsg,
             seen: userChatsSnapshot.lastMsgSeenBy!.contains(currentUserUid),
             requestedByOtherUser: userChatsSnapshot.requestedMembers!.contains(currentUserUid),
+            requestedByThisUser: userChatsSnapshot.requestedMembers!.contains(otherUser.userUid),
             blockedByThisUser: userChatsSnapshot.blockedMembers!.contains(key));
       }
     });
