@@ -96,7 +96,7 @@ String convertToTimeAgo(DateTime dateTime) {
   } else if (diff.inSeconds >= 1) {
     return '${diff.inSeconds}s';
   } else {
-    return 'just now';
+    return '0s';
   }
 }
 

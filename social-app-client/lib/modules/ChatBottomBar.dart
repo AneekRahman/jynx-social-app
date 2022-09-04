@@ -15,14 +15,16 @@ class ChatBottomBar extends StatefulWidget {
   User currentUser;
   UserProfileObject otherUser;
   Function setNewChatRoomUid;
-  ChatBottomBar(
-      {Key? key,
-      this.chatRow,
-      required this.currentUser,
-      required this.otherUser,
-      required this.setNewChatRoomUid,
-      required this.rootContext})
-      : super(key: key);
+  Function onAccepted;
+  ChatBottomBar({
+    Key? key,
+    this.chatRow,
+    required this.currentUser,
+    required this.otherUser,
+    required this.setNewChatRoomUid,
+    required this.onAccepted,
+    required this.rootContext,
+  }) : super(key: key);
 
   @override
   State<ChatBottomBar> createState() => _ChatBottomBarState();
@@ -58,10 +60,11 @@ class _ChatBottomBarState extends State<ChatBottomBar> {
       int lastMsgSentTime = new DateTime.now().millisecondsSinceEpoch;
       // Send a message in the RealtimeDatabase chatRoom
       await widget.rootContext.read<RealtimeDatabaseService>().sendMessageInRoom(
-          widget.chatRow!.chatRoomUid,
-          {"msg": _textInputValue, "sentTime": lastMsgSentTime, "userUid": widget.currentUser.uid},
-          firstMessage,
-          {widget.chatRow!.otherUser.userUid: true, widget.currentUser.uid: true});
+            widget.chatRow!.chatRoomUid,
+            {"msg": _textInputValue, "sentTime": lastMsgSentTime, "userUid": widget.currentUser.uid},
+            firstMessage,
+            {widget.chatRow!.otherUser.userUid: true, widget.currentUser.uid: true},
+          );
 
       // Update the userChats document and reset the lastMsgSeen array and sentTime
       widget.rootContext.read<FirestoreService>().setNewMsgUserChatsSeenReset(
@@ -77,12 +80,10 @@ class _ChatBottomBarState extends State<ChatBottomBar> {
         await widget.rootContext.read<FirestoreService>().acceptChatUserRequest(widget.rootContext.read<RealtimeDatabaseService>(),
             widget.chatRow!.chatRoomUid, widget.currentUser.uid, widget.chatRow!.otherUser.userUid);
         // Update the UI
-        setState(() => widget.chatRow!.requestedByOtherUser = false);
+        widget.onAccepted();
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text("There was a network issue while sending the message"),
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("There was a network issue while sending the message")));
       throw e;
     }
   }

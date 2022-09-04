@@ -11,7 +11,6 @@ import 'package:social_app/pages/VideoCallPage.dart';
 import 'package:social_app/services/firestore_service.dart';
 import 'package:social_app/services/rtd_service.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter/services.dart';
 
 import '../modules/ChatBottomBar.dart';
 import '../modules/MessageBubble.dart';
@@ -51,23 +50,54 @@ class ChatTopBar extends StatelessWidget {
               size: 18,
             ),
           ),
-          _buildOtherUserPicNamesRow(context),
-          chatRow != null ? _buildChatActionsRow(context) : SizedBox(),
+          _buildOtherUserNamesRow(context),
+          _buildUserPicActionsRow(context, chatRow),
         ],
       ),
     );
   }
 
-  Row _buildChatActionsRow(BuildContext context) {
+  Row _buildUserPicActionsRow(BuildContext context, ChatRow? chatRow) {
     return Row(
       children: [
-        IconButton(
-          onPressed: () => Navigator.push(context, CupertinoPageRoute(builder: (context) => VideoCallPage())),
-          icon: Image.asset("assets/icons/Call-icon.png", height: 24, width: 24),
-        ),
+        chatRow != null
+            ? IconButton(
+                onPressed: () => Navigator.push(context, CupertinoPageRoute(builder: (context) => VideoCallPage())),
+                icon: Image.asset("assets/icons/Call-icon.png", height: 24, width: 24),
+              )
+            : SizedBox(),
         PopupMenuButton(
+          icon: Container(
+            height: 45,
+            width: 45,
+            decoration: BoxDecoration(
+              color: Colors.white10,
+              borderRadius: BorderRadius.circular(10000),
+              border: Border.all(color: Colors.yellow, width: 2),
+            ),
+            child: otherUser.photoURL!.isNotEmpty
+                ? ClipRRect(
+                    child: Image.network(
+                      otherUser.photoURL!,
+                      height: 45,
+                      width: 45,
+                      fit: BoxFit.cover,
+                    ),
+                    borderRadius: BorderRadius.all(Radius.circular(100)),
+                  )
+                : Container(
+                    height: 45,
+                    width: 45,
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(.07),
+                      borderRadius: BorderRadius.circular(10000),
+                    ),
+                  ),
+          ),
           padding: EdgeInsets.all(0),
           onSelected: ((value) {
+            if (chatRow == null) return;
+
             if (value == 1) _showOtherUsersProfileModal(context);
             if (value == 2) Clipboard.setData(ClipboardData(text: otherUser.userName));
             if (value == 3) _chatRequestActionsGlobalKey.currentState!.blockUnblockUser();
@@ -112,70 +142,31 @@ class ChatTopBar extends StatelessWidget {
     );
   }
 
-  Expanded _buildOtherUserPicNamesRow(BuildContext context) {
+  Expanded _buildOtherUserNamesRow(BuildContext context) {
     return Expanded(
-      child: Row(
-        children: <Widget>[
-          GestureDetector(
-            onTap: () {
-              _showOtherUsersProfileModal(context);
-            },
-            child: Container(
-              height: 45,
-              width: 45,
-              margin: EdgeInsets.only(right: 10),
-              decoration: BoxDecoration(
-                color: Colors.white10,
-                borderRadius: BorderRadius.circular(10000),
-                border: Border.all(color: Colors.yellow, width: 2),
-              ),
-              child: otherUser.photoURL!.isNotEmpty
-                  ? ClipRRect(
-                      child: Image.network(
-                        otherUser.photoURL!,
-                        height: 45,
-                        width: 45,
-                        fit: BoxFit.cover,
-                      ),
-                      borderRadius: BorderRadius.all(Radius.circular(100)),
-                    )
-                  : Container(
-                      height: 45,
-                      width: 45,
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(.07),
-                        borderRadius: BorderRadius.circular(10000),
-                      ),
-                    ),
+      child: TextButton(
+        style: ButtonStyle(
+          alignment: Alignment.centerLeft,
+          padding: MaterialStatePropertyAll(EdgeInsets.symmetric(horizontal: 10, vertical: 4)),
+        ),
+        onPressed: () {
+          _showOtherUsersProfileModal(context);
+        },
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              otherUser.displayName!,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontFamily: HelveticaFont.Medium, fontSize: 14, color: Colors.black),
             ),
-          ),
-          Expanded(
-            child: TextButton(
-              style: ButtonStyle(
-                alignment: Alignment.centerLeft,
-                padding: MaterialStatePropertyAll(EdgeInsets.all(0)),
-              ),
-              onPressed: () {
-                _showOtherUsersProfileModal(context);
-              },
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    otherUser.displayName!,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontFamily: HelveticaFont.Medium, fontSize: 14, color: Colors.black),
-                  ),
-                  Text(
-                    "@" + otherUser.userName!,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontFamily: HelveticaFont.Roman, fontSize: 12, color: Colors.black38),
-                  ),
-                ],
-              ),
+            Text(
+              "@" + otherUser.userName!,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontFamily: HelveticaFont.Roman, fontSize: 12, color: Colors.black38),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -264,18 +255,29 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                     ? _buildMessagesStreamBuilder(context)
                     : Center(child: Text("You haven't messaged yet!"))
                 : _buildLoadingAnim(),
-            widget.chatRow != null
+            widget.chatRow != null && (widget.chatRow!.requestedByOtherUser! || widget.chatRow!.blockedByThisUser!)
                 ? ChatRequestActions(
                     key: _chatRequestActionsGlobalKey,
                     chatRow: widget.chatRow!,
                     currentUser: _currentUser,
-                  )
+                    onAccepted: () {
+                      setState(() {
+                        widget.chatRow!.requestedByOtherUser = false;
+                        widget.chatRow!.blockedByThisUser = false;
+                      });
+                    })
                 : Container(),
             ChatBottomBar(
               rootContext: context,
               chatRow: widget.chatRow,
               currentUser: _currentUser,
               otherUser: widget.otherUser,
+              onAccepted: () {
+                setState(() {
+                  widget.chatRow!.requestedByOtherUser = false;
+                  widget.chatRow!.blockedByThisUser = false;
+                });
+              },
               setNewChatRoomUid: (String chatRoomUid) {
                 setState(() {
                   widget.chatRow = ChatRow(
@@ -359,9 +361,10 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
 }
 
 class ChatRequestActions extends StatefulWidget {
-  ChatRequestActions({Key? key, required this.currentUser, required this.chatRow}) : super(key: key);
   User currentUser;
   ChatRow chatRow;
+  Function onAccepted;
+  ChatRequestActions({Key? key, required this.currentUser, required this.chatRow, required this.onAccepted}) : super(key: key);
 
   @override
   _ChatRequestActionsState createState() => _ChatRequestActionsState();
@@ -378,7 +381,7 @@ class _ChatRequestActionsState extends State<ChatRequestActions> {
       await context.read<FirestoreService>().acceptChatUserRequest(
           context.read<RealtimeDatabaseService>(), widget.chatRow.chatRoomUid, widget.currentUser.uid, widget.chatRow.otherUser.userUid);
       // Update the UI
-      setState(() => widget.chatRow.requestedByOtherUser = false);
+      widget.onAccepted();
     } catch (e) {
       throw e;
     }
@@ -418,70 +421,74 @@ class _ChatRequestActionsState extends State<ChatRequestActions> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.chatRow.requestedByOtherUser! || widget.chatRow.blockedByThisUser!) {
-      return Column(
-        children: [
-          Container(
-            margin: EdgeInsets.only(top: 10),
-            height: 1,
-            width: MediaQuery.of(context).size.width,
-            color: Color(0xFFF1F1F1F1),
+    return Column(
+      children: [
+        Container(
+          margin: EdgeInsets.only(top: 10),
+          height: 1,
+          width: MediaQuery.of(context).size.width,
+          color: Color(0xFFF1F1F1F1),
+        ),
+        Padding(
+          padding: EdgeInsets.fromLTRB(20, 20, 20, 0),
+          child: Text(
+            widget.chatRow.blockedByThisUser!
+                ? "You have blocked this user and they will not be able to message you."
+                : "This message will be moved to your chat list when you accept it or reply here.",
+            style: TextStyle(fontFamily: HelveticaFont.Light),
           ),
-          Padding(
-            padding: EdgeInsets.fromLTRB(20, 20, 20, 0),
-            child: Text(
-              widget.chatRow.blockedByThisUser!
-                  ? "You have blocked this user and they will not be able to message you."
-                  : "This message will be moved to your chat list when you accept it or reply here.",
-              style: TextStyle(fontFamily: HelveticaFont.Light),
-            ),
-          ),
-          Container(
-            padding: EdgeInsets.fromLTRB(20, 20, 20, 0),
-            child: !_loading
-                ? Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      GestureDetector(
-                        onTap: () {
-                          _acceptRequest();
-                        },
-                        child: Container(
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.black12, width: 1),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          padding: EdgeInsets.symmetric(vertical: 12, horizontal: 24),
-                          child: Text(
-                            "Accept Request",
-                            style: TextStyle(fontFamily: HelveticaFont.Bold),
+        ),
+        Container(
+          padding: EdgeInsets.fromLTRB(20, 20, 20, 0),
+          child: !_loading
+              ? Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    GestureDetector(
+                      onTap: () {
+                        _acceptRequest();
+                      },
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF3EC2F9),
+                          border: Border.all(color: Colors.black12, width: 1),
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        padding: EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+                        child: Text(
+                          "Accept Request",
+                          style: TextStyle(
+                            fontFamily: HelveticaFont.Bold,
+                            color: Colors.white,
                           ),
                         ),
                       ),
-                      GestureDetector(
-                        onTap: () {
-                          blockUnblockUser();
-                        },
-                        child: Container(
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.black12, width: 1),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          padding: EdgeInsets.symmetric(vertical: 12, horizontal: 24),
-                          child: Text(
-                            widget.chatRow.blockedByThisUser! ? "Unblock User" : "Block User",
-                            style: TextStyle(fontFamily: HelveticaFont.Bold),
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        blockUnblockUser();
+                      },
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          border: Border.all(color: Colors.black12, width: 1),
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        padding: EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+                        child: Text(
+                          widget.chatRow.blockedByThisUser! ? "Unblock User" : "Block User",
+                          style: TextStyle(
+                            fontFamily: HelveticaFont.Bold,
+                            color: Colors.white,
                           ),
                         ),
                       ),
-                    ],
-                  )
-                : _buildLoadingAnim(),
-          ),
-        ],
-      );
-    } else {
-      return Container();
-    }
+                    ),
+                  ],
+                )
+              : _buildLoadingAnim(),
+        ),
+      ],
+    );
   }
 }

@@ -140,19 +140,13 @@ class FirestoreService {
     await rtdDatabase.unBlockInRTDatabase(userChatsDocumentUid, otherUserUid);
   }
 
-  Future blockUser({
-    required String userChatsDocumentUid,
-    required String blockedUserUid,
-  }) async {
+  Future blockUser({required String userChatsDocumentUid, required String blockedUserUid}) async {
     await _firestoreInstance.collection("userChats").doc(userChatsDocumentUid).update({
       "blockedMembers": FieldValue.arrayUnion([blockedUserUid]),
     });
   }
 
-  Future unblockUser({
-    required String userChatsDocumentUid,
-    required String blockedUserUid,
-  }) async {
+  Future unblockUser({required String userChatsDocumentUid, required String blockedUserUid}) async {
     await _firestoreInstance.collection("userChats").doc(userChatsDocumentUid).update({
       "blockedMembers": FieldValue.arrayRemove([blockedUserUid]),
     });
