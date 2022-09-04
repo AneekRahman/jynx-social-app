@@ -40,6 +40,7 @@ dependencies:
   rxdart: ^0.27.5 # For location
   flutter_inappwebview: ^5.4.3+7
   permission_handler: ^10.0.0
+  flutter_webrtc: ^0.9.5
 
   flutter:
     sdk: flutter
@@ -68,6 +69,7 @@ flutter_icons:
 flutter:
   assets:
     - assets/
+    - assets/icons/
     - fonts/
 
   uses-material-design: true

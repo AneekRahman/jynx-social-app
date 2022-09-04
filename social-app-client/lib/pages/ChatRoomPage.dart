@@ -19,13 +19,6 @@ import 'OthersProfilePage.dart';
 
 GlobalKey<_ChatRequestActionsState> _chatRequestActionsGlobalKey = GlobalKey<_ChatRequestActionsState>();
 
-const kMessageTextFieldDecoration = InputDecoration(
-  contentPadding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
-  hintText: 'Type your message here...',
-  hintStyle: TextStyle(fontFamily: 'Poppins', fontSize: 14),
-  border: InputBorder.none,
-);
-
 Center _buildLoadingAnim() {
   return Center(
     child: SizedBox(child: CircularProgressIndicator(), height: 25, width: 25),
@@ -319,16 +312,24 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                   delegate: SliverChildBuilderDelegate(
                     (context, index) {
                       MsgRow msgRow = _msgRows.elementAt(index);
-                      // Check if previous post was also from the same user
-                      bool firstMsgOfUser = true;
-                      if (index == 0 || _msgRows.elementAt(index - 1).msgUid == _currentUser.uid) {
-                        firstMsgOfUser = false;
+                      // REMEBER!! _msgRows is a REVERSED array!!!
+
+                      // Check if previous message was also from the same user
+                      bool nextMsgSameUser = true;
+                      if (index == 0 || _msgRows.elementAt(index - 1).userUid != msgRow.userUid) {
+                        nextMsgSameUser = false;
+                      }
+                      // Check if next post message is also from the same user
+                      bool prevMsgSameUser = true;
+                      if (_msgRows.length - 1 == index || _msgRows.elementAt(index + 1).userUid != msgRow.userUid) {
+                        prevMsgSameUser = false;
                       }
 
                       return MessageBubble(
                         msgRow: msgRow,
-                        isUser: msgRow.userUid == _currentUser.uid,
-                        firstMsgOfUser: firstMsgOfUser,
+                        isUsersMsg: msgRow.userUid == _currentUser.uid,
+                        prevMsgSameUser: prevMsgSameUser,
+                        nextMsgSameUser: nextMsgSameUser,
                       );
                     },
                     childCount: _msgRows.length,

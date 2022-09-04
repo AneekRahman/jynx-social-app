@@ -107,7 +107,7 @@ class _ChatBottomBarState extends State<ChatBottomBar> {
         Container(
           padding: EdgeInsets.symmetric(vertical: 14, horizontal: 10),
           child: Material(
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(100),
             color: Color(0xFFF1F1F1F1),
             child: Row(
               children: [
@@ -118,7 +118,12 @@ class _ChatBottomBarState extends State<ChatBottomBar> {
                     textCapitalization: TextCapitalization.sentences,
                     style: TextStyle(fontFamily: HelveticaFont.Roman),
                     controller: chatMsgTextController,
-                    decoration: kMessageTextFieldDecoration,
+                    decoration: InputDecoration(
+                      contentPadding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
+                      hintText: 'Type your message here...',
+                      hintStyle: TextStyle(fontFamily: HelveticaFont.Roman, fontSize: 14),
+                      border: InputBorder.none,
+                    ),
                     onChanged: ((value) {
                       setState(() {
                         _textInputValue = value;
@@ -137,13 +142,14 @@ class _ChatBottomBarState extends State<ChatBottomBar> {
                     _onSendHandler(context);
                   },
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 14),
-                    child: Icon(
-                      Icons.send,
-                      size: 30,
-                      color: _textInputValue.isEmpty ? Colors.black38 : Colors.purpleAccent,
-                    ),
-                  ),
+                      padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 14),
+                      child: Image.asset("assets/icons/Send-icon.png", height: 30, width: 30)
+                      //  Icon(
+                      //   Icons.send,
+                      //   size: 30,
+                      //   color: _textInputValue.isEmpty ? Colors.black38 : Colors.purpleAccent,
+                      // ),
+                      ),
                 ),
               ],
             ),
