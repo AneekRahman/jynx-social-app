@@ -1,9 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:social_app/models/CustomClaims.dart';
-import 'package:social_app/modules/MyBottomButton.dart';
 import 'package:social_app/modules/constants.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
@@ -44,7 +41,11 @@ class _FinalSignUpUpdatePageState extends State<FinalSignUpUpdatePage> {
         );
         if (response.statusCode == 200) {
           ScaffoldMessenger.of(_context).showSnackBar(SnackBar(
-            content: Text("Welcome, $_displayName!"),
+            backgroundColor: Colors.blue,
+            content: Text(
+              "Welcome, $_displayName!",
+              style: TextStyle(color: Colors.white, fontSize: 18),
+            ),
           ));
           // Update the displayName
           await _user!.updateDisplayName(_displayName);
@@ -53,7 +54,11 @@ class _FinalSignUpUpdatePageState extends State<FinalSignUpUpdatePage> {
         } else {
           Map jsonObject = json.decode(response.body);
           ScaffoldMessenger.of(_context).showSnackBar(SnackBar(
-            content: Text(jsonObject["message"] ?? "There was an error while, try again!"),
+            backgroundColor: Colors.red,
+            content: Text(
+              jsonObject["message"] ?? "There was an error while, try again!",
+              style: TextStyle(color: Colors.white, fontSize: 18),
+            ),
           ));
         }
       } catch (e) {
@@ -73,6 +78,7 @@ class _FinalSignUpUpdatePageState extends State<FinalSignUpUpdatePage> {
   void initState() {
     _firestoreInstance = FirebaseFirestore.instance;
     _user = context.read<User>();
+
     super.initState();
   }
 
@@ -128,7 +134,10 @@ class _FinalSignUpUpdatePageState extends State<FinalSignUpUpdatePage> {
             ),
             SizedBox(height: 40),
             TextFormField(
-              onChanged: (value) => _userName = value.trim(),
+              onChanged: (value) {
+                _userName = value.trim();
+                _formKey.currentState!.validate();
+              },
               validator: (input) {
                 if (input!.length < 6 || input.length > 32) {
                   return "Should be between 6 - 32 characters long";
@@ -150,7 +159,10 @@ class _FinalSignUpUpdatePageState extends State<FinalSignUpUpdatePage> {
             ),
             SizedBox(height: 20),
             TextFormField(
-              onChanged: (value) => _displayName = value.trim(),
+              onChanged: (value) {
+                _displayName = value.trim();
+                _formKey.currentState!.validate();
+              },
               validator: (input) {
                 if (input!.length < 3 || input.length > 32) {
                   return "Should be between 3 - 32 characters long";

@@ -12,12 +12,12 @@ class EnterNumberPage extends StatefulWidget {
 }
 
 class _EnterNumberPageState extends State<EnterNumberPage> {
-  TextEditingController _phoneFieldController = TextEditingController();
-  String _onlyEnteredValue = "", _completePhoneNumber = "", _msg = "";
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  String _completePhoneNumber = "", _msg = "";
   bool _loading = false;
 
   void _sendCode() async {
-    if (_loading || _onlyEnteredValue.isEmpty || _onlyEnteredValue.length < 6) return;
+    if (_loading || !_formKey.currentState!.validate()) return;
 
     // Start loading animation
     setState(() {
@@ -54,27 +54,31 @@ class _EnterNumberPageState extends State<EnterNumberPage> {
             Icon(Icons.phone),
             SizedBox(width: 20),
             Expanded(
-              child: IntlPhoneField(
-                controller: _phoneFieldController,
-                decoration: InputDecoration(
-                  labelText: 'Phone',
-                  labelStyle: TextStyle(color: Colors.white),
-                  floatingLabelBehavior: FloatingLabelBehavior.always,
-                  hintText: "XXX-XXXXXX",
+              child: Form(
+                key: _formKey,
+                child: IntlPhoneField(
+                  decoration: InputDecoration(
+                    labelText: 'Phone',
+                    labelStyle: TextStyle(color: Colors.white),
+                    floatingLabelBehavior: FloatingLabelBehavior.always,
+                    hintText: "XXX-XXXXXX",
+                  ),
+                  invalidNumberMessage: 'Please enter a full number',
+                  showDropdownIcon: false,
+                  flagsButtonPadding: EdgeInsets.only(top: 15),
+                  initialCountryCode: 'US',
+                  onChanged: (phone) {
+                    if (_msg.isNotEmpty) {
+                      setState(() {
+                        _msg = "";
+                      });
+                    }
+                    _completePhoneNumber = phone.completeNumber;
+                  },
+                  validator: (phone) {
+                    if (_msg.isNotEmpty) return _msg;
+                  },
                 ),
-                invalidNumberMessage: 'Please enter a full number',
-                showDropdownIcon: false,
-                flagsButtonPadding: EdgeInsets.only(top: 15),
-                initialCountryCode: 'US',
-                onChanged: (phone) {
-                  if (_msg.isNotEmpty) {
-                    setState(() {
-                      _msg = "";
-                    });
-                  }
-                  _completePhoneNumber = phone.completeNumber;
-                  _onlyEnteredValue = phone.number;
-                },
               ),
             ),
           ],
@@ -87,7 +91,7 @@ class _EnterNumberPageState extends State<EnterNumberPage> {
                     _msg,
                     style: TextStyle(color: Colors.red),
                   ),
-                  SizedBox(height: 20),
+                  SizedBox(height: 30),
                 ],
               )
             : SizedBox(),
