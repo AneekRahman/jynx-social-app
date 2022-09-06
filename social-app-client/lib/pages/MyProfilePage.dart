@@ -126,17 +126,11 @@ class _MyProfilePageState extends State<MyProfilePage> {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(
-                                  Icons.settings,
-                                  size: 18,
-                                ),
+                                Icon(Icons.settings, size: 18, color: Colors.black),
                                 SizedBox(width: 10),
                                 Text(
                                   "Edit Profile",
-                                  style: TextStyle(
-                                    fontFamily: HelveticaFont.Bold,
-                                    fontSize: 14,
-                                  ),
+                                  style: TextStyle(fontFamily: HelveticaFont.Bold, fontSize: 14, color: Colors.black),
                                 ),
                               ],
                             ),

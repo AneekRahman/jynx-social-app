@@ -128,7 +128,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           child: Text(
                             "Logout",
                             textAlign: TextAlign.center,
-                            style: TextStyle(fontFamily: HelveticaFont.Bold),
+                            style: TextStyle(fontFamily: HelveticaFont.Bold, color: Colors.black),
                           ),
                           onTap: () {
                             context.read<AuthenticationService>().signOut();

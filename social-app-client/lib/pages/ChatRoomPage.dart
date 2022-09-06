@@ -251,53 +251,56 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(statusBarColor: Colors.transparent, statusBarIconBrightness: Brightness.dark),
-      child: Scaffold(
-        body: StreamBuilder(
-            stream: widget.chatRow != null ? context.watch<FirestoreService>().getChatRoomStream(widget.chatRow!.chatRoomUid) : null,
-            builder: (context, AsyncSnapshot<DocumentSnapshot> snapshot) {
-              if (snapshot.hasData) {
-                widget.chatRow = makeChatRowFromUserChats(snapshot.data, _currentUser.uid, false)!;
-              }
+      child: Theme(
+        data: ThemeData.light(),
+        child: Scaffold(
+          body: StreamBuilder(
+              stream: widget.chatRow != null ? context.watch<FirestoreService>().getChatRoomStream(widget.chatRow!.chatRoomUid) : null,
+              builder: (context, AsyncSnapshot<DocumentSnapshot> snapshot) {
+                if (snapshot.hasData) {
+                  widget.chatRow = makeChatRowFromUserChats(snapshot.data, _currentUser.uid, false)!;
+                }
 
-              return Column(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: <Widget>[
-                  ChatTopBar(
-                    chatRow: widget.chatRow,
-                    otherUser: widget.chatRow != null ? widget.chatRow!.otherUser : widget.otherUser,
-                  ),
-                  !_initializingChatRoom
-                      ? widget.chatRow != null
-                          ? _buildMessagesStreamBuilder(context)
-                          : Center(child: Text("You haven't messaged yet!"))
-                      : _buildLoadingAnim(),
-                  widget.chatRow != null
-                      ? ChatRequestActions(
-                          key: _chatRequestActionsGlobalKey,
-                          chatRow: widget.chatRow!,
-                          currentUser: _currentUser,
-                        )
-                      : Container(),
-                  ChatBottomBar(
-                    rootContext: context,
-                    chatRow: widget.chatRow,
-                    currentUser: _currentUser,
-                    otherUser: widget.otherUser,
-                    setNewChatRoomUid: (String chatRoomUid) {
-                      setState(() {
-                        widget.chatRow = ChatRow(
-                          chatRoomUid: chatRoomUid,
-                          otherUser: widget.otherUser,
-                          requestedByOtherUser: false,
-                          blockedByThisUser: false,
-                        );
-                      });
-                    },
-                  ),
-                ],
-              );
-            }),
+                return Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                    ChatTopBar(
+                      chatRow: widget.chatRow,
+                      otherUser: widget.chatRow != null ? widget.chatRow!.otherUser : widget.otherUser,
+                    ),
+                    !_initializingChatRoom
+                        ? widget.chatRow != null
+                            ? _buildMessagesStreamBuilder(context)
+                            : Center(child: Text("You haven't messaged yet!"))
+                        : _buildLoadingAnim(),
+                    widget.chatRow != null
+                        ? ChatRequestActions(
+                            key: _chatRequestActionsGlobalKey,
+                            chatRow: widget.chatRow!,
+                            currentUser: _currentUser,
+                          )
+                        : Container(),
+                    ChatBottomBar(
+                      rootContext: context,
+                      chatRow: widget.chatRow,
+                      currentUser: _currentUser,
+                      otherUser: widget.otherUser,
+                      setNewChatRoomUid: (String chatRoomUid) {
+                        setState(() {
+                          widget.chatRow = ChatRow(
+                            chatRoomUid: chatRoomUid,
+                            otherUser: widget.otherUser,
+                            requestedByOtherUser: false,
+                            blockedByThisUser: false,
+                          );
+                        });
+                      },
+                    ),
+                  ],
+                );
+              }),
+        ),
       ),
     );
   }

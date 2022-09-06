@@ -68,17 +68,11 @@ class _OthersProfilePageState extends State<OthersProfilePage> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(
-                                Icons.chat_bubble,
-                                size: 18,
-                              ),
+                              Icon(Icons.chat_bubble, size: 18, color: Colors.black),
                               SizedBox(width: 10),
                               Text(
                                 "Message",
-                                style: TextStyle(
-                                  fontFamily: HelveticaFont.Bold,
-                                  fontSize: 14,
-                                ),
+                                style: TextStyle(fontFamily: HelveticaFont.Bold, fontSize: 14, color: Colors.black),
                               ),
                             ],
                           ),
