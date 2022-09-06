@@ -115,7 +115,7 @@ class _FinalSignUpUpdatePageState extends State<FinalSignUpUpdatePage> {
         child: Column(
           children: [
             SizedBox(height: 20),
-            Text("Complete Account", style: headingStyle),
+            Text("Complete Account", style: singInHeadingStyle),
             SizedBox(height: 10),
             Text(
               'Select a new username and enter your full name \nto complete the account creation',

@@ -147,7 +147,7 @@ class _OtpPageState extends State<OtpPage> {
                   SizedBox(height: 30),
                   Text(
                     "Phone Verification",
-                    style: headingStyle,
+                    style: singInHeadingStyle,
                   ),
                   SizedBox(height: 10),
                   Text("Enter the code sent to: " + widget.phoneNo),

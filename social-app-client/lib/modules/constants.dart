@@ -34,10 +34,9 @@ class HelveticaFont {
   static const String Black = "helvetica_black";
 }
 
-final headingStyle = TextStyle(
-  fontSize: 28,
-  fontFamily: HelveticaFont.Heavy,
-  color: Colors.black,
+final singInHeadingStyle = TextStyle(
+  fontSize: 24,
+  fontFamily: HelveticaFont.Medium,
   height: 1.5,
 );
 

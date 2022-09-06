@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import './OTP/OtpPage.dart';
-import './PhoneSendCodePage.dart';
+import 'EnterNumberPage.dart';
 
 class PhoneSignInPage extends StatefulWidget {
   @override
@@ -9,43 +9,49 @@ class PhoneSignInPage extends StatefulWidget {
 }
 
 class _PhoneSignInPageState extends State<PhoneSignInPage> {
-  int _pageNum = 0;
+  bool _showOtpPage = false;
   String? _phoneNumber;
 
-  Widget _getStepPage() {
-    if (_pageNum == 1 && _phoneNumber != null) {
+  Widget _getSignInPage() {
+    // Show OtpPage when there is a number added
+    if (!_showOtpPage && _phoneNumber != null) {
       return OtpPage(
         phoneNo: _phoneNumber!,
       );
-    }
-
-    // Return the default first page if none of the other pages are selected
-    return PhoneSendCodePage(saveSentPhoneNo: (phoneNo) {
-      _phoneNumber = phoneNo;
-      setState(() {
-        _pageNum = 1;
+    } else {
+      // Return the default first page
+      return EnterNumberPage(saveSentPhoneNo: (phoneNo) {
+        setState(() {
+          _phoneNumber = phoneNo;
+          _showOtpPage = true;
+        });
       });
-    });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-        if (_pageNum > 0) {
+        if (_showOtpPage) {
           setState(() {
-            _pageNum--;
+            _phoneNumber = null;
+            _showOtpPage = false;
           });
-
           return false;
         } else
           return true;
       },
       child: AnnotatedRegion<SystemUiOverlayStyle>(
-        value: const SystemUiOverlayStyle(statusBarColor: Colors.transparent, statusBarIconBrightness: Brightness.dark),
+        value: const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.light,
+          systemNavigationBarIconBrightness: Brightness.dark,
+        ),
         child: Scaffold(
+          backgroundColor: Colors.black,
           body: SafeArea(
-            child: _getStepPage(),
+            child: _getSignInPage(),
           ),
         ),
       ),
