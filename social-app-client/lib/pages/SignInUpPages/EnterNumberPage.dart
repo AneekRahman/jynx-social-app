@@ -68,15 +68,12 @@ class _EnterNumberPageState extends State<EnterNumberPage> {
                   flagsButtonPadding: EdgeInsets.only(top: 15),
                   initialCountryCode: 'US',
                   onChanged: (phone) {
+                    _completePhoneNumber = phone.completeNumber;
                     if (_msg.isNotEmpty) {
                       setState(() {
                         _msg = "";
                       });
                     }
-                    _completePhoneNumber = phone.completeNumber;
-                  },
-                  validator: (phone) {
-                    if (_msg.isNotEmpty) return _msg;
                   },
                 ),
               ),

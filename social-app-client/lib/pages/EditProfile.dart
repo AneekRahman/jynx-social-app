@@ -224,7 +224,7 @@ class _EditProfileFormState extends State<EditProfileForm> {
                   child: Text(
                     "Update",
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontFamily: HelveticaFont.Bold),
+                    style: TextStyle(fontFamily: HelveticaFont.Bold, color: Colors.black),
                   ),
                   onTap: () {
                     _updateProfile(_context);

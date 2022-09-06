@@ -16,8 +16,13 @@ class _PhoneSignInPageState extends State<PhoneSignInPage> {
     // Show OtpPage when there is a number added
     if (_showOtpPage && _phoneNumber != null) {
       return OtpPage(
-        phoneNo: _phoneNumber!,
-      );
+          phoneNo: _phoneNumber!,
+          goBackToEnterPhonePage: () {
+            setState(() {
+              _phoneNumber = null;
+              _showOtpPage = false;
+            });
+          });
     } else {
       // Return the default first page
       return EnterNumberPage(saveSentPhoneNo: (phoneNo) {

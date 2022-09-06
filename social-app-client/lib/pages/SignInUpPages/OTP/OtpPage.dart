@@ -8,7 +8,8 @@ import 'OtpForm.dart';
 
 class OtpPage extends StatefulWidget {
   final String phoneNo;
-  OtpPage({required this.phoneNo});
+  final Function goBackToEnterPhonePage;
+  OtpPage({required this.phoneNo, required this.goBackToEnterPhonePage});
   @override
   _OtpPageState createState() => _OtpPageState();
 }
@@ -141,9 +142,21 @@ class _OtpPageState extends State<OtpPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   SizedBox(height: MediaQuery.of(context).size.height * .05),
-                  Text("Enter OTP code", style: singInHeadingStyle),
+                  Text("Enter verification code", style: singInHeadingStyle),
                   SizedBox(height: 10),
-                  Text("Sent to: " + widget.phoneNo),
+                  Row(
+                    children: [
+                      Text("Sent to: " + widget.phoneNo),
+                      SizedBox(width: 10),
+                      GestureDetector(
+                        onTap: () => widget.goBackToEnterPhonePage(),
+                        child: Text(
+                          "Not you?",
+                          style: TextStyle(decoration: TextDecoration.underline, color: Colors.blue),
+                        ),
+                      )
+                    ],
+                  ),
                   OtpForm(
                     onOtpChange: (smsCode) {
                       _smsCode = smsCode;
