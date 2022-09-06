@@ -1,11 +1,9 @@
-import 'dart:io';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/src/widgets/container.dart';
-import 'package:flutter/src/widgets/framework.dart';
-import 'package:flutter_inappwebview/flutter_inappwebview.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_webrtc/flutter_webrtc.dart';
+import 'package:sdp_transform/sdp_transform.dart';
 
 class VideoCallPage extends StatefulWidget {
   const VideoCallPage({super.key});
@@ -15,100 +13,240 @@ class VideoCallPage extends StatefulWidget {
 }
 
 class _VideoCallPageState extends State<VideoCallPage> {
-  final GlobalKey webViewKey = GlobalKey();
+  final _localVideoRenderer = RTCVideoRenderer();
+  final _remoteVideoRenderer = RTCVideoRenderer();
+  final sdpController = TextEditingController();
 
-  InAppWebViewController? webViewController;
-  InAppWebViewGroupOptions options = InAppWebViewGroupOptions(
-      crossPlatform: InAppWebViewOptions(useShouldOverrideUrlLoading: true, mediaPlaybackRequiresUserGesture: false),
-      android: AndroidInAppWebViewOptions(
-        useHybridComposition: true,
-      ),
-      ios: IOSInAppWebViewOptions(
-        allowsInlineMediaPlayback: true,
-      ));
+  bool _offer = false;
 
-  double progress = 0;
+  RTCPeerConnection? _peerConnection;
+  MediaStream? _localStream;
 
-  void requestPermissions() async {
-    await Permission.camera.request();
-    await Permission.microphone.request();
-    await Permission.storage.request();
-
-    _setupWebview();
+  Future initRenderers() async {
+    await _localVideoRenderer.initialize();
+    await _remoteVideoRenderer.initialize();
   }
 
-  void _setupWebview() async {
-    if (Platform.isAndroid) {
-      await AndroidInAppWebViewController.setWebContentsDebuggingEnabled(true);
-
-      var swAvailable = await AndroidWebViewFeature.isFeatureSupported(AndroidWebViewFeature.SERVICE_WORKER_BASIC_USAGE);
-      var swInterceptAvailable =
-          await AndroidWebViewFeature.isFeatureSupported(AndroidWebViewFeature.SERVICE_WORKER_SHOULD_INTERCEPT_REQUEST);
-
-      if (swAvailable && swInterceptAvailable) {
-        AndroidServiceWorkerController serviceWorkerController = AndroidServiceWorkerController.instance();
-
-        await serviceWorkerController.setServiceWorkerClient(AndroidServiceWorkerClient(
-          shouldInterceptRequest: (request) async {
-            print(request);
-            return null;
-          },
-        ));
+  Future _getUserMedia() async {
+    final Map<String, dynamic> mediaConstraints = {
+      'audio': true,
+      'video': {
+        'facingMode': 'user',
       }
-    }
+    };
+
+    MediaStream stream = await navigator.mediaDevices.getUserMedia(mediaConstraints);
+
+    setState(() {
+      _localVideoRenderer.srcObject = stream;
+    });
+    return stream;
+  }
+
+  Future _createPeerConnecion() async {
+    await initRenderers();
+
+    Map<String, dynamic> configuration = {
+      "iceServers": [
+        {"url": "stun:stun.l.google.com:19302"},
+      ]
+    };
+
+    final Map<String, dynamic> offerSdpConstraints = {
+      "mandatory": {
+        "OfferToReceiveAudio": true,
+        "OfferToReceiveVideo": true,
+      },
+      "optional": [],
+    };
+
+    _localStream = await _getUserMedia();
+
+    RTCPeerConnection pc = await createPeerConnection(configuration, offerSdpConstraints);
+
+    _localStream!.getTracks().forEach((track) {
+      pc.addTrack(track, _localStream!);
+    });
+
+    pc.onIceCandidate = (e) {
+      if (e.candidate != null) {
+        print(json.encode({
+          'candidate': e.candidate.toString(),
+          'sdpMid': e.sdpMid.toString(),
+          'sdpMlineIndex': e.sdpMLineIndex,
+        }));
+      }
+    };
+
+    pc.onIceConnectionState = (e) {
+      print(e);
+    };
+
+    pc.onAddStream = (stream) {
+      print('addStream: ' + stream.id);
+      _remoteVideoRenderer.srcObject = stream;
+    };
+
+    return pc;
+  }
+
+  void _createOffer() async {
+    RTCSessionDescription description = await _peerConnection!.createOffer({'offerToReceiveVideo': 1});
+    var session = parse(description.sdp.toString());
+    print(json.encode(session));
+    _offer = true;
+
+    _peerConnection!.setLocalDescription(description);
+  }
+
+  void _createAnswer() async {
+    RTCSessionDescription description = await _peerConnection!.createAnswer({'offerToReceiveVideo': 1});
+
+    var session = parse(description.sdp.toString());
+    print(json.encode(session));
+
+    _peerConnection!.setLocalDescription(description);
+  }
+
+  void _setRemoteDescription() async {
+    String jsonString = sdpController.text;
+    dynamic session = await jsonDecode(jsonString);
+
+    String sdp = write(session, null);
+
+    RTCSessionDescription description = RTCSessionDescription(sdp, _offer ? 'answer' : 'offer');
+    print(description.toMap());
+
+    await _peerConnection!.setRemoteDescription(description);
+  }
+
+  void _addCandidate() async {
+    String jsonString = sdpController.text;
+    dynamic session = await jsonDecode(jsonString);
+    print(session['candidate']);
+    dynamic candidate = RTCIceCandidate(session['candidate'], session['sdpMid'], session['sdpMlineIndex']);
+    await _peerConnection!.addCandidate(candidate);
   }
 
   @override
   void initState() {
-    requestPermissions();
+    _createPeerConnecion().then((pc) {
+      _peerConnection = pc;
+    });
 
     super.initState();
   }
 
   @override
   void dispose() {
+    sdpController.dispose();
+    _localVideoRenderer.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: InAppWebView(
-          key: webViewKey,
-          initialUrlRequest: URLRequest(url: Uri.parse("https://baalish.app.100ms.live/preview/mvv-lar-dmj")),
-          // initialFile: "assets/index.html",
-          initialOptions: options,
-          onWebViewCreated: (controller) {
-            webViewController = controller;
-          },
-          onLoadStart: (controller, url) {},
-          androidOnPermissionRequest: (controller, origin, resources) async {
-            return PermissionRequestResponse(resources: resources, action: PermissionRequestResponseAction.GRANT);
-          },
-          shouldOverrideUrlLoading: (controller, navigationAction) async {
-            var uri = navigationAction.request.url!;
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+        systemNavigationBarIconBrightness: Brightness.dark,
+      ),
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: SafeArea(
+          child: Column(
+            children: [
+              Expanded(
+                child: Stack(
+                  children: [
+                    SizedBox(
+                      height: MediaQuery.of(context).size.height - 90,
+                      width: MediaQuery.of(context).size.width,
+                      child: RTCVideoView(
+                        _remoteVideoRenderer,
+                        objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
+                      ),
+                    ),
+                    Positioned(
+                      bottom: 30,
+                      left: 30,
+                      height: 160,
+                      width: 100,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.all(Radius.circular(10)),
+                        child: RTCVideoView(
+                          _localVideoRenderer,
+                          objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              TextField(
+                controller: sdpController,
+                keyboardType: TextInputType.multiline,
+                maxLines: 2,
+                maxLength: TextField.noMaxLength,
+              ),
+              _buildBottomActionsBar(context)
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
-            // TODO Make sure only my own video calling webapp url is loaded
-            if (!["http", "https", "file", "chrome", "data", "javascript", "about"].contains(uri.scheme)) {
-              if (await canLaunchUrl(uri)) {
-                // Launch the App
-                await launchUrl(uri);
-                // and cancel the request
-                return NavigationActionPolicy.CANCEL;
-              }
-            }
-
-            return NavigationActionPolicy.ALLOW;
-          },
-          onProgressChanged: (controller, progress) {
-            setState(() {
-              this.progress = progress / 100;
-            });
-          },
-          onConsoleMessage: (controller, consoleMessage) {
-            print(consoleMessage);
-          },
+  Container _buildBottomActionsBar(BuildContext context) {
+    return Container(
+      height: 90,
+      width: MediaQuery.of(context).size.width,
+      padding: EdgeInsets.all(10),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.all(Radius.circular(10)),
+          color: Colors.white10,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            IconButton(
+              onPressed: _createOffer,
+              icon: Icon(
+                Icons.call_end,
+                color: Colors.white,
+                size: 30,
+              ),
+            ),
+            SizedBox(width: 50),
+            IconButton(
+              onPressed: _createAnswer,
+              icon: Icon(
+                Icons.videocam_rounded,
+                color: Colors.white,
+                size: 30,
+              ),
+            ),
+            SizedBox(width: 50),
+            IconButton(
+              onPressed: _setRemoteDescription,
+              icon: Icon(
+                Icons.mic_rounded,
+                color: Colors.white,
+                size: 30,
+              ),
+            ),
+            SizedBox(width: 50),
+            IconButton(
+              onPressed: _addCandidate,
+              icon: Icon(
+                Icons.volume_up,
+                color: Colors.white,
+                size: 30,
+              ),
+            ),
+          ],
         ),
       ),
     );
