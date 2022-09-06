@@ -78,30 +78,34 @@ class _FinalSignUpUpdatePageState extends State<FinalSignUpUpdatePage> {
 
   @override
   Widget build(BuildContext context) {
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(statusBarColor: Colors.transparent, statusBarIconBrightness: Brightness.dark),
-      child: Scaffold(
-        body: SafeArea(
-          child: Column(
-            children: [
-              Expanded(
-                child: SingleChildScrollView(
-                  child: _buildForm(context),
-                ),
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                child: _buildForm(context),
               ),
-              Builder(
-                builder: (context) {
-                  return MyBottomButton(
-                    isLoading: _loading,
-                    text: "Finish Account",
-                    onTap: () async {
-                      _finishAccount(context);
-                    },
-                  );
-                },
-              )
-            ],
-          ),
+            ),
+            Builder(builder: (context) {
+              return Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: buildYellowButton(
+                  child: Text(
+                    "Finish Account",
+                    style: TextStyle(color: Colors.black, fontFamily: HelveticaFont.Bold, fontSize: 18),
+                    textAlign: TextAlign.center,
+                  ),
+                  onTap: () async {
+                    _finishAccount(context);
+                  },
+                  loading: _loading,
+                  context: context,
+                ),
+              );
+            }),
+          ],
         ),
       ),
     );
@@ -113,13 +117,13 @@ class _FinalSignUpUpdatePageState extends State<FinalSignUpUpdatePage> {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(height: 20),
+            SizedBox(height: MediaQuery.of(context).size.height * .05),
             Text("Complete Account", style: singInHeadingStyle),
             SizedBox(height: 10),
             Text(
-              'Select a new username and enter your full name \nto complete the account creation',
-              textAlign: TextAlign.center,
+              'Select a new username and enter your full name to complete the account creation',
               style: Theme.of(context).textTheme.caption,
             ),
             SizedBox(height: 40),
@@ -137,8 +141,9 @@ class _FinalSignUpUpdatePageState extends State<FinalSignUpUpdatePage> {
               style: TextStyle(fontFamily: HelveticaFont.Roman, fontSize: 20),
               decoration: InputDecoration(
                   labelText: "Username",
+                  labelStyle: TextStyle(color: Colors.white),
                   prefix: Text("@"),
-                  prefixStyle: TextStyle(color: Colors.black45, fontSize: 18),
+                  prefixStyle: TextStyle(color: Colors.white54, fontSize: 18),
                   floatingLabelBehavior: FloatingLabelBehavior.always,
                   hintText: "john_doe123",
                   contentPadding: EdgeInsets.fromLTRB(0, 0, 0, 10)),
@@ -158,6 +163,7 @@ class _FinalSignUpUpdatePageState extends State<FinalSignUpUpdatePage> {
               textCapitalization: TextCapitalization.words,
               decoration: InputDecoration(
                   labelText: "Full Name",
+                  labelStyle: TextStyle(color: Colors.white),
                   floatingLabelBehavior: FloatingLabelBehavior.always,
                   hintText: "eg: John Doe",
                   contentPadding: EdgeInsets.fromLTRB(0, 0, 0, 10)),
