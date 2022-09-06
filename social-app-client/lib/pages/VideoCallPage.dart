@@ -128,6 +128,20 @@ class _VideoCallPageState extends State<VideoCallPage> {
     await _peerConnection!.addCandidate(candidate);
   }
 
+  void _cleanSessions() async {
+    sdpController.dispose();
+    _localVideoRenderer.dispose();
+
+    if (_localStream != null) {
+      _localStream!.getTracks().forEach((element) async {
+        await element.stop();
+      });
+      await _localStream!.dispose();
+      _localStream = null;
+    }
+    await _peerConnection?.close();
+  }
+
   @override
   void initState() {
     _createPeerConnecion().then((pc) {
@@ -139,8 +153,7 @@ class _VideoCallPageState extends State<VideoCallPage> {
 
   @override
   void dispose() {
-    sdpController.dispose();
-    _localVideoRenderer.dispose();
+    _cleanSessions();
     super.dispose();
   }
 
