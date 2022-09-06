@@ -9,12 +9,15 @@ class PhoneSignInPage extends StatefulWidget {
 }
 
 class _PhoneSignInPageState extends State<PhoneSignInPage> {
-  bool _showOtpPage = false;
-  String? _phoneNumber;
+  // bool _showOtpPage = false;
+  // String? _phoneNumber;
+
+  bool _showOtpPage = true;
+  String? _phoneNumber = "865556788";
 
   Widget _getSignInPage() {
     // Show OtpPage when there is a number added
-    if (!_showOtpPage && _phoneNumber != null) {
+    if (_showOtpPage && _phoneNumber != null) {
       return OtpPage(
         phoneNo: _phoneNumber!,
       );

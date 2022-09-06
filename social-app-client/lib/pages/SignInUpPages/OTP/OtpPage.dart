@@ -14,20 +14,10 @@ class OtpPage extends StatefulWidget {
 }
 
 class _OtpPageState extends State<OtpPage> {
-  String? _smsCode, _msg;
+  String? _smsCode;
+  String _msg = "";
   bool _loading = false, _resentCode = false, _reSendingCode = false;
-  int _resendCodeTimer = 0;
-
-  void testResendCode() async {
-    setState(() {
-      _reSendingCode = true;
-    });
-    await Future.delayed(Duration(seconds: 3));
-    setState(() {
-      _resentCode = true;
-      _reSendingCode = false;
-    });
-  }
+  int _resendCodeTimer = 60;
 
   void _resendCode() async {
     if (_reSendingCode || _resentCode || _resendCodeTimer != 0) return;
@@ -97,19 +87,24 @@ class _OtpPageState extends State<OtpPage> {
     });
   }
 
-  Row buildTimer() {
+  Row _buildResendCodeRow() {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Text("Wait before requesting a new code"),
+        Text("Didn't get it?"),
+        SizedBox(width: 16),
         TweenAnimationBuilder(
           tween: Tween(begin: 60.0, end: 0.0),
           duration: Duration(seconds: 60),
           builder: (_, value, child) {
             _resendCodeTimer = value.toInt();
-            return Text(
-              "00:$_resendCodeTimer",
-              style: TextStyle(color: Color(0xFF757575)),
+            return Row(
+              children: [
+                _buildResendCodeButton(),
+                Text(
+                  " 00:" + "$_resendCodeTimer".padLeft(_resendCodeTimer < 10 ? 2 : 0, "0"),
+                  style: TextStyle(color: _reSendingCode || _resentCode || _resendCodeTimer != 0 ? Colors.white38 : Colors.white),
+                ),
+              ],
             );
           },
         ),
@@ -117,7 +112,7 @@ class _OtpPageState extends State<OtpPage> {
     );
   }
 
-  Widget buildResendCodeButton(BuildContext context) {
+  Widget _buildResendCodeButton() {
     String text = "Resend Code";
     if (_reSendingCode) text = "Resending code...";
     if (_resentCode) text = "Code sent";
@@ -129,7 +124,7 @@ class _OtpPageState extends State<OtpPage> {
         text,
         style: TextStyle(
             decoration: TextDecoration.underline,
-            color: _reSendingCode || _resentCode || _resendCodeTimer != 0 ? Colors.black38 : Colors.black),
+            color: _reSendingCode || _resentCode || _resendCodeTimer != 0 ? Colors.white38 : Colors.blue),
       ),
     );
   }
@@ -143,41 +138,50 @@ class _OtpPageState extends State<OtpPage> {
             padding: const EdgeInsets.symmetric(horizontal: 20.0),
             child: SingleChildScrollView(
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SizedBox(height: 30),
-                  Text(
-                    "Phone Verification",
-                    style: singInHeadingStyle,
-                  ),
+                  SizedBox(height: MediaQuery.of(context).size.height * .05),
+                  Text("Enter OTP code", style: singInHeadingStyle),
                   SizedBox(height: 10),
-                  Text("Enter the code sent to: " + widget.phoneNo),
+                  Text("Sent to: " + widget.phoneNo),
                   OtpForm(
                     onOtpChange: (smsCode) {
                       _smsCode = smsCode;
                     },
                   ),
+                  _msg.isNotEmpty
+                      ? Column(
+                          children: [
+                            SizedBox(height: 20),
+                            Text(
+                              _msg,
+                              style: TextStyle(color: Colors.red),
+                              textAlign: TextAlign.center,
+                            ),
+                            SizedBox(height: 10),
+                          ],
+                        )
+                      : SizedBox(),
                   SizedBox(height: 20),
-                  Text(
-                    _msg ?? "",
-                    style: TextStyle(color: Colors.red),
-                    textAlign: TextAlign.center,
-                  ),
-                  SizedBox(height: 40),
-                  buildTimer(),
-                  SizedBox(height: 10),
-                  buildResendCodeButton(context)
+                  _buildResendCodeRow(),
                 ],
               ),
             ),
           ),
         ),
-        MyBottomButton(
-          text: "Verify phone",
-          isLoading: _loading,
-          onTap: () {
-            _phoneSignIn();
-          },
-        )
+        Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: buildYellowButton(
+            child: Text(
+              "Verify code",
+              style: TextStyle(color: Colors.black, fontFamily: HelveticaFont.Bold, fontSize: 18),
+              textAlign: TextAlign.center,
+            ),
+            onTap: _phoneSignIn,
+            loading: _loading,
+            context: context,
+          ),
+        ),
       ],
     );
   }

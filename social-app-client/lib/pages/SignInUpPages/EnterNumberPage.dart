@@ -102,11 +102,11 @@ class _EnterNumberPageState extends State<EnterNumberPage> {
         Expanded(
           child: SingleChildScrollView(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 30),
+              padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SizedBox(height: MediaQuery.of(context).size.height * .1),
+                  SizedBox(height: MediaQuery.of(context).size.height * .05),
                   Text("Enter your phone number", style: singInHeadingStyle),
                   SizedBox(height: 20),
                   _buildForm(),
@@ -124,7 +124,7 @@ class _EnterNumberPageState extends State<EnterNumberPage> {
           child: buildYellowButton(
             child: Text(
               "Send code",
-              style: TextStyle(color: Colors.black, fontFamily: HelveticaFont.Bold),
+              style: TextStyle(color: Colors.black, fontFamily: HelveticaFont.Bold, fontSize: 18),
               textAlign: TextAlign.center,
             ),
             onTap: _sendCode,

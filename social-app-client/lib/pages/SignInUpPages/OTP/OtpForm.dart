@@ -48,7 +48,7 @@ class _OtpFormState extends State<OtpForm> {
 
   SizedBox buildInputNode(FocusNode focusNode, FocusNode nextFocusNode, int index) {
     return SizedBox(
-      width: 60,
+      width: (MediaQuery.of(context).size.width / 6) - 15,
       child: TextFormField(
         focusNode: focusNode,
         style: TextStyle(fontSize: 24),
@@ -82,8 +82,9 @@ class _OtpFormState extends State<OtpForm> {
               buildInputNode(pin3FocusNode, pin4FocusNode, 2),
               buildInputNode(pin4FocusNode, pin5FocusNode, 3),
               buildInputNode(pin5FocusNode, pin6FocusNode, 4),
+              // The last node where we unfocus
               SizedBox(
-                width: 60,
+                width: (MediaQuery.of(context).size.width / 6) - 15,
                 child: TextFormField(
                   focusNode: pin6FocusNode,
                   style: TextStyle(fontSize: 24),
