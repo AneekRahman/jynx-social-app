@@ -187,6 +187,10 @@ class _PlacesAutocompleteOverlayState extends PlacesAutocompleteState {
 
   Widget _textField(BuildContext context) => TextField(
         controller: _queryTextController,
+        textInputAction: TextInputAction.search,
+        onSubmitted: (v) {
+          _onQueryChange();
+        },
         autofocus: true,
         style: TextStyle(color: Theme.of(context).brightness == Brightness.light ? Colors.black87 : null, fontSize: 16.0),
         decoration: widget.decoration ??
@@ -362,7 +366,7 @@ abstract class PlacesAutocompleteState extends State<PlacesAutocompleteWidget> {
     _initPlaces();
     _searching = false;
 
-    _queryTextController!.addListener(_onQueryChange);
+    // _queryTextController!.addListener(_onQueryChange);
 
     _queryBehavior.stream.listen(doSearch);
   }
@@ -418,8 +422,8 @@ abstract class PlacesAutocompleteState extends State<PlacesAutocompleteWidget> {
   void dispose() {
     super.dispose();
 
-    _places!.dispose();
-    _debounce!.cancel();
+    if (_places != null) _places!.dispose();
+    if (_debounce != null) _debounce!.cancel();
     _queryBehavior.close();
     _queryTextController!.removeListener(_onQueryChange);
   }
