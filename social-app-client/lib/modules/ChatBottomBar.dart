@@ -121,14 +121,16 @@ class _ChatBottomBarState extends State<ChatBottomBar> {
               children: [
                 Flexible(
                   child: Container(
-                    margin: EdgeInsets.only(bottom: 4),
+                    margin: EdgeInsets.only(bottom: 2),
                     child: TextField(
                       maxLines: 5,
                       minLines: 1,
                       textCapitalization: TextCapitalization.sentences,
                       style: TextStyle(fontFamily: HelveticaFont.Roman),
+                      maxLength: 200,
                       controller: chatMsgTextController,
                       decoration: InputDecoration(
+                        counterText: "",
                         contentPadding: EdgeInsets.symmetric(vertical: 14.0, horizontal: 20.0),
                         hintText: 'Type your message here...',
                         hintStyle: TextStyle(fontFamily: HelveticaFont.Roman, fontSize: 14),

@@ -12,6 +12,7 @@ class EnterNumberPage extends StatefulWidget {
 }
 
 class _EnterNumberPageState extends State<EnterNumberPage> {
+  final _phoneNumberTextController = TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   String _completePhoneNumber = "", _msg = "";
   bool _loading = false;
@@ -57,6 +58,7 @@ class _EnterNumberPageState extends State<EnterNumberPage> {
               child: Form(
                 key: _formKey,
                 child: IntlPhoneField(
+                  controller: _phoneNumberTextController,
                   decoration: InputDecoration(
                     labelText: 'Phone',
                     labelStyle: TextStyle(color: Colors.white),
@@ -65,8 +67,11 @@ class _EnterNumberPageState extends State<EnterNumberPage> {
                   ),
                   invalidNumberMessage: 'Please enter a full number',
                   showDropdownIcon: false,
-                  flagsButtonPadding: EdgeInsets.only(top: 15),
+                  flagsButtonPadding: EdgeInsets.only(top: 18),
                   initialCountryCode: 'US',
+                  onCountryChanged: (phone) {
+                    _phoneNumberTextController.clear();
+                  },
                   onChanged: (phone) {
                     _completePhoneNumber = phone.completeNumber;
                     if (_msg.isNotEmpty) {
