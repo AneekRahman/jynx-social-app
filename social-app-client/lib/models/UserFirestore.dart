@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-class UserProfileObject {
+class UserFirestore {
   late String userUid;
   String? displayName;
   String? userName;
@@ -11,7 +11,7 @@ class UserProfileObject {
   String? website;
   Map? meta = {};
 
-  UserProfileObject({
+  UserFirestore({
     required this.userUid,
     this.displayName,
     this.userName,
@@ -23,7 +23,7 @@ class UserProfileObject {
     this.meta,
   });
 
-  UserProfileObject.fromJson(Map<String, dynamic> map, String uid) {
+  UserFirestore.fromMap(Map map, String uid) {
     userUid = uid;
     displayName = map['displayName'];
     userName = map['userName'];

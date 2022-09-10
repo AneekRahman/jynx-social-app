@@ -7,13 +7,13 @@ import '../pages/ChatRoomPage.dart';
 import '../services/firestore_service.dart';
 import '../services/rtd_service.dart';
 import '../models/ChatRow.dart';
-import '../models/UserProfileObject.dart';
+import '../models/UserFirestore.dart';
 
 class ChatBottomBar extends StatefulWidget {
   BuildContext rootContext;
   ChatRow? chatRow;
   User currentUser;
-  UserProfileObject otherUser;
+  UserFirestore otherUser;
   Function setNewChatRoomUid;
   ChatBottomBar({
     Key? key,

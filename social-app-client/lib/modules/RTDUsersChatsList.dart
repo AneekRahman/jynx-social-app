@@ -21,6 +21,7 @@ class RTDUsersChatsList extends StatefulWidget {
 
 class _RTDUsersChatsListState extends State<RTDUsersChatsList> {
   List<ChatRoomsInfos> _chatRoomsInfosList = [];
+  bool _loading = true;
 
   void listPreAddDuplicateRemoval(String chatRoomUid) {
     for (var i = 0; i < _chatRoomsInfosList.length; i++) {
@@ -64,7 +65,9 @@ class _RTDUsersChatsListState extends State<RTDUsersChatsList> {
         ));
       }
     }
-    setState(() {});
+    setState(() {
+      if (_loading) _loading = false;
+    });
   }
 
   @override
@@ -80,7 +83,7 @@ class _RTDUsersChatsListState extends State<RTDUsersChatsList> {
       child: Column(
         children: [
           LoadingBar(
-            loading: true,
+            loading: _loading,
           ),
           Expanded(
             child: CustomScrollView(

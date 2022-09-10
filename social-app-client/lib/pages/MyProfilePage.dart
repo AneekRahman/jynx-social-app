@@ -6,7 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:social_app/models/CustomClaims.dart';
 import 'package:provider/provider.dart';
-import 'package:social_app/models/UserProfileObject.dart';
+import 'package:social_app/models/UserFirestore.dart';
 import 'package:social_app/modules/constants.dart';
 import 'package:social_app/pages/EditProfile.dart';
 import 'package:social_app/services/auth_service.dart';
@@ -105,8 +105,7 @@ class _MyProfilePageState extends State<MyProfilePage> {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return Center(child: SizedBox(height: 30, width: 30, child: CircularProgressIndicator(strokeWidth: 2)));
                 } else if (snapshot.hasData) {
-                  UserProfileObject _myUserObject =
-                      UserProfileObject.fromJson(snapshot.data!.data() as Map<String, dynamic>, snapshot.data!.id);
+                  UserFirestore _myUserObject = UserFirestore.fromMap(snapshot.data!.data() as Map<String, dynamic>, snapshot.data!.id);
 
                   return Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10),
@@ -162,7 +161,7 @@ class _MyProfilePageState extends State<MyProfilePage> {
     );
   }
 
-  GestureDetector _buildWebsiteTextRow(UserProfileObject _myUserObject, BuildContext context) {
+  GestureDetector _buildWebsiteTextRow(UserFirestore _myUserObject, BuildContext context) {
     return GestureDetector(
       onTap: () {
         if (_myUserObject.website!.isEmpty) {
@@ -182,7 +181,7 @@ class _MyProfilePageState extends State<MyProfilePage> {
     );
   }
 
-  GestureDetector _buildBioTextRow(UserProfileObject _myUserObject, BuildContext context) {
+  GestureDetector _buildBioTextRow(UserFirestore _myUserObject, BuildContext context) {
     return GestureDetector(
       onTap: () {
         if (_myUserObject.userBio!.isEmpty) {
@@ -200,7 +199,7 @@ class _MyProfilePageState extends State<MyProfilePage> {
     );
   }
 
-  Row _buildLocationTextRow(UserProfileObject _myUserObject, BuildContext context) {
+  Row _buildLocationTextRow(UserFirestore _myUserObject, BuildContext context) {
     return Row(
       children: [
         Icon(
@@ -228,7 +227,7 @@ class _MyProfilePageState extends State<MyProfilePage> {
     );
   }
 
-  Row _buildUserPicNamesRow(UserProfileObject _myUserObject) {
+  Row _buildUserPicNamesRow(UserFirestore _myUserObject) {
     return Row(
       children: [
         GestureDetector(

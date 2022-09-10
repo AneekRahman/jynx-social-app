@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:social_app/models/ChatRow.dart';
-import 'package:social_app/models/UserProfileObject.dart';
+import 'package:social_app/models/UserFirestore.dart';
 
 class MyServer {
   static const String SERVER_API = "https://us-central1-jynx-chat.cloudfunctions.net/api";
@@ -69,7 +69,7 @@ ChatRow? makeChatRowFromUserChats(snapshot, String currentUserUid, bool isFromQu
     // Check if available in the members list
     userChatsSnapshot.memberInfo!.forEach((key, value) {
       if (key != currentUserUid) {
-        UserProfileObject otherUser = UserProfileObject.fromJson(userChatsSnapshot.memberInfo![key], key);
+        UserFirestore otherUser = UserFirestore.fromMap(userChatsSnapshot.memberInfo![key], key);
         chatRow = ChatRow(
             chatRoomUid: snapshot.id,
             otherUser: otherUser,

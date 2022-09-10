@@ -1,6 +1,6 @@
-import 'package:social_app/models/UserProfileObject.dart';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
+
+import 'UserFirestore.dart';
 
 class UserChatsObject {
   String? chatRoomUid;
@@ -56,7 +56,7 @@ class UserChatsObject {
 
 class ChatRow {
   late String chatRoomUid;
-  late UserProfileObject otherUser;
+  late UserFirestore otherUser;
   String? lastMsgSentTime;
   String? lastMsg;
   bool? seen;
@@ -80,7 +80,7 @@ class ChatRow {
 
   ChatRow.fromJson(Map<String, dynamic> map, String chatRoomUid) {
     chatRoomUid = chatRoomUid;
-    otherUser = UserProfileObject.fromJson(map["otherUser"], map["userUid"]);
+    otherUser = UserFirestore.fromMap(map["otherUser"], map["userUid"]);
     lastMsgSentTime = map['lastMsgSentTime'];
     lastMsg = map['lastMsg'];
     seen = map['seen'];

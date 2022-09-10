@@ -6,7 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 import 'package:social_app/models/ChatRow.dart';
 import 'package:social_app/models/MsgRow.dart';
-import 'package:social_app/models/UserProfileObject.dart';
+import 'package:social_app/models/UserFirestore.dart';
 import 'package:social_app/modules/constants.dart';
 import 'package:social_app/pages/VideoCallPage.dart';
 import 'package:social_app/services/firestore_service.dart';
@@ -27,7 +27,7 @@ Center _buildLoadingAnim() {
 
 class ChatTopBar extends StatelessWidget {
   ChatRow? chatRow;
-  UserProfileObject otherUser;
+  UserFirestore otherUser;
   ChatTopBar({this.chatRow, required this.otherUser});
 
   @override
@@ -184,7 +184,7 @@ class ChatTopBar extends StatelessWidget {
 
 class ChatRoomPage extends StatefulWidget {
   ChatRow? chatRow;
-  UserProfileObject otherUser;
+  UserFirestore otherUser;
   ChatRoomPage({this.chatRow, required this.otherUser});
   @override
   _ChatRoomPageState createState() => _ChatRoomPageState();
@@ -218,16 +218,16 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   }
 
   void _initializeChatRoom() async {
-    if (widget.chatRow == null) {
-      // Search for an already made private chatroom for these 2 users
-      ChatRow? chatRow = await context.read<FirestoreService>().findPrivateChatWithUser(_currentUser.uid, widget.otherUser.userUid);
-      print(chatRow);
-      if (chatRow != null) {
-        setState(() {
-          widget.chatRow = chatRow;
-        });
-      }
-    }
+    // if (widget.chatRow == null) {
+    //   // Search for an already made private chatroom for these 2 users
+    //   ChatRow? chatRow = await context.read<FirestoreService>().findPrivateChatWithUser(_currentUser.uid, widget.otherUser.userUid);
+    //   print(chatRow);
+    //   if (chatRow != null) {
+    //     setState(() {
+    //       widget.chatRow = chatRow;
+    //     });
+    //   }
+    // }
 
     // If chatRoom found, then make sure to update the seen of lastMsg if already not seen
     if (widget.chatRow != null && widget.chatRow!.chatRoomUid != null && !widget.chatRow!.seen!) {

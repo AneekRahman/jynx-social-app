@@ -3,8 +3,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:social_app/models/UserProfileObject.dart';
+import 'package:social_app/models/UserFirestore.dart';
 import 'package:social_app/modules/constants.dart';
+import 'package:social_app/pages/ChatMessageRoom.dart';
 import 'package:social_app/services/firestore_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -12,7 +13,7 @@ import 'ChatRoomPage.dart';
 import 'MyProfilePage.dart';
 
 class OthersProfilePage extends StatefulWidget {
-  final UserProfileObject otherUsersProfileObject;
+  final UserFirestore otherUsersProfileObject;
   final bool showMessageButton;
   const OthersProfilePage({required this.otherUsersProfileObject, required this.showMessageButton});
   @override
@@ -47,7 +48,7 @@ class _OthersProfilePageState extends State<OthersProfilePage> {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: SizedBox(height: 30, width: 30, child: CircularProgressIndicator(strokeWidth: 2)));
           } else if (snapshot.hasData) {
-            UserProfileObject _myUserObject = UserProfileObject.fromJson(snapshot.data!.data() as Map<String, dynamic>, snapshot.data!.id);
+            UserFirestore _myUserObject = UserFirestore.fromMap(snapshot.data!.data() as Map<String, dynamic>, snapshot.data!.id);
 
             return Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10),
@@ -80,8 +81,12 @@ class _OthersProfilePageState extends State<OthersProfilePage> {
                             Navigator.push(
                               context,
                               CupertinoPageRoute(
-                                builder: (context) => ChatRoomPage(
-                                  otherUser: _myUserObject,
+                                builder: (context) => ChatMessageRoom(
+                                  currentUser: _currentUser!,
+                                  otherUserUid: widget.otherUsersProfileObject.userUid,
+                                  otherUserName: widget.otherUsersProfileObject.displayName!,
+                                  otherUserUsername: widget.otherUsersProfileObject.userName!,
+                                  chatRoomPhotoURL: widget.otherUsersProfileObject.photoURL!,
                                 ),
                               ),
                             );
@@ -105,7 +110,7 @@ class _OthersProfilePageState extends State<OthersProfilePage> {
     );
   }
 
-  GestureDetector _buildWebsiteTextRow(UserProfileObject _myUserObject) {
+  GestureDetector _buildWebsiteTextRow(UserFirestore _myUserObject) {
     return GestureDetector(
       onTap: () {
         if (!_myUserObject.website!.isEmpty) {
@@ -123,7 +128,7 @@ class _OthersProfilePageState extends State<OthersProfilePage> {
     );
   }
 
-  Text _buildBioTextRow(UserProfileObject _myUserObject) {
+  Text _buildBioTextRow(UserFirestore _myUserObject) {
     return Text(
       _myUserObject.userBio!.isNotEmpty ? _myUserObject.userBio! : "There was no bio added...",
       style: TextStyle(
@@ -134,7 +139,7 @@ class _OthersProfilePageState extends State<OthersProfilePage> {
     );
   }
 
-  Row _buildLocationTextRow(UserProfileObject _myUserObject) {
+  Row _buildLocationTextRow(UserFirestore _myUserObject) {
     return Row(
       children: [
         Icon(
@@ -155,7 +160,7 @@ class _OthersProfilePageState extends State<OthersProfilePage> {
     );
   }
 
-  Row _buildUserPicNamesRow(UserProfileObject _myUserObject) {
+  Row _buildUserPicNamesRow(UserFirestore _myUserObject) {
     return Row(
       children: [
         ProfileImageBlock(

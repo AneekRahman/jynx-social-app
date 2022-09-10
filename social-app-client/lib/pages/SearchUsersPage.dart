@@ -4,7 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
-import 'package:social_app/models/UserProfileObject.dart';
+import 'package:social_app/models/UserFirestore.dart';
 import 'package:social_app/modules/LoadingBar.dart';
 import 'package:social_app/modules/constants.dart';
 import 'package:social_app/pages/ChatRoomPage.dart';
@@ -19,7 +19,7 @@ class SearchUsersPage extends StatefulWidget {
 class _SearchUsersPageState extends State<SearchUsersPage> {
   final String _initialMsg = "Search for names, usernames";
   String _msg = "Search for names, usernames";
-  List<UserProfileObject> _searchUsersList = [];
+  List<UserFirestore> _searchUsersList = [];
   bool _loading = false;
   User? _currentUser;
 
@@ -29,7 +29,7 @@ class _SearchUsersPageState extends State<SearchUsersPage> {
     setState(() {
       _loading = true;
     });
-    List<UserProfileObject> users = [];
+    List<UserFirestore> users = [];
     // code to convert the first character to uppercase
     List searchKeys = input.toLowerCase().split(" ");
     if (searchKeys.length > 10) searchKeys = searchKeys.sublist(0, 9);
@@ -40,7 +40,7 @@ class _SearchUsersPageState extends State<SearchUsersPage> {
     for (QueryDocumentSnapshot user in result.docs) {
       Map<String, dynamic> data = user.data() as Map<String, dynamic>;
 
-      if (user.id != _currentUser!.uid) users.add(UserProfileObject.fromJson(data, user.id));
+      if (user.id != _currentUser!.uid) users.add(UserFirestore.fromMap(data, user.id));
     }
     // Update the UI
     setState(() {
@@ -218,7 +218,7 @@ class SearchBox extends StatelessWidget {
 }
 
 class SearchUserRow extends StatelessWidget {
-  final UserProfileObject _userObject;
+  final UserFirestore _userObject;
   const SearchUserRow({Key? key, userObject})
       : _userObject = userObject,
         super(key: key);

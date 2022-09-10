@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 
 import 'package:social_app/models/ChatRow.dart';
 import 'package:social_app/models/CustomClaims.dart';
-import 'package:social_app/models/UserProfileObject.dart';
+import 'package:social_app/models/UserFirestore.dart';
 import 'package:social_app/modules/constants.dart';
 import 'package:social_app/services/rtd_service.dart';
 
@@ -61,25 +61,16 @@ class FirestoreService {
         .snapshots();
   }
 
-  Future<ChatRow?> findPrivateChatWithUser(String currentUserUid, String otherUserUid) async {
-    try {
-      QuerySnapshot snapshots = await _firestoreInstance
-          .collection("userChats")
-          .where("memberInfo.$currentUserUid.searchable", isEqualTo: true)
-          .where("memberInfo.$otherUserUid.searchable", isEqualTo: true)
-          .where("type", isEqualTo: "PRIVATE")
-          .get();
-      if (snapshots.docs.length == 0) return null;
-      QueryDocumentSnapshot snapshot = snapshots.docs[0];
-      ChatRow chatrow = makeChatRowFromUserChats(snapshot, currentUserUid, true)!;
-      return chatrow;
-    } catch (e) {
-      throw e;
-    }
+  /// Use the [currentUserUid] and [otherUserUid] to find a commonly shared private message in Firestore
+  Future<QuerySnapshot<Map<String, dynamic>>> findPrivateChatWithUser(String currentUserUid, String otherUserUid) async {
+    return _firestoreInstance
+        .collection("chatRoomRecords")
+        .where("isGroup", isEqualTo: false)
+        .where("members", whereIn: [currentUserUid, otherUserUid]).get();
   }
 
   Future createRequestedUserChats({
-    required UserProfileObject otherUserObject,
+    required UserFirestore otherUserObject,
     required User currentUser,
     required String lastMsg,
   }) async {

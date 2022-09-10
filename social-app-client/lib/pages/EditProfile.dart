@@ -4,7 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:social_app/models/CustomClaims.dart';
-import 'package:social_app/models/UserProfileObject.dart';
+import 'package:social_app/models/UserFirestore.dart';
 import 'package:social_app/modules/constants.dart';
 import 'package:provider/provider.dart';
 import 'package:social_app/modules/flutter_google_places/flutter_google_places.dart';
@@ -17,7 +17,7 @@ import 'package:google_maps_webservice/places.dart';
 import '../services/auth_service.dart';
 
 class EditProfile extends StatelessWidget {
-  UserProfileObject userObject;
+  UserFirestore userObject;
   EditProfile({required this.userObject});
   @override
   Widget build(BuildContext context) {
@@ -41,7 +41,7 @@ class EditProfile extends StatelessWidget {
 }
 
 class EditProfileForm extends StatefulWidget {
-  UserProfileObject userObject;
+  UserFirestore userObject;
   EditProfileForm({required this.userObject});
   @override
   _EditProfileFormState createState() => _EditProfileFormState();
