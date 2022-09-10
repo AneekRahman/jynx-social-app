@@ -27,7 +27,6 @@ class _RTDUsersChatsListState extends State<RTDUsersChatsList> {
   void listPreAddDuplicateRemoval(String chatRoomUid) {
     for (var i = 0; i < _chatRoomsInfosList.length; i++) {
       if (_chatRoomsInfosList[i].chatRoomUid == chatRoomUid) {
-        print("GOT Remove at: " + chatRoomUid);
         _chatRoomsInfosList.removeAt(i);
       }
     }
@@ -36,8 +35,6 @@ class _RTDUsersChatsListState extends State<RTDUsersChatsList> {
   void initUsersChatRoomsStreamListener() {
     widget.stream.listen((DatabaseEvent event) {
       if (event.snapshot.exists) {
-        print("GOT usersChatRooms: " + event.snapshot.value.toString());
-
         final usersChatRoomsList = UsersChatRooms.fromMap(event.snapshot.value as Map);
         getChatRoomsInfosFromUids(usersChatRoomsList);
       } else {
@@ -57,8 +54,6 @@ class _RTDUsersChatsListState extends State<RTDUsersChatsList> {
     });
 
     List<DataSnapshot> chatRoomsInfosList = await Future.wait(_promises);
-
-    print("GOT chatRoomsInfos: " + chatRoomsInfosList.toString());
 
     for (var i = 0; i < chatRoomsInfosList.length; i++) {
       final element = chatRoomsInfosList[i];

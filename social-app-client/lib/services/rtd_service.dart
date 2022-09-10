@@ -32,8 +32,6 @@ class RealtimeDatabaseService {
 
     Map<String, Object?> updates = {};
 
-    print("GOT THIS: " + "usersChatRooms/${currentUser.uid}/chatRooms/$newChatRoomUid");
-
     // First, show this new chatRoom in the users own chatList
     updates["usersChatRooms/${currentUser.uid}/chatRooms/$newChatRoomUid"] = {
       "lTime": lTime,
