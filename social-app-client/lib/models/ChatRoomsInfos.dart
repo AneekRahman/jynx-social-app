@@ -37,6 +37,7 @@ class ChatRoomsInfos {
 }
 
 class ChatRoomsInfosMem {
+  /// [userUid], [name], [uName], [url] will always be present
   late String userUid, name, uName, url;
   ChatRoomsInfosMem({required this.userUid, required this.name, required this.uName, required this.url});
 

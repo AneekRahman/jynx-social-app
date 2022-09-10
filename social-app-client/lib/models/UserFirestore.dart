@@ -1,6 +1,7 @@
 import 'package:social_app/models/ChatRoomsInfos.dart';
 
 class UserFirestore {
+  /// [userUid], [displayName], [userName], [photoURL] will always be present
   late String userUid;
   String? displayName;
   String? userName;

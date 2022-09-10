@@ -34,54 +34,52 @@ class _ChatBottomBarState extends State<ChatBottomBar> {
   bool _alreadySending = false;
 
   Future _createRequestAndSendMsg(context, firstMessage) async {
-    try {
-      final String chatRoomUid = await widget.rootContext
-          .read<FirestoreService>()
-          .createRequestedUserChats(otherUserObject: widget.otherUser, currentUser: widget.currentUser, lastMsg: _textInputValue);
+    // try {
+    //   final String chatRoomUid = await widget.rootContext
+    //       .read<RealtimeDatabaseService>()
+    //       .createNewRequest(currentUser: widget.currentUser, otherUser: widget.otherUser, msg: _textInputValue);
 
-      // Successfully created new requestedUserChat
-      widget.chatRow = ChatRow(chatRoomUid: chatRoomUid, otherUser: widget.otherUser);
-      // Set the newly created chatRoomUid
-      widget.setNewChatRoomUid(chatRoomUid);
-      // Lastly send the message
-      await _sendMessageToChatRoom(context, firstMessage);
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text("Unable to send the message to the user currently"),
-      ));
-      throw e;
-    }
+    //   // Successfully created new requestedUserChat
+    //   widget.chatRow = ChatRow(chatRoomUid: chatRoomUid, otherUser: widget.otherUser);
+    //   // Set the newly created chatRoomUid
+    //   widget.setNewChatRoomUid(chatRoomUid);
+    //   // Lastly send the message
+    //   await _sendMessageToChatRoom(context, firstMessage);
+    // } catch (e) {
+    //   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+    //     content: Text("Unable to send the message to the user currently"),
+    //   ));
+    //   throw e;
+    // }
   }
 
   Future _sendMessageToChatRoom(context, bool firstMessage) async {
-    try {
-      int lastMsgSentTime = new DateTime.now().millisecondsSinceEpoch;
-      // Send a message in the RealtimeDatabase chatRoom
-      await widget.rootContext.read<RealtimeDatabaseService>().sendMessageInRoom(
-            widget.chatRow!.chatRoomUid,
-            {"msg": _textInputValue, "sentTime": lastMsgSentTime, "userUid": widget.currentUser.uid},
-            firstMessage,
-            {widget.chatRow!.otherUser.userUid: true, widget.currentUser.uid: true},
-          );
+    // try {
+    //   int lastMsgSentTime = new DateTime.now().millisecondsSinceEpoch;
+    //   // Send a message in the RealtimeDatabase chatRoom
+    //   await widget.rootContext.read<RealtimeDatabaseService>().sendMessageInRoom(
+    //     widget.chatRow!.chatRoomUid,
+    //     {"msg": _textInputValue, "sentTime": lastMsgSentTime, "userUid": widget.currentUser.uid},
+    //   );
 
-      // Update the userChats document and reset the lastMsgSeen array and sentTime
-      widget.rootContext.read<FirestoreService>().setNewMsgUserChatsSeenReset(
-            widget.chatRow!.chatRoomUid,
-            widget.currentUser.uid,
-            lastMsgSentTime.toString(),
-            _textInputValue,
-          );
+    //   // Update the userChats document and reset the lastMsgSeen array and sentTime
+    //   widget.rootContext.read<FirestoreService>().setNewMsgUserChatsSeenReset(
+    //         widget.chatRow!.chatRoomUid,
+    //         widget.currentUser.uid,
+    //         lastMsgSentTime.toString(),
+    //         _textInputValue,
+    //       );
 
-      // If the chat is still in a requested one
-      if (widget.chatRow!.requestedByOtherUser != null && widget.chatRow!.requestedByOtherUser!) {
-        // Accept the request
-        await widget.rootContext.read<FirestoreService>().acceptChatUserRequest(widget.rootContext.read<RealtimeDatabaseService>(),
-            widget.chatRow!.chatRoomUid, widget.currentUser.uid, widget.chatRow!.otherUser.userUid);
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("There was a network issue while sending the message")));
-      throw e;
-    }
+    //   // If the chat is still in a requested one
+    //   if (widget.chatRow!.requestedByOtherUser != null && widget.chatRow!.requestedByOtherUser!) {
+    //     // Accept the request
+    //     await widget.rootContext.read<FirestoreService>().acceptChatUserRequest(widget.rootContext.read<RealtimeDatabaseService>(),
+    //         widget.chatRow!.chatRoomUid, widget.currentUser.uid, widget.chatRow!.otherUser.userUid);
+    //   }
+    // } catch (e) {
+    //   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("There was a network issue while sending the message")));
+    //   throw e;
+    // }
   }
 
   void _onSendHandler(context) async {

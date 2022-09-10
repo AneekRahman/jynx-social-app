@@ -35,6 +35,8 @@ class _ChatMessageRoomState extends State<ChatMessageRoom> {
   bool noChatRoomFound = false;
   bool isGroupChat = false;
 
+  /// This is called after [chatRoomsInfos] is prepared. If [chatRoomsInfos] is available it will run right
+  /// after the initState. If [chatRoomsInfos] is null, it will run after [getChatRoomInfos] finds a chatRoomsInfos.
   void _initChatRoomWithInfos() {
     if (!widget.chatRoomsInfos!.grp) {
       // This means that this is a private chat, so save the other user as a state
@@ -49,26 +51,32 @@ class _ChatMessageRoomState extends State<ChatMessageRoom> {
     }
   }
 
-  Future getChatRoomInfos() async {
+  /// When a [chatRoomUid] is found from either [findChatRoomsInFirestore] or the [setNewChatRoomUid] callback after creating a
+  /// new request, use this method to fetch the new [ChatRoomsInfos] and set it in [ChatMessageRoom]
+  Future getAndSetChatRoomsInfos(String chatRoomUid) async {
+    final rtdSnapshot = await context.read<RealtimeDatabaseService>().getChatRoomsInfoPromise(chatRoomUid: chatRoomUid);
+
+    if (rtdSnapshot.exists) {
+      widget.chatRoomsInfos = ChatRoomsInfos.fromMap(
+        rtdSnapshot.value as Map,
+        chatRoomUid: rtdSnapshot.key!,
+      );
+      // Finally initialize the chatRoom using the chatRoomsInfos
+      _initChatRoomWithInfos();
+      if (mounted) setState(() {});
+    }
+  }
+
+  /// When the [chatRoomsInfos] is null, use [otherPrivateChatRoomUser] to find the chatRoomsInfos
+  /// from Firestore. If none is found, set [noChatRoomFound] to true
+  Future findChatRoomsInFirestore() async {
     final firestoreChatRecord = await context.read<FirestoreService>().findPrivateChatWithUser(
           widget.currentUser.uid,
           widget.otherPrivateChatRoomUser!.userUid,
         );
 
     if (firestoreChatRecord.docs.isNotEmpty) {
-      final rtdSnapshot =
-          await context.read<RealtimeDatabaseService>().getChatRoomsInfoPromise(chatRoomUid: firestoreChatRecord.docs[0].id);
-
-      print("GOT INFO: " + rtdSnapshot.key!.toString());
-      if (rtdSnapshot.exists) {
-        widget.chatRoomsInfos = ChatRoomsInfos.fromMap(
-          rtdSnapshot.value as Map,
-          chatRoomUid: rtdSnapshot.key!,
-        );
-        // Finally initialize the chatRoom using the chatRoomsInfos
-        _initChatRoomWithInfos();
-        if (mounted) setState(() {});
-      }
+      await getAndSetChatRoomsInfos(firestoreChatRecord.docs[0].id);
     } else {
       if (mounted)
         setState(() {
@@ -80,7 +88,7 @@ class _ChatMessageRoomState extends State<ChatMessageRoom> {
   @override
   void initState() {
     if (widget.chatRoomsInfos == null) {
-      getChatRoomInfos();
+      findChatRoomsInFirestore();
     } else {
       _initChatRoomWithInfos();
     }
@@ -106,6 +114,7 @@ class _ChatMessageRoomState extends State<ChatMessageRoom> {
                 child: widget.chatRoomsInfos != null
                     ? MessagesStreamBuilder(
                         chatRoomUid: widget.chatRoomsInfos!.chatRoomUid,
+                        currentUser: widget.currentUser,
                       )
                     : !noChatRoomFound
                         ? Center(
@@ -115,7 +124,14 @@ class _ChatMessageRoomState extends State<ChatMessageRoom> {
                             child: Text("You haven't texted them yet!"),
                           ),
               ),
-              ChatBottomBar(chatRoomsInfos: widget.chatRoomsInfos),
+              ChatBottomBar(
+                chatRoomsInfos: widget.chatRoomsInfos,
+                otherUser: widget.otherPrivateChatRoomUser!,
+                currentUser: widget.currentUser,
+                setNewChatRoomUid: (newChatRoomUid) {
+                  getAndSetChatRoomsInfos(newChatRoomUid);
+                },
+              ),
             ],
           ),
         ),
@@ -125,7 +141,9 @@ class _ChatMessageRoomState extends State<ChatMessageRoom> {
 }
 
 class ChatTopBar extends StatelessWidget {
-  ChatRoomsInfos? chatRoomsInfos; // Might be null
+  /// [chatRoomsInfos] Might be null, but [otherPrivateChatRoomUser] will always be available. [otherPrivateChatRoomUser] is either
+  /// passed directly from the previous page or derived from [chatRoomsInfos] if [otherPrivateChatRoomUser] is null to begin with.
+  ChatRoomsInfos? chatRoomsInfos;
   final ChatRoomsInfosMem otherPrivateChatRoomUser;
 
   ChatTopBar({
@@ -287,19 +305,19 @@ class ChatTopBar extends StatelessWidget {
 }
 
 class MessagesStreamBuilder extends StatefulWidget {
-  /// [chatRoomUid] is must needed!
+  /// [chatRoomUid] will not be null.
   final String chatRoomUid;
-  const MessagesStreamBuilder({super.key, required this.chatRoomUid});
+  final User currentUser;
+  const MessagesStreamBuilder({super.key, required this.chatRoomUid, required this.currentUser});
 
   @override
   State<MessagesStreamBuilder> createState() => _MessagesStreamBuilderState();
 }
 
 class _MessagesStreamBuilderState extends State<MessagesStreamBuilder> {
-  late User _currentUser;
   List<MsgRow> _msgRows = [];
-  bool _initializingChatRoom = true;
 
+  /// This is called right after the [StreamBuilder] gets some data.
   void _setMsgRowsFromStream(dynamic chatRoomMsgsObject) {
     if (chatRoomMsgsObject != null)
       chatRoomMsgsObject.forEach((key, value) {
@@ -312,6 +330,8 @@ class _MessagesStreamBuilderState extends State<MessagesStreamBuilder> {
     _msgRows.sort((a, b) => b.sentTime!.compareTo(a.sentTime!));
   }
 
+  /// This is caled before [_setMsgRowsFromStream] adds new rows to the [_msgRows] in order to remove duplicate rows
+  /// based on the [msgUid]
   void _removeIfAlreadyAdded(MsgRow msgRow) {
     for (int i = 0; i < _msgRows.length; i++) {
       MsgRow element = _msgRows.elementAt(i);
@@ -320,12 +340,6 @@ class _MessagesStreamBuilderState extends State<MessagesStreamBuilder> {
         _msgRows.removeAt(index);
       }
     }
-  }
-
-  Center _buildLoadingAnim() {
-    return Center(
-      child: SizedBox(child: CircularProgressIndicator(), height: 25, width: 25),
-    );
   }
 
   @override
@@ -359,7 +373,7 @@ class _MessagesStreamBuilderState extends State<MessagesStreamBuilder> {
 
                     return MessageBubble(
                       msgRow: msgRow,
-                      isUsersMsg: msgRow.userUid == _currentUser.uid,
+                      isUsersMsg: msgRow.userUid == widget.currentUser.uid,
                       prevMsgSameUser: prevMsgSameUser,
                       nextMsgSameUser: nextMsgSameUser,
                     );
@@ -370,9 +384,19 @@ class _MessagesStreamBuilderState extends State<MessagesStreamBuilder> {
             ],
           );
         } else if (snapshot.hasError) {
+          /// When an error occurs.
           return Center(child: Text("Error! Go back and reload the page!"));
         } else {
-          return _buildLoadingAnim();
+          /// This is when the stream is still loading and hasn't fetched the data back
+          return Center(
+            child: SizedBox(
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.yellow,
+                ),
+                height: 25,
+                width: 25),
+          );
         }
       },
     );
@@ -380,9 +404,23 @@ class _MessagesStreamBuilderState extends State<MessagesStreamBuilder> {
 }
 
 class ChatBottomBar extends StatefulWidget {
+  /// [chatRoomsInfos] might be null. Which means this is most probably a Private message.
+  ///  In this case we have to create a request if a message is sent.
   ChatRoomsInfos? chatRoomsInfos;
+
+  /// If this is a Private message then [otherUser] will not be null no matter what. But in the case of a Group message,
+  /// [otherUser] will be null. For Group messages, only [chatRoomsInfos] will be needed.
+  late ChatRoomsInfosMem otherUser;
+  late User currentUser;
+
+  /// [setNewChatRoomUid] is the callback after a new Private request is created
+  /// in order to send the new [chatRoomUid] to the [ChatMessageRoom] widget.
+  Function setNewChatRoomUid;
   ChatBottomBar({
     required this.chatRoomsInfos,
+    required this.currentUser,
+    required this.otherUser,
+    required this.setNewChatRoomUid,
   });
 
   @override
@@ -394,7 +432,55 @@ class _ChatBottomBarState extends State<ChatBottomBar> {
   String _textInputValue = "";
   bool _alreadySending = false;
 
-  void _onSendHandler(context) async {}
+  Future createRequestAndSendMsg() async {
+    try {
+      // Create the chatRoom first in the Realtime Database and retrieve a new [chatRoomUid]
+      final String chatRoomUid = await context
+          .read<RealtimeDatabaseService>()
+          .createNewRequest(currentUser: widget.currentUser, otherUser: widget.otherUser, msg: _textInputValue);
+
+      // Next, create a chatRoomRecords in Firestore for searching purposes
+      await context
+          .read<FirestoreService>()
+          .createNewChatRoomRecords(chatRoomUid: chatRoomUid, isGroup: false, members: [widget.currentUser.uid, widget.otherUser.userUid]);
+
+      // Lastly, callback so that [ChatMessageRoom] can fetch the new ChatRoomsInfos from Realtime Database
+      widget.setNewChatRoomUid(chatRoomUid);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text("Unable to send the message to the user currently"),
+      ));
+      throw e;
+    }
+  }
+
+  Future sendMessageToChatRoom() async {
+    try {
+      // Send a message in the RealtimeDatabase chatRoom
+      await context.read<RealtimeDatabaseService>().sendMessageInRoom(
+            chatRoomUid: widget.chatRoomsInfos!.chatRoomUid,
+            msg: _textInputValue,
+            userUid: widget.currentUser.uid,
+          );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("There was a network issue while sending the message")));
+      throw e;
+    }
+  }
+
+  void onSendHandler() async {
+    if (_alreadySending) return;
+    _alreadySending = true;
+
+    if (widget.chatRoomsInfos != null) {
+      /// Send a message to the already assigned [widget.chatRoomsInfos.chatRoomUid]
+      await sendMessageToChatRoom();
+    } else {
+      /// Create a new request and then send the message using [_sendMessageToChatRoom]
+      await createRequestAndSendMsg();
+    }
+    _alreadySending = false;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -451,7 +537,7 @@ class _ChatBottomBarState extends State<ChatBottomBar> {
                     chatMsgTextController.clear();
                     // Don't send any message if _alreadySending or if message is empty
                     if (_textInputValue.isEmpty || _alreadySending) return;
-                    _onSendHandler(context);
+                    onSendHandler();
                   },
                   icon: Image.asset("assets/icons/Send-icon.png", height: 30, width: 30),
                 ),

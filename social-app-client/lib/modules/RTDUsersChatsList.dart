@@ -40,6 +40,11 @@ class _RTDUsersChatsListState extends State<RTDUsersChatsList> {
 
         final usersChatRoomsList = UsersChatRooms.fromMap(event.snapshot.value as Map);
         getChatRoomsInfosFromUids(usersChatRoomsList);
+      } else {
+        // There were no chatRooms found for this user
+        setState(() {
+          if (_loading) _loading = false;
+        });
       }
     });
   }

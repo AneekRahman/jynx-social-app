@@ -104,6 +104,13 @@ class FirestoreService {
     return chatRoomUid;
   }
 
+  Future createNewChatRoomRecords({required String chatRoomUid, required bool isGroup, required List<String> members}) async {
+    await _firestoreInstance.collection("chatRoomRecords").doc(chatRoomUid).set({
+      "isGroup": isGroup,
+      "members": members,
+    });
+  }
+
   Future setNewMsgUserChatsSeenReset(
     String userChatsDocumentUid,
     String currentUserUid,
