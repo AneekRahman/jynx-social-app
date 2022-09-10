@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:social_app/models/ChatRoomsInfos.dart';
 import 'package:social_app/models/UsersChatRooms.dart';
 import 'package:social_app/modules/UsersChatRoomsRow.dart';
+import 'package:social_app/pages/ChatMessageRoom.dart';
 
 import '../pages/ChatRoomPage.dart';
 import '../services/rtd_service.dart';
@@ -96,14 +97,14 @@ class _RTDUsersChatsListState extends State<RTDUsersChatsList> {
 
                       return TextButton(
                           onPressed: () {
-                            // Navigator.push(
-                            //   context,
-                            //   CupertinoPageRoute(
-                            //       builder: (context) => ChatRoomPage(
-                            //             chatRow: chatRow,
-                            //             otherUser: chatRow.otherUser,
-                            //           )),
-                            // );
+                            Navigator.push(
+                              context,
+                              CupertinoPageRoute(
+                                  builder: (context) => ChatMessageRoom(
+                                        chatRoomsInfos: chatRoomsInfos,
+                                        currentUser: widget.currentUser,
+                                      )),
+                            );
                           },
                           child: UsersChatRoomsRow(
                             chatRoomsInfos: chatRoomsInfos,

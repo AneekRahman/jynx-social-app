@@ -14,16 +14,17 @@ import '../modules/constants.dart';
 import 'OthersProfilePage.dart';
 
 class ChatMessageRoom extends StatefulWidget {
-  // if chatRoomsInfos if null, then search for the chatRoomUid in Firestore using the otherUserUid and thisUserUid
+  /// If [chatRoomsInfos] is null, then [otherPrivateChatRoomUser] must be present
+  /// If [otherPrivateChatRoomUser] is null, then [chatRoomsInfos] must be present
   ChatRoomsInfos? chatRoomsInfos;
+  ChatRoomsInfosMem? otherPrivateChatRoomUser;
   final User currentUser;
-  final ChatRoomsInfosMem otherPrivateChatRoomUser;
 
   ChatMessageRoom({
     super.key,
     this.chatRoomsInfos,
     required this.currentUser,
-    required this.otherPrivateChatRoomUser,
+    this.otherPrivateChatRoomUser,
   });
 
   @override
@@ -33,14 +34,13 @@ class ChatMessageRoom extends StatefulWidget {
 class _ChatMessageRoomState extends State<ChatMessageRoom> {
   bool noChatRoomFound = false;
   bool isGroupChat = false;
-  late ChatRoomsInfosMem? otherPrivateChatRoomUser;
 
   void _initChatRoomWithInfos() {
     if (!widget.chatRoomsInfos!.grp) {
       // This means that this is a private chat, so save the other user as a state
       widget.chatRoomsInfos!.mems.forEach((element) {
         if (widget.currentUser.uid != element.userUid) {
-          otherPrivateChatRoomUser = element;
+          widget.otherPrivateChatRoomUser = element;
         }
       });
     } else {
@@ -52,7 +52,7 @@ class _ChatMessageRoomState extends State<ChatMessageRoom> {
   Future getChatRoomInfos() async {
     final firestoreChatRecord = await context.read<FirestoreService>().findPrivateChatWithUser(
           widget.currentUser.uid,
-          widget.otherPrivateChatRoomUser.userUid,
+          widget.otherPrivateChatRoomUser!.userUid,
         );
 
     if (firestoreChatRecord.docs.isNotEmpty) {
@@ -99,7 +99,7 @@ class _ChatMessageRoomState extends State<ChatMessageRoom> {
             children: [
               ChatTopBar(
                 chatRoomsInfos: widget.chatRoomsInfos,
-                otherPrivateChatRoomUser: widget.otherPrivateChatRoomUser,
+                otherPrivateChatRoomUser: widget.otherPrivateChatRoomUser!,
               ),
               // The mesasges list
               Expanded(
@@ -109,10 +109,10 @@ class _ChatMessageRoomState extends State<ChatMessageRoom> {
                       )
                     : !noChatRoomFound
                         ? Center(
-                            child: Text("loading..."),
+                            child: Text("preparing..."),
                           )
                         : Center(
-                            child: Text("You haven't texted this user yet!"),
+                            child: Text("You haven't texted them yet!"),
                           ),
               ),
               ChatBottomBar(chatRoomsInfos: widget.chatRoomsInfos),

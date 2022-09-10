@@ -48,7 +48,7 @@ class _OthersProfilePageState extends State<OthersProfilePage> {
 
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: SizedBox(height: 30, width: 30, child: CircularProgressIndicator(strokeWidth: 2)));
-          } else if (snapshot.hasData) {
+          } else if (snapshot.hasData && snapshot.data!.exists) {
             UserFirestore _myUserObject = UserFirestore.fromMap(snapshot.data!.data() as Map<String, dynamic>, snapshot.data!.id);
 
             return Padding(
