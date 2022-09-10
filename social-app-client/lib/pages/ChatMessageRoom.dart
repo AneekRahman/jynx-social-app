@@ -1,26 +1,29 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 import 'package:provider/provider.dart';
 import 'package:social_app/models/ChatRoomsInfos.dart';
 import 'package:social_app/models/UserFirestore.dart';
 import 'package:social_app/services/firestore_service.dart';
 import 'package:social_app/services/rtd_service.dart';
 
+import '../models/MsgRow.dart';
+import '../modules/MessageBubble.dart';
+import '../modules/constants.dart';
+import 'OthersProfilePage.dart';
+
 class ChatMessageRoom extends StatefulWidget {
   // if chatRoomsInfos if null, then search for the chatRoomUid in Firestore using the otherUserUid and thisUserUid
   ChatRoomsInfos? chatRoomsInfos;
   final User currentUser;
-  final String otherUserUid, otherUserName, otherUserUsername, chatRoomPhotoURL;
+  final ChatRoomsInfosMem otherPrivateChatRoomUser;
 
   ChatMessageRoom({
     super.key,
     this.chatRoomsInfos,
     required this.currentUser,
-    required this.otherUserUid,
-    required this.otherUserName,
-    required this.otherUserUsername,
-    required this.chatRoomPhotoURL,
+    required this.otherPrivateChatRoomUser,
   });
 
   @override
@@ -29,11 +32,27 @@ class ChatMessageRoom extends StatefulWidget {
 
 class _ChatMessageRoomState extends State<ChatMessageRoom> {
   bool noChatRoomFound = false;
+  bool isGroupChat = false;
+  late ChatRoomsInfosMem? otherPrivateChatRoomUser;
+
+  void _initChatRoomWithInfos() {
+    if (!widget.chatRoomsInfos!.grp) {
+      // This means that this is a private chat, so save the other user as a state
+      widget.chatRoomsInfos!.mems.forEach((element) {
+        if (widget.currentUser.uid != element.userUid) {
+          otherPrivateChatRoomUser = element;
+        }
+      });
+    } else {
+      // This means that this is a group chat
+      isGroupChat = true;
+    }
+  }
 
   Future getChatRoomInfos() async {
     final firestoreChatRecord = await context.read<FirestoreService>().findPrivateChatWithUser(
           widget.currentUser.uid,
-          widget.otherUserUid,
+          widget.otherPrivateChatRoomUser.userUid,
         );
 
     if (firestoreChatRecord.docs.isNotEmpty) {
@@ -46,13 +65,15 @@ class _ChatMessageRoomState extends State<ChatMessageRoom> {
           rtdSnapshot.value as Map,
           chatRoomUid: rtdSnapshot.key!,
         );
+        // Finally initialize the chatRoom using the chatRoomsInfos
+        _initChatRoomWithInfos();
         if (mounted) setState(() {});
-      } else {
-        if (mounted)
-          setState(() {
-            noChatRoomFound = true;
-          });
       }
+    } else {
+      if (mounted)
+        setState(() {
+          noChatRoomFound = true;
+        });
     }
   }
 
@@ -60,6 +81,8 @@ class _ChatMessageRoomState extends State<ChatMessageRoom> {
   void initState() {
     if (widget.chatRoomsInfos == null) {
       getChatRoomInfos();
+    } else {
+      _initChatRoomWithInfos();
     }
 
     super.initState();
@@ -74,19 +97,288 @@ class _ChatMessageRoomState extends State<ChatMessageRoom> {
         child: Scaffold(
           body: Column(
             children: [
-              _buildTopBar(),
+              ChatTopBar(
+                chatRoomsInfos: widget.chatRoomsInfos,
+                otherPrivateChatRoomUser: widget.otherPrivateChatRoomUser,
+              ),
+              // The mesasges list
+              Expanded(
+                child: widget.chatRoomsInfos != null
+                    ? MessagesStreamBuilder(
+                        chatRoomUid: widget.chatRoomsInfos!.chatRoomUid,
+                      )
+                    : !noChatRoomFound
+                        ? Center(
+                            child: Text("loading..."),
+                          )
+                        : Center(
+                            child: Text("You haven't texted this user yet!"),
+                          ),
+              ),
             ],
           ),
         ),
       ),
     );
   }
+}
 
-  Container _buildTopBar() {
+class ChatTopBar extends StatelessWidget {
+  ChatRoomsInfos? chatRoomsInfos; // Might be null
+  final ChatRoomsInfosMem otherPrivateChatRoomUser;
+
+  ChatTopBar({
+    super.key,
+    this.chatRoomsInfos,
+    required this.otherPrivateChatRoomUser,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      child: Row(
-        children: [],
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(
+            color: Colors.black.withOpacity(.02),
+            width: 1.0,
+          ),
+        ),
       ),
+      padding: EdgeInsets.fromLTRB(10, 20 + MediaQuery.of(context).padding.top, 20, 10),
+      child: Row(
+        children: <Widget>[
+          IconButton(
+            onPressed: () => Navigator.pop(context),
+            icon: Icon(
+              Icons.arrow_back_ios_new_outlined,
+              size: 18,
+            ),
+          ),
+          _buildOtherUserNamesRow(context),
+          _buildUserPicActionsRow(context, chatRoomsInfos),
+        ],
+      ),
+    );
+  }
+
+  Row _buildUserPicActionsRow(BuildContext context, ChatRoomsInfos? chatRoomsInfos) {
+    return Row(
+      children: [
+        chatRoomsInfos != null
+            ? IconButton(
+                onPressed: () {
+                  // if (chatRow.requestedByThisUser != null && !chatRow.requestedByThisUser! && !chatRow.blockedByThisUser!) {
+                  //   Navigator.push(context, CupertinoPageRoute(builder: (context) => VideoCallPage()));
+                  // } else {
+                  //   ScaffoldMessenger.of(context)
+                  //       .showSnackBar(SnackBar(content: Text("The other user must accept your request before you can start a call!")));
+                  // }
+                },
+                icon: Image.asset("assets/icons/Call-icon.png", height: 24, width: 24),
+              )
+            : SizedBox(),
+        PopupMenuButton(
+          icon: Container(
+            height: 45,
+            width: 45,
+            decoration: BoxDecoration(
+              color: Colors.white10,
+              borderRadius: BorderRadius.circular(10000),
+              border: Border.all(color: Colors.yellow, width: 2),
+            ),
+            child: otherPrivateChatRoomUser.url.isNotEmpty
+                ? ClipRRect(
+                    child: Image.network(
+                      otherPrivateChatRoomUser.url,
+                      height: 45,
+                      width: 45,
+                      fit: BoxFit.cover,
+                    ),
+                    borderRadius: BorderRadius.all(Radius.circular(100)),
+                  )
+                : Container(
+                    height: 45,
+                    width: 45,
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(.07),
+                      borderRadius: BorderRadius.circular(10000),
+                    ),
+                  ),
+          ),
+          padding: EdgeInsets.all(0),
+          onSelected: ((value) {
+            if (value == 1) _showOtherUsersProfileModal(context);
+            if (value == 2) Clipboard.setData(ClipboardData(text: otherPrivateChatRoomUser.uName));
+            // if (value == 3 && _chatRequestActionsGlobalKey.currentState != null)
+            //   _chatRequestActionsGlobalKey.currentState!.blockUnblockUser();
+          }),
+          itemBuilder: (ctx) => chatRoomsInfos != null
+              ? [
+                  _buildPopupMenuItem(context, 'View profile', Icons.person_outline, 1),
+                  _buildPopupMenuItem(context, 'Copy username', Icons.copy, 2),
+                  _buildPopupMenuItem(context, "Block user", Icons.person_off, 3),
+                ]
+              : [],
+        ),
+      ],
+    );
+  }
+
+  PopupMenuItem _buildPopupMenuItem(BuildContext context, String title, IconData iconData, int value) {
+    return PopupMenuItem(
+      value: value,
+      child: Row(
+        children: [
+          Icon(
+            iconData,
+            color: Colors.black,
+          ),
+          SizedBox(width: 10),
+          Text(title),
+        ],
+      ),
+    );
+  }
+
+  void _showOtherUsersProfileModal(BuildContext context) {
+    showMaterialModalBottomSheet(
+      backgroundColor: Colors.transparent,
+      context: context,
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
+        child: OthersProfilePage(
+          otherUsersProfileObject: UserFirestore(
+            userUid: otherPrivateChatRoomUser.userUid,
+            displayName: otherPrivateChatRoomUser.name,
+            userName: otherPrivateChatRoomUser.uName,
+            photoURL: otherPrivateChatRoomUser.url,
+          ),
+          showMessageButton: false,
+        ),
+      ),
+    );
+  }
+
+  Expanded _buildOtherUserNamesRow(BuildContext context) {
+    return Expanded(
+      child: TextButton(
+        style: ButtonStyle(
+          alignment: Alignment.centerLeft,
+          padding: MaterialStatePropertyAll(EdgeInsets.symmetric(horizontal: 10, vertical: 4)),
+        ),
+        onPressed: () {
+          _showOtherUsersProfileModal(context);
+        },
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              otherPrivateChatRoomUser.name,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontFamily: HelveticaFont.Medium, fontSize: 14, color: Colors.black),
+            ),
+            Text(
+              "@" + otherPrivateChatRoomUser.uName,
+              // "Last message " + convertToTimeAgo(new DateTime.fromMillisecondsSinceEpoch(int.parse(chatRow!.lastMsgSentTime!))) + " ago",
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontFamily: HelveticaFont.Roman, fontSize: 12, color: Colors.black38),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class MessagesStreamBuilder extends StatefulWidget {
+  /// [chatRoomUid] is must needed!
+  final String chatRoomUid;
+  const MessagesStreamBuilder({super.key, required this.chatRoomUid});
+
+  @override
+  State<MessagesStreamBuilder> createState() => _MessagesStreamBuilderState();
+}
+
+class _MessagesStreamBuilderState extends State<MessagesStreamBuilder> {
+  late User _currentUser;
+  List<MsgRow> _msgRows = [];
+  bool _initializingChatRoom = true;
+
+  void _setMsgRowsFromStream(dynamic chatRoomMsgsObject) {
+    if (chatRoomMsgsObject != null)
+      chatRoomMsgsObject.forEach((key, value) {
+        MsgRow msgRow = MsgRow.fromJson({...chatRoomMsgsObject[key], 'msgUid': key});
+        _removeIfAlreadyAdded(msgRow);
+        _msgRows.add(msgRow);
+      });
+
+    // Sort the first 10 results on the client side as well
+    _msgRows.sort((a, b) => b.sentTime!.compareTo(a.sentTime!));
+  }
+
+  void _removeIfAlreadyAdded(MsgRow msgRow) {
+    for (int i = 0; i < _msgRows.length; i++) {
+      MsgRow element = _msgRows.elementAt(i);
+      if (element != null && msgRow.msgUid == element.msgUid) {
+        final index = _msgRows.indexOf(element);
+        _msgRows.removeAt(index);
+      }
+    }
+  }
+
+  Center _buildLoadingAnim() {
+    return Center(
+      child: SizedBox(child: CircularProgressIndicator(), height: 25, width: 25),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder(
+      stream: context.watch<RealtimeDatabaseService>().getChatRoomMessagesStream(widget.chatRoomUid),
+      builder: (context, AsyncSnapshot snapshot) {
+        if (snapshot.hasData && !snapshot.hasError) {
+          _setMsgRowsFromStream(snapshot.data!.snapshot.value);
+
+          return CustomScrollView(
+            reverse: true,
+            physics: BouncingScrollPhysics(),
+            slivers: [
+              SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    MsgRow msgRow = _msgRows.elementAt(index);
+                    // REMEBER!! _msgRows is a REVERSED array!!!
+
+                    // Check if previous message was also from the same user
+                    bool nextMsgSameUser = true;
+                    if (index == 0 || _msgRows.elementAt(index - 1).userUid != msgRow.userUid) {
+                      nextMsgSameUser = false;
+                    }
+                    // Check if next post message is also from the same user
+                    bool prevMsgSameUser = true;
+                    if (_msgRows.length - 1 == index || _msgRows.elementAt(index + 1).userUid != msgRow.userUid) {
+                      prevMsgSameUser = false;
+                    }
+
+                    return MessageBubble(
+                      msgRow: msgRow,
+                      isUsersMsg: msgRow.userUid == _currentUser.uid,
+                      prevMsgSameUser: prevMsgSameUser,
+                      nextMsgSameUser: nextMsgSameUser,
+                    );
+                  },
+                  childCount: _msgRows.length,
+                ),
+              ),
+            ],
+          );
+        } else if (snapshot.hasError) {
+          return Center(child: Text("Error! Go back and reload the page!"));
+        } else {
+          return _buildLoadingAnim();
+        }
+      },
     );
   }
 }

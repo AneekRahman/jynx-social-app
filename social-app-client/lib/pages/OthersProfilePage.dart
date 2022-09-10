@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:social_app/models/ChatRoomsInfos.dart';
 import 'package:social_app/models/UserFirestore.dart';
 import 'package:social_app/modules/constants.dart';
 import 'package:social_app/pages/ChatMessageRoom.dart';
@@ -83,10 +84,12 @@ class _OthersProfilePageState extends State<OthersProfilePage> {
                               CupertinoPageRoute(
                                 builder: (context) => ChatMessageRoom(
                                   currentUser: _currentUser!,
-                                  otherUserUid: widget.otherUsersProfileObject.userUid,
-                                  otherUserName: widget.otherUsersProfileObject.displayName!,
-                                  otherUserUsername: widget.otherUsersProfileObject.userName!,
-                                  chatRoomPhotoURL: widget.otherUsersProfileObject.photoURL!,
+                                  otherPrivateChatRoomUser: ChatRoomsInfosMem(
+                                    userUid: widget.otherUsersProfileObject.userUid,
+                                    name: widget.otherUsersProfileObject.displayName!,
+                                    uName: widget.otherUsersProfileObject.userName!,
+                                    url: widget.otherUsersProfileObject.photoURL!,
+                                  ),
                                 ),
                               ),
                             );

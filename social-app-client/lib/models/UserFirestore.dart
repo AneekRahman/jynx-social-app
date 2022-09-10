@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 class UserFirestore {
   late String userUid;
   String? displayName;
@@ -24,13 +22,13 @@ class UserFirestore {
   });
 
   UserFirestore.fromMap(Map map, String uid) {
-    userUid = uid;
-    displayName = map['displayName'];
-    userName = map['userName'];
-    userNameLowerCase = map['userNameLowerCase'];
-    photoURL = map['photoURL'];
-    userBio = map['userBio'];
-    location = map['location'];
-    website = map['website'];
+    this.userUid = uid;
+    this.displayName = map['displayName'];
+    this.userName = map['userName'];
+    this.userNameLowerCase = map['userNameLowerCase'];
+    this.photoURL = map['photoURL'];
+    this.userBio = map['userBio'];
+    this.location = map['location'];
+    this.website = map['website'];
   }
 }
