@@ -65,8 +65,26 @@ class FirestoreService {
   Future<QuerySnapshot<Map<String, dynamic>>> findPrivateChatWithUser(String currentUserUid, String otherUserUid) async {
     return _firestoreInstance
         .collection("chatRoomRecords")
+        .where("members.$currentUserUid", isEqualTo: true)
+        .where("members.$otherUserUid", isEqualTo: true)
         .where("isGroup", isEqualTo: false)
-        .where("members", whereIn: [currentUserUid, otherUserUid]).get();
+        .get();
+  }
+
+  /// Create a chatRoomRecord so that the Private [chatRoomUid] for 2 users can be found after querying
+  Future createNewChatRoomRecords({
+    required String chatRoomUid,
+    required bool isGroup,
+    required String currentUserUid,
+    required String otherUserUid,
+  }) async {
+    await _firestoreInstance.collection("chatRoomRecords").doc(chatRoomUid).set({
+      "isGroup": isGroup,
+      "members": {
+        currentUserUid: true, // True means this user is not blocked by the other user
+        otherUserUid: true, // False means this user is blocked by the other user
+      },
+    });
   }
 
   Future createRequestedUserChats({
@@ -102,13 +120,6 @@ class FirestoreService {
       },
     });
     return chatRoomUid;
-  }
-
-  Future createNewChatRoomRecords({required String chatRoomUid, required bool isGroup, required List<String> members}) async {
-    await _firestoreInstance.collection("chatRoomRecords").doc(chatRoomUid).set({
-      "isGroup": isGroup,
-      "members": members,
-    });
   }
 
   Future setNewMsgUserChatsSeenReset(

@@ -76,6 +76,7 @@ class _ChatMessageRoomState extends State<ChatMessageRoom> {
         );
 
     if (firestoreChatRecord.docs.isNotEmpty) {
+      print("GOT: findChatRoomsInFirestore: " + firestoreChatRecord.docs[0].id);
       await getAndSetChatRoomsInfos(firestoreChatRecord.docs[0].id);
     } else {
       if (mounted)
@@ -440,9 +441,12 @@ class _ChatBottomBarState extends State<ChatBottomBar> {
           .createNewRequest(currentUser: widget.currentUser, otherUser: widget.otherUser, msg: _textInputValue);
 
       // Next, create a chatRoomRecords in Firestore for searching purposes
-      await context
-          .read<FirestoreService>()
-          .createNewChatRoomRecords(chatRoomUid: chatRoomUid, isGroup: false, members: [widget.currentUser.uid, widget.otherUser.userUid]);
+      await context.read<FirestoreService>().createNewChatRoomRecords(
+            chatRoomUid: chatRoomUid,
+            isGroup: false,
+            currentUserUid: widget.currentUser.uid,
+            otherUserUid: widget.otherUser.userUid,
+          );
 
       // Lastly, callback so that [ChatMessageRoom] can fetch the new ChatRoomsInfos from Realtime Database
       widget.setNewChatRoomUid(chatRoomUid);
