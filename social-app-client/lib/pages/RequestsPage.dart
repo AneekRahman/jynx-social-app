@@ -6,6 +6,9 @@ import 'package:social_app/modules/constants.dart';
 import 'package:provider/provider.dart';
 import 'package:social_app/services/firestore_service.dart';
 
+import '../modules/RTDUsersChatsList.dart';
+import '../services/rtd_service.dart';
+
 class RequestsPage extends StatefulWidget {
   @override
   _RequestsPageState createState() => _RequestsPageState();
@@ -29,12 +32,15 @@ class _RequestsPageState extends State<RequestsPage> {
         body: Column(
           children: [
             HomeAppBar(),
-            Expanded(
-              child: ChatsList(
-                currentUser: _currentUser!,
-                stream: context.watch<FirestoreService>().getUserChatsRequestedStream(_currentUser!.uid, false),
-              ),
+            RTDUsersChatsList(
+              stream: context.read<RealtimeDatabaseService>().getUsersChatsStream(userUid: _currentUser!.uid),
             ),
+            // Expanded(
+            //   child: ChatsList(
+            //     currentUser: _currentUser!,
+            //     stream: context.watch<FirestoreService>().getUserChatsRequestedStream(_currentUser!.uid, false),
+            //   ),
+            // ),
           ],
         ),
       ),

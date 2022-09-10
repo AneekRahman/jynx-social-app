@@ -13,8 +13,8 @@ import 'package:social_app/pages/ChatRoomPage.dart';
 import '../services/firestore_service.dart';
 import 'ChatListRow.dart';
 
-class ChatsList extends StatefulWidget {
-  ChatsList({
+class OldChatsList extends StatefulWidget {
+  OldChatsList({
     Key? key,
     required this.currentUser,
     required this.stream,
@@ -25,10 +25,10 @@ class ChatsList extends StatefulWidget {
   final Stream<QuerySnapshot> stream;
 
   @override
-  State<ChatsList> createState() => _ChatsListState();
+  State<OldChatsList> createState() => _OldChatsListState();
 }
 
-class _ChatsListState extends State<ChatsList> {
+class _OldChatsListState extends State<OldChatsList> {
   List<ChatRow> chatRows = [];
   bool loadingChats = true;
   bool _reachedEndOfResults = false;

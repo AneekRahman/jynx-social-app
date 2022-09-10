@@ -6,9 +6,12 @@ class RealtimeDatabaseService {
 
   const RealtimeDatabaseService(this._firebaseDatabase);
 
-  Future<DataSnapshot> queryTest() async {
-    // return await _firebaseDatabase.ref("usersChatRooms").child('---userUid').child("chatRooms").orderByChild("lTime").equalTo(10).get();
-    return await _firebaseDatabase.ref("usersChatRooms").child('---userUid').child("chatRooms").orderByChild("lTime").limitToLast(2).get();
+  Stream<DatabaseEvent> getUsersChatsStream({required userUid}) {
+    return _firebaseDatabase.ref("usersChatRooms").child(userUid).child("chatRooms").orderByChild("lTime").limitToLast(2).onValue;
+  }
+
+  Future<DataSnapshot> getChatRoomsInfoPromise({required chatRoomUid}) {
+    return _firebaseDatabase.ref("chatRoomsInfos").child(chatRoomUid).get();
   }
 
   Stream getChatRoomMessagesStream(String chatRoomUid) {
