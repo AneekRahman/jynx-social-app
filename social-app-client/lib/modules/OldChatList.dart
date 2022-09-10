@@ -11,7 +11,7 @@ import 'package:social_app/modules/constants.dart';
 import 'package:social_app/pages/ChatRoomPage.dart';
 
 import '../services/firestore_service.dart';
-import 'ChatListRow.dart';
+import 'UsersChatRoomsRow.dart';
 
 class OldChatsList extends StatefulWidget {
   OldChatsList({
@@ -152,7 +152,8 @@ class _OldChatsListState extends State<OldChatsList> {
                                                 )),
                                       );
                                     },
-                                    child: ChatsListRow(chatRow: chatRow));
+                                    child: Container());
+                                // child: ChatsListRow(chatRow: chatRow));
                               },
                               childCount: chatRows.length,
                             ),

@@ -3,15 +3,12 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
-import 'package:social_app/modules/ChatList.dart';
 import 'package:social_app/modules/RTDUsersChatsList.dart';
 import 'package:social_app/modules/constants.dart';
 import 'package:social_app/pages/MyProfilePage.dart';
 import 'package:social_app/pages/RequestsPage.dart';
 import 'package:social_app/pages/SearchUsersPage.dart';
-import 'package:social_app/services/auth_service.dart';
 import 'package:provider/provider.dart';
-import 'package:social_app/services/firestore_service.dart';
 
 import '../services/rtd_service.dart';
 
@@ -44,6 +41,7 @@ class _HomePageState extends State<HomePage> {
             HomeAppBar(),
             RTDUsersChatsList(
               stream: context.read<RealtimeDatabaseService>().getUsersChatsStream(userUid: _currentUser!.uid),
+              currentUser: _currentUser!,
             ),
           ],
         ),

@@ -1,16 +1,20 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:social_app/models/ChatRoomsInfos.dart';
 import 'package:social_app/models/UsersChatRooms.dart';
+import 'package:social_app/modules/UsersChatRoomsRow.dart';
 
+import '../pages/ChatRoomPage.dart';
 import '../services/rtd_service.dart';
 import 'LoadingBar.dart';
 
 class RTDUsersChatsList extends StatefulWidget {
   final Stream<DatabaseEvent> stream;
-  RTDUsersChatsList({required this.stream});
+  final User currentUser;
+  RTDUsersChatsList({required this.stream, required this.currentUser});
   @override
   State<RTDUsersChatsList> createState() => _RTDUsersChatsListState();
 }
@@ -49,12 +53,17 @@ class _RTDUsersChatsListState extends State<RTDUsersChatsList> {
 
     print("GOT chatRoomsInfos: " + chatRoomsInfosList.toString());
 
-    chatRoomsInfosList.forEach((DataSnapshot element) {
+    for (var i = 0; i < chatRoomsInfosList.length; i++) {
+      final element = chatRoomsInfosList[i];
       if (element.exists) {
         listPreAddDuplicateRemoval(element.key!);
-        _chatRoomsInfosList.add(ChatRoomsInfos.fromMap(element.value as Map, chatRoomUid: element.key!));
+        _chatRoomsInfosList.add(ChatRoomsInfos.fromMap(
+          element.value as Map,
+          chatRoomUid: element.key!,
+          seenByThisUser: usersChatRoomList.usersChatRooms[i].seen,
+        ));
       }
-    });
+    }
     setState(() {});
   }
 
@@ -82,18 +91,21 @@ class _RTDUsersChatsListState extends State<RTDUsersChatsList> {
                     (context, index) {
                       ChatRoomsInfos chatRoomsInfos = _chatRoomsInfosList[index];
 
-                      return Container(
-                        padding: EdgeInsets.all(20),
-                        color: Colors.amber,
-                        child: Column(
-                          children: [
-                            Text("Got something!"),
-                            Text(chatRoomsInfos.lMsg),
-                            Text(chatRoomsInfos.chatRoomUid),
-                            Text(chatRoomsInfos.lTime.toString()),
-                          ],
-                        ),
-                      );
+                      return TextButton(
+                          onPressed: () {
+                            // Navigator.push(
+                            //   context,
+                            //   CupertinoPageRoute(
+                            //       builder: (context) => ChatRoomPage(
+                            //             chatRow: chatRow,
+                            //             otherUser: chatRow.otherUser,
+                            //           )),
+                            // );
+                          },
+                          child: UsersChatRoomsRow(
+                            chatRoomsInfos: chatRoomsInfos,
+                            currentUser: widget.currentUser,
+                          ));
                     },
                     childCount: _chatRoomsInfosList.length,
                   ),

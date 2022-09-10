@@ -1,13 +1,23 @@
 class ChatRoomsInfos {
   late String chatRoomUid, lMsg;
+  String? groupChatImageURL;
   late bool grp;
-  late int lTime;
+  late int lTime, seenByThisUser;
   late List<ChatRoomsInfosMem> mems = [];
 
-  ChatRoomsInfos({required this.chatRoomUid, required this.lMsg, required this.lTime, required this.grp, required this.mems});
+  ChatRoomsInfos({
+    required this.chatRoomUid,
+    required this.lMsg,
+    this.groupChatImageURL,
+    required this.lTime,
+    required this.grp,
+    required this.seenByThisUser,
+    required this.mems,
+  });
 
-  ChatRoomsInfos.fromMap(Map map, {required this.chatRoomUid}) {
+  ChatRoomsInfos.fromMap(Map map, {required this.chatRoomUid, required this.seenByThisUser}) {
     this.lMsg = map["lMsg"];
+    this.groupChatImageURL = map["groupChatImageURL"];
     this.lTime = map["lTime"];
     this.grp = map["grp"];
 
