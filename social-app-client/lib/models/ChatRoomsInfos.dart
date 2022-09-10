@@ -1,3 +1,5 @@
+import 'package:social_app/models/UserFirestore.dart';
+
 class ChatRoomsInfos {
   late String chatRoomUid, lMsg;
   String? groupChatImageURL = "";
@@ -37,4 +39,11 @@ class ChatRoomsInfos {
 class ChatRoomsInfosMem {
   late String userUid, name, uName, url;
   ChatRoomsInfosMem({required this.userUid, required this.name, required this.uName, required this.url});
+
+  ChatRoomsInfosMem.fromUserFirestore(UserFirestore userFirestore) {
+    this.userUid = userFirestore.userUid;
+    this.name = userFirestore.displayName!;
+    this.uName = userFirestore.userName!;
+    this.url = userFirestore.photoURL!;
+  }
 }

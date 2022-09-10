@@ -84,12 +84,7 @@ class _OthersProfilePageState extends State<OthersProfilePage> {
                               CupertinoPageRoute(
                                 builder: (context) => ChatMessageRoom(
                                   currentUser: _currentUser!,
-                                  otherPrivateChatRoomUser: ChatRoomsInfosMem(
-                                    userUid: widget.otherUsersProfileObject.userUid,
-                                    name: widget.otherUsersProfileObject.displayName!,
-                                    uName: widget.otherUsersProfileObject.userName!,
-                                    url: widget.otherUsersProfileObject.photoURL!,
-                                  ),
+                                  otherPrivateChatRoomUser: ChatRoomsInfosMem.fromUserFirestore(widget.otherUsersProfileObject),
                                 ),
                               ),
                             );

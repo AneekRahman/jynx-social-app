@@ -1,3 +1,5 @@
+import 'package:social_app/models/ChatRoomsInfos.dart';
+
 class UserFirestore {
   late String userUid;
   String? displayName;
@@ -30,5 +32,12 @@ class UserFirestore {
     this.userBio = map['userBio'];
     this.location = map['location'];
     this.website = map['website'];
+  }
+
+  UserFirestore.fromChatRoomsInfosMem(ChatRoomsInfosMem chatRoomsInfosMem) {
+    this.userUid = chatRoomsInfosMem.userUid;
+    this.displayName = chatRoomsInfosMem.name;
+    this.userName = chatRoomsInfosMem.uName;
+    this.photoURL = chatRoomsInfosMem.url;
   }
 }

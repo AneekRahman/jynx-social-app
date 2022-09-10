@@ -115,6 +115,7 @@ class _ChatMessageRoomState extends State<ChatMessageRoom> {
                             child: Text("You haven't texted this user yet!"),
                           ),
               ),
+              ChatBottomBar(chatRoomsInfos: widget.chatRoomsInfos),
             ],
           ),
         ),
@@ -247,12 +248,7 @@ class ChatTopBar extends StatelessWidget {
       builder: (context) => Padding(
         padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
         child: OthersProfilePage(
-          otherUsersProfileObject: UserFirestore(
-            userUid: otherPrivateChatRoomUser.userUid,
-            displayName: otherPrivateChatRoomUser.name,
-            userName: otherPrivateChatRoomUser.uName,
-            photoURL: otherPrivateChatRoomUser.url,
-          ),
+          otherUsersProfileObject: UserFirestore.fromChatRoomsInfosMem(otherPrivateChatRoomUser),
           showMessageButton: false,
         ),
       ),
@@ -379,6 +375,92 @@ class _MessagesStreamBuilderState extends State<MessagesStreamBuilder> {
           return _buildLoadingAnim();
         }
       },
+    );
+  }
+}
+
+class ChatBottomBar extends StatefulWidget {
+  ChatRoomsInfos? chatRoomsInfos;
+  ChatBottomBar({
+    required this.chatRoomsInfos,
+  });
+
+  @override
+  State<ChatBottomBar> createState() => _ChatBottomBarState();
+}
+
+class _ChatBottomBarState extends State<ChatBottomBar> {
+  final chatMsgTextController = TextEditingController();
+  String _textInputValue = "";
+  bool _alreadySending = false;
+
+  void _onSendHandler(context) async {}
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        SizedBox(width: 10),
+        Container(
+          margin: EdgeInsets.only(bottom: 14),
+          child: IconButton(
+            onPressed: () {},
+            icon: Image.asset("assets/icons/Camera-icon.png", height: 30, width: 30),
+          ),
+        ),
+        Container(
+          width: MediaQuery.of(context).size.width - 60,
+          padding: EdgeInsets.symmetric(vertical: 14, horizontal: 10),
+          child: Material(
+            borderRadius: BorderRadius.circular(26),
+            color: Color(0xFFF1F1F1F1),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Flexible(
+                  child: Container(
+                    margin: EdgeInsets.only(bottom: 2),
+                    child: TextField(
+                      maxLines: 5,
+                      minLines: 1,
+                      textCapitalization: TextCapitalization.sentences,
+                      style: TextStyle(fontFamily: HelveticaFont.Roman),
+                      maxLength: 200,
+                      controller: chatMsgTextController,
+                      decoration: InputDecoration(
+                        counterText: "",
+                        contentPadding: EdgeInsets.symmetric(vertical: 14.0, horizontal: 20.0),
+                        hintText: 'Type your message here...',
+                        hintStyle: TextStyle(fontFamily: HelveticaFont.Roman, fontSize: 14),
+                        border: InputBorder.none,
+                      ),
+                      onChanged: ((value) {
+                        setState(() {
+                          _textInputValue = value;
+                        });
+                      }),
+                    ),
+                  ),
+                ),
+                IconButton(
+                  onPressed: () async {
+                    // Save the input value
+                    _textInputValue = chatMsgTextController.text;
+                    // Reset the text input field
+                    chatMsgTextController.clear();
+                    // Don't send any message if _alreadySending or if message is empty
+                    if (_textInputValue.isEmpty || _alreadySending) return;
+                    _onSendHandler(context);
+                  },
+                  icon: Image.asset("assets/icons/Send-icon.png", height: 30, width: 30),
+                ),
+                SizedBox(width: 10),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
