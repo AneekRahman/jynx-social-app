@@ -12,7 +12,7 @@ class RealtimeDatabaseService {
   const RealtimeDatabaseService(this._firebaseDatabase);
 
   Stream<DatabaseEvent> getUsersChatsStream({required userUid}) {
-    return _firebaseDatabase.ref("usersChatRooms").child(userUid).child("chatRooms").orderByChild("lTime").limitToLast(2).onValue;
+    return _firebaseDatabase.ref("usersChatRooms").child(userUid).child("chatRooms").orderByChild("lTime").limitToLast(10).onValue;
   }
 
   Future<DataSnapshot> getChatRoomsInfoPromise({required chatRoomUid}) {
