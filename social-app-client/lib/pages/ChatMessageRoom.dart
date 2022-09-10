@@ -479,9 +479,11 @@ class _ChatBottomBarState extends State<ChatBottomBar> {
     if (widget.chatRoomsInfos != null) {
       /// Send a message to the already assigned [widget.chatRoomsInfos.chatRoomUid]
       await sendMessageToChatRoom();
+      print("GOT: sendMessageToChatRoom");
     } else {
       /// Create a new request and then send the message using [_sendMessageToChatRoom]
       await createRequestAndSendMsg();
+      print("GOT: createRequestAndSendMsg");
     }
     _alreadySending = false;
   }

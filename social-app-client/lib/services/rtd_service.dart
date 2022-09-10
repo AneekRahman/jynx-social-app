@@ -95,6 +95,12 @@ class RealtimeDatabaseService {
     String? newMsgUid = FirebaseDatabase.instance.ref().child("chatRooms").push().key;
     Map<String, Object?> updates = {};
 
+    // First, show this new chatRoom in the users own chatList
+    updates["usersChatRooms/$userUid/chatRooms/$chatRoomUid"] = {
+      "lTime": lTime,
+      "seen": 1,
+    };
+
     // Update the [lMsg] and [lTime] in the /chatRoomsInfos/ and let the trigger update the /userChatRooms/ or /requestedUsersChatRooms/
     updates["chatRoomsInfos/$chatRoomUid/lMsg"] = msg;
     updates["chatRoomsInfos/$chatRoomUid/lTime"] = lTime;
