@@ -63,7 +63,15 @@ class _RTDUsersChatsListState extends State<RTDUsersChatsList> {
     List<DataSnapshot> newChatRoomsInfosList = await Future.wait(chatRoomsInfosPromises);
 
     /// Delete the newest few entries from [_chatRoomsInfosList] sinces [usersChatRoomList] returned the newest 10 entries
-    if (_chatRoomsInfosList.isNotEmpty) _chatRoomsInfosList.removeRange(0, newChatRoomsInfosList.length);
+    if (_chatRoomsInfosList.isNotEmpty) {
+      if (_chatRoomsInfosList.length < 10) {
+        /// [_chatRoomsInfosList] has less than 10 entries
+        _chatRoomsInfosList.removeRange(0, _chatRoomsInfosList.length);
+      } else {
+        /// [_chatRoomsInfosList] has 10 or more entries
+        _chatRoomsInfosList.removeRange(0, newChatRoomsInfosList.length);
+      }
+    }
 
     /// Add the newest version of the entry and Also map [seenByThisUser]
     for (var i = 0; i < newChatRoomsInfosList.length; i++) {
