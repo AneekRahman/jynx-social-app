@@ -117,8 +117,7 @@ class _RTDUsersChatsListState extends State<RTDUsersChatsList> {
             loading: _loading,
           ),
           Expanded(
-            child: _chatRoomsInfosList.length != 0 && !_loading
-                // _chatRoomsInfosList.length == 0 && !_loading
+            child: _chatRoomsInfosList.length == 0 && !_loading
                 ? _buildNoChatsFoundMsg()
                 : CustomScrollView(
                     physics: BouncingScrollPhysics(),
