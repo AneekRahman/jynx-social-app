@@ -34,13 +34,8 @@ class _RequestsPageState extends State<RequestsPage> {
             RTDUsersChatsList(
               stream: context.read<RealtimeDatabaseService>().getUsersRequestedChatsStream(userUid: _currentUser!.uid),
               currentUser: _currentUser!,
+              fromRequestList: true,
             ),
-            // Expanded(
-            //   child: ChatsList(
-            //     currentUser: _currentUser!,
-            //     stream: context.watch<FirestoreService>().getUserChatsRequestedStream(_currentUser!.uid, false),
-            //   ),
-            // ),
           ],
         ),
       ),

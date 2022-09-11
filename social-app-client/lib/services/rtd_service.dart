@@ -115,6 +115,10 @@ class RealtimeDatabaseService {
     await _firebaseDatabase.ref().update(updates);
   }
 
+  Future deleteRequestedUsersChatRooms({required String chatRoomUid, required String userUid}) async {
+    await _firebaseDatabase.ref("requestedUsersChatRooms/$userUid/chatRooms/$chatRoomUid").remove();
+  }
+
   Future blockInRTDatabase(String chatRoomUid, String blockedUserUid) async {
     final Map<String, dynamic> updates = {};
     updates['/chatRooms/$chatRoomUid/members/$blockedUserUid'] = false;

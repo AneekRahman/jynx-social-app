@@ -30,7 +30,7 @@ class ChatRoomsInfos {
             userUid: userUid,
             name: memsUserInfo["name"],
             uName: memsUserInfo["uName"],
-            url: memsUserInfo["url"],
+            url: memsUserInfo["url"] ?? "",
           ));
     });
   }

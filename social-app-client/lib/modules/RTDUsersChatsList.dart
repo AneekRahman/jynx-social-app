@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/cupertino.dart';
@@ -15,17 +17,19 @@ import 'LoadingBar.dart';
 class RTDUsersChatsList extends StatefulWidget {
   final Stream<DatabaseEvent> stream;
   final User currentUser;
-  RTDUsersChatsList({required this.stream, required this.currentUser});
+  final bool fromRequestList;
+  RTDUsersChatsList({required this.stream, required this.currentUser, required this.fromRequestList});
   @override
   State<RTDUsersChatsList> createState() => _RTDUsersChatsListState();
 }
 
 class _RTDUsersChatsListState extends State<RTDUsersChatsList> {
+  late StreamSubscription<DatabaseEvent> _streamSubscription;
   List<ChatRoomsInfos> _chatRoomsInfosList = [];
   bool _loading = true;
 
   void initUsersChatRoomsStreamListener() {
-    widget.stream.listen((DatabaseEvent event) {
+    _streamSubscription = widget.stream.listen((DatabaseEvent event) {
       if (event.snapshot.exists) {
         final usersChatRoomsList = UsersChatRooms.fromMap(event.snapshot.value as Map);
         getChatRoomsInfosFromUids(usersChatRoomsList);
@@ -91,6 +95,12 @@ class _RTDUsersChatsListState extends State<RTDUsersChatsList> {
   }
 
   @override
+  void dispose() {
+    _streamSubscription.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Expanded(
       child: Column(
@@ -113,6 +123,7 @@ class _RTDUsersChatsListState extends State<RTDUsersChatsList> {
                               context,
                               CupertinoPageRoute(
                                   builder: (context) => ChatMessageRoom(
+                                        fromRequestList: widget.fromRequestList,
                                         chatRoomsInfos: chatRoomsInfos,
                                         currentUser: widget.currentUser,
                                       )),

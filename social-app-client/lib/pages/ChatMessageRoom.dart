@@ -19,10 +19,12 @@ class ChatMessageRoom extends StatefulWidget {
   ChatRoomsInfos? chatRoomsInfos;
   UserFirestore? otherUser;
   final User currentUser;
+  final bool fromRequestList;
 
   ChatMessageRoom({
     super.key,
     required this.currentUser,
+    required this.fromRequestList,
     this.chatRoomsInfos,
     this.otherUser,
   });
@@ -136,9 +138,10 @@ class _ChatMessageRoomState extends State<ChatMessageRoom> {
                           ),
               ),
               ChatBottomBar(
+                currentUser: widget.currentUser,
+                fromRequestList: widget.fromRequestList,
                 chatRoomsInfos: widget.chatRoomsInfos,
                 otherUser: otherPrivateChatRoomUser!,
-                currentUser: widget.currentUser,
                 setNewChatRoomUid: (newChatRoomUid) {
                   getAndSetChatRoomsInfos(newChatRoomUid);
                 },
@@ -421,16 +424,18 @@ class ChatBottomBar extends StatefulWidget {
 
   /// If this is a Private message then [otherUser] will not be null no matter what. But in the case of a Group message,
   /// [otherUser] will be null. For Group messages, only [chatRoomsInfos] will be needed.
-  late ChatRoomsInfosMem otherUser;
-  late User currentUser;
+  final ChatRoomsInfosMem otherUser;
+  final User currentUser;
+  bool fromRequestList;
 
   /// [setNewChatRoomUid] is the callback after a new Private request is created
   /// in order to send the new [chatRoomUid] to the [ChatMessageRoom] widget.
   Function setNewChatRoomUid;
   ChatBottomBar({
     required this.chatRoomsInfos,
-    required this.currentUser,
     required this.otherUser,
+    required this.currentUser,
+    required this.fromRequestList,
     required this.setNewChatRoomUid,
   });
 
@@ -443,7 +448,7 @@ class _ChatBottomBarState extends State<ChatBottomBar> {
   String _textInputValue = "";
   bool _alreadySending = false;
 
-  Future createRequestAndSendMsg() async {
+  Future createNewChatRoomAndSendMsg() async {
     try {
       // Create the chatRoom first in the Realtime Database and retrieve a new [chatRoomUid]
       final String chatRoomUid = await context
@@ -476,12 +481,26 @@ class _ChatBottomBarState extends State<ChatBottomBar> {
             msg: _textInputValue,
             userUid: widget.currentUser.uid,
           );
+
+      // If this is [widget.fromRequestList] then DELETE this chatRoom entry from /requestedUsersChatRooms/
+      if (widget.fromRequestList) {
+        await context.read<RealtimeDatabaseService>().deleteRequestedUsersChatRooms(
+              chatRoomUid: widget.chatRoomsInfos!.chatRoomUid,
+              userUid: widget.currentUser.uid,
+            );
+        // Update the UI and stop showing the [_buildRequestedNotice]
+        setState(() {
+          widget.fromRequestList = false;
+        });
+      }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("There was a network issue while sending the message")));
       throw e;
     }
   }
 
+  /// If [widget.chatRoomsInfos] is null then call [createNewChatRoomAndSendMsg] to create a new /chatRooms/, /chatRoomsInfos/, /usersChatRooms/
+  /// If [widget.chatRoomsInfos] is not null, send a message in the /chatRooms/ and update lMsg and lTime in /chatRoomsInfos/, /usersChatRooms/
   void onSendHandler() async {
     if (_alreadySending) return;
     _alreadySending = true;
@@ -490,76 +509,99 @@ class _ChatBottomBarState extends State<ChatBottomBar> {
       /// Send a message to the already assigned [widget.chatRoomsInfos.chatRoomUid]
       await sendMessageToChatRoom();
     } else {
-      /// Create a new request and then send the message using [_sendMessageToChatRoom]
-      await createRequestAndSendMsg();
+      /// Create a new request and then send the message using [createNewChatRoomAndSendMsg]
+      await createNewChatRoomAndSendMsg();
     }
     _alreadySending = false;
   }
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
+    return Column(
       children: [
-        SizedBox(width: 10),
-        Container(
-          margin: EdgeInsets.only(bottom: 14),
-          child: IconButton(
-            onPressed: () {},
-            icon: Image.asset("assets/icons/Camera-icon.png", height: 30, width: 30),
-          ),
-        ),
-        Container(
-          width: MediaQuery.of(context).size.width - 60,
-          padding: EdgeInsets.symmetric(vertical: 14, horizontal: 10),
-          child: Material(
-            borderRadius: BorderRadius.circular(26),
-            color: Color(0xFFF1F1F1F1),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Flexible(
-                  child: Container(
-                    child: TextField(
-                      maxLines: 5,
-                      minLines: 1,
-                      textCapitalization: TextCapitalization.sentences,
-                      style: TextStyle(fontFamily: HelveticaFont.Medium),
-                      maxLength: 200,
-                      controller: chatMsgTextController,
-                      decoration: InputDecoration(
-                        counterText: "",
-                        contentPadding: EdgeInsets.symmetric(vertical: 14.0, horizontal: 20.0),
-                        hintText: 'Say hi...',
-                        hintStyle: TextStyle(fontFamily: HelveticaFont.Medium, fontSize: 14),
-                        border: InputBorder.none,
-                      ),
-                      onChanged: ((value) {
-                        setState(() {
-                          _textInputValue = value;
-                        });
-                      }),
-                    ),
-                  ),
-                ),
-                IconButton(
-                  onPressed: () async {
-                    // Save the input value
-                    _textInputValue = chatMsgTextController.text;
-                    // Reset the text input field
-                    chatMsgTextController.clear();
-                    // Don't send any message if _alreadySending or if message is empty
-                    if (_textInputValue.isEmpty || _alreadySending) return;
-                    onSendHandler();
-                  },
-                  icon: Image.asset("assets/icons/Send-icon.png", height: 30, width: 30),
-                ),
-                SizedBox(width: 10),
-              ],
+        widget.fromRequestList ? _buildRequestedNotice() : SizedBox(),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            SizedBox(width: 10),
+            Container(
+              margin: EdgeInsets.only(bottom: 14),
+              child: IconButton(
+                onPressed: () {},
+                icon: Image.asset("assets/icons/Camera-icon.png", height: 30, width: 30),
+              ),
             ),
-          ),
+            Container(
+              width: MediaQuery.of(context).size.width - 60,
+              padding: EdgeInsets.symmetric(vertical: 14, horizontal: 10),
+              child: Material(
+                borderRadius: BorderRadius.circular(26),
+                color: Color(0xFFF1F1F1F1),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Flexible(
+                      child: Container(
+                        child: TextField(
+                          maxLines: 5,
+                          minLines: 1,
+                          textCapitalization: TextCapitalization.sentences,
+                          style: TextStyle(fontFamily: HelveticaFont.Medium),
+                          maxLength: 200,
+                          controller: chatMsgTextController,
+                          decoration: InputDecoration(
+                            counterText: "",
+                            contentPadding: EdgeInsets.symmetric(vertical: 14.0, horizontal: 20.0),
+                            hintText: 'Say hi...',
+                            hintStyle: TextStyle(fontFamily: HelveticaFont.Medium, fontSize: 14),
+                            border: InputBorder.none,
+                          ),
+                          onChanged: ((value) {
+                            setState(() {
+                              _textInputValue = value;
+                            });
+                          }),
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () async {
+                        // Save the input value
+                        _textInputValue = chatMsgTextController.text;
+                        // Reset the text input field
+                        chatMsgTextController.clear();
+                        // Don't send any message if _alreadySending or if message is empty
+                        if (_textInputValue.isEmpty || _alreadySending) return;
+                        onSendHandler();
+                      },
+                      icon: Image.asset("assets/icons/Send-icon.png", height: 30, width: 30),
+                    ),
+                    SizedBox(width: 10),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
       ],
+    );
+  }
+
+  Container _buildRequestedNotice() {
+    return Container(
+      margin: EdgeInsets.fromLTRB(10, 10, 10, 0),
+      padding: EdgeInsets.fromLTRB(16, 10, 16, 10),
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(.05),
+        borderRadius: BorderRadius.all(Radius.circular(10)),
+      ),
+      child: Text(
+        "This is a request message. You can reply to this message to accept it and it will be shown in your chats list.",
+        style: TextStyle(
+          fontFamily: HelveticaFont.Roman,
+          fontSize: 12,
+        ),
+      ),
     );
   }
 }

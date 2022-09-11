@@ -42,6 +42,7 @@ class _HomePageState extends State<HomePage> {
             RTDUsersChatsList(
               stream: context.read<RealtimeDatabaseService>().getUsersChatsStream(userUid: _currentUser!.uid),
               currentUser: _currentUser!,
+              fromRequestList: false,
             ),
           ],
         ),
