@@ -2,7 +2,7 @@ const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const _ = require("lodash");
 
-/* ------------ FIRESTORE TRIGGERS ------------ */
+/* ------------ FIRESTORE TRIGGERS (START) ------------ */
 
 exports.onUserUpdated = functions.firestore
   .document("users/{userUid}")
@@ -38,10 +38,42 @@ exports.onUserUpdated = functions.firestore
     }
   });
 
-/* ------------- PUBSUB CRON JOBS ------------- */
+exports.onChatRoomsInfosCreated = functions.database
+  .ref("/chatRoomsInfos/{chatRoomUid}")
+  .onCreate((snapshot, context) => {
+    // Grab the current value of what was written to the Realtime Database.
+    const chatRoomsInfosData = snapshot.val();
+    const chatRoomUid = context.params.chatRoomUid;
+
+    /// When this [chatRoomsInfos] is a private chat
+    if (chatRoomsInfosData.grp === false && chatRoomsInfosData.mems) {
+      let _otherUsersUserUid;
+      for (const userUid in chatRoomsInfosData.mems) {
+        /// Meaning this is not the one that created the new chatRoom
+        if (userUid !== context.auth.uid) _otherUsersUserUid = userUid;
+      }
+
+      if (_otherUsersUserUid) {
+        return admin
+          .database()
+          .ref(
+            `requestedUsersChatRooms/${_otherUsersUserUid}/chatRooms/${chatRoomUid}`
+          )
+          .set({
+            lTime: chatRoomsInfosData.lTime,
+            seen: 0,
+          });
+      }
+    }
+  });
+
+/* ------------ FIRESTORE TRIGGERS (END) ------------ */
+
+/* ------------- PUBSUB CRON JOBS (START) ------------- */
 
 // ---------- (Upto 3 Pub/Sub jobs are free on Google Cloud) ----------
 
+// TODO Update this
 const updateUsersAllChats = async (userUid) => {
   const userDoc = await admin
     .firestore()
@@ -76,7 +108,7 @@ const updateUsersAllChats = async (userUid) => {
 };
 
 exports.UserChatsInfoUpdateCron = functions.pubsub // .runWith({ memory: "1GB" })
-  .schedule("every 7 minutes")
+  .schedule("every 10 minutes")
   .onRun(async (context) => {
     // Loop through all documents in the collections (updatedUsers)
     admin
@@ -96,55 +128,6 @@ exports.UserChatsInfoUpdateCron = functions.pubsub // .runWith({ memory: "1GB" }
   });
 
 /* ------------- PUBSUB CRON JOBS (END) ------------- */
-
-// const compressProfilePictureHandler = async (object) => {
-//   // Once the thumbnail has been uploaded delete the local file to free up disk space.
-//   const filePath = object.name; // File path in the bucket.
-//   const fileName = path.basename(filePath); // Get the file name.
-//   const fileBucket = object.bucket; // The Storage bucket that contains the file.
-//   const contentType = object.contentType; // File content type.
-//   const metageneration = object.metageneration; // Number of times metadata has been generated. New objects have a value of 1.
-
-//   // Exit if this is triggered on a file that is not an image.
-//   if (!contentType.startsWith("image/")) return;
-
-//   // Exit if the image file is not a profile picture image or if it was already compressed
-//   if (
-//     !fileName.startsWith("profile-picture") ||
-//     fileName.startsWith("compressed_profile-picture")
-//   )
-//     return;
-
-//   const bucket = admin.storage().bucket(fileBucket);
-//   const tempFilePath = path.join(os.tmpdir(), fileName);
-//   const metadata = {
-//     contentType: contentType,
-//     cacheControl: "public,max-age=31535000",
-//   };
-
-//   try {
-//     // Make a small dp for the users uploaded image
-//     // Download file from bucket.
-//     await bucket.file(filePath).download({ destination: tempFilePath });
-
-//     // Generate a compressed image using ImageMagick.
-//     await spawn("convert", [tempFilePath, "-resize", "600x600>", tempFilePath]);
-
-//     // We add a 'compressed_' prefix to profile picture file name. That's where we'll upload the new image.
-//     const finalProPicName = `compressed_${fileName}`;
-//     const finalProPicPath = path.join(path.dirname(filePath), finalProPicName);
-//     // Uploading the thumbnail.
-//     await bucket.upload(tempFilePath, {
-//       destination: finalProPicPath,
-//       metadata: metadata,
-//     });
-//   } catch (error) {
-//     throw error;
-//   }
-
-//   // Once the thumbnail has been uploaded delete the local file to free up disk space.
-//   fs.unlinkSync(tempFilePath);
-// };
 
 // My Non API Functions -----------------------
 

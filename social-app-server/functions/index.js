@@ -12,4 +12,7 @@ admin.initializeApp({
 
 exports.api = require("./modules/api").api;
 exports.onUserUpdated = require("./modules/triggers").onUserUpdated;
-exports.UserChatsInfoUpdateCron = require("./modules/triggers").UserChatsInfoUpdateCron;
+exports.UserChatsInfoUpdateCron =
+  require("./modules/triggers").UserChatsInfoUpdateCron;
+exports.onChatRoomsInfosCreated =
+  require("./modules/triggers").onChatRoomsInfosCreated;

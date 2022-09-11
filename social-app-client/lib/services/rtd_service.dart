@@ -15,6 +15,10 @@ class RealtimeDatabaseService {
     return _firebaseDatabase.ref("usersChatRooms").child(userUid).child("chatRooms").orderByChild("lTime").limitToLast(10).onValue;
   }
 
+  Stream<DatabaseEvent> getUsersRequestedChatsStream({required userUid}) {
+    return _firebaseDatabase.ref("requestedUsersChatRooms").child(userUid).child("chatRooms").orderByChild("lTime").limitToLast(10).onValue;
+  }
+
   Future<DataSnapshot> getChatRoomsInfoPromise({required chatRoomUid}) {
     return _firebaseDatabase.ref("chatRoomsInfos").child(chatRoomUid).get();
   }
@@ -46,20 +50,18 @@ class RealtimeDatabaseService {
     // Save the information about this chatRoom in Realtime Database
     updates["chatRoomsInfos/$newChatRoomUid"] = {
       "grp": false,
-      "lMsg": msg,
+      "lMsg": msg.length > 40 ? msg.substring(0, 40) : msg.substring(0, msg.length),
       "lTime": lTime,
       "mems": {
         currentUser.uid: {
           "name": currentUser.displayName,
           "uName": claims.userName,
           "url": currentUser.photoURL,
-          "acc": 1, // The user who sends the message already accepts it
         },
         otherUser.userUid: {
           "name": otherUser.name,
           "uName": otherUser.uName,
           "url": otherUser.url,
-          "acc": 0, // The other user will see this msg in their requested chats list
         }
       }
     };
@@ -100,7 +102,7 @@ class RealtimeDatabaseService {
     };
 
     // Update the [lMsg] and [lTime] in the /chatRoomsInfos/ and let the trigger update the /userChatRooms/ or /requestedUsersChatRooms/
-    updates["chatRoomsInfos/$chatRoomUid/lMsg"] = msg;
+    updates["chatRoomsInfos/$chatRoomUid/lMsg"] = msg.length > 40 ? msg.substring(0, 40) : msg.substring(0, msg.length);
     updates["chatRoomsInfos/$chatRoomUid/lTime"] = lTime;
 
     // Lastly, push a new message to the chatRooms

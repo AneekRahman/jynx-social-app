@@ -14,17 +14,17 @@ import '../modules/constants.dart';
 import 'OthersProfilePage.dart';
 
 class ChatMessageRoom extends StatefulWidget {
-  /// If [chatRoomsInfos] is null, then [otherPrivateChatRoomUser] must be present
-  /// If [otherPrivateChatRoomUser] is null, then [chatRoomsInfos] must be present
+  /// If [chatRoomsInfos] is null, then [otherUser] must be present
+  /// If [otherUser] is null, then [chatRoomsInfos] must be present
   ChatRoomsInfos? chatRoomsInfos;
-  ChatRoomsInfosMem? otherPrivateChatRoomUser;
+  UserFirestore? otherUser;
   final User currentUser;
 
   ChatMessageRoom({
     super.key,
-    this.chatRoomsInfos,
     required this.currentUser,
-    this.otherPrivateChatRoomUser,
+    this.chatRoomsInfos,
+    this.otherUser,
   });
 
   @override
@@ -35,6 +35,11 @@ class _ChatMessageRoomState extends State<ChatMessageRoom> {
   bool noChatRoomFound = false;
   bool isGroupChat = false;
 
+  /// In order to make sure there is always an other user, when [isGroupChat] is false, this [otherPrivateChatRoomUser] is
+  /// initialized inside [initState] once if [widget.chatRoomsInfos] is not null. If [widget.chatRoomsInfos] is null then
+  /// [otherPrivateChatRoomUser] is initialized after [findPrivateChatRoomsInFirestore] finds a private chatRoom
+  ChatRoomsInfosMem? otherPrivateChatRoomUser;
+
   /// This is called after [chatRoomsInfos] is prepared. If [chatRoomsInfos] is available it will run right
   /// after the initState. If [chatRoomsInfos] is null, it will run after [getChatRoomInfos] finds a chatRoomsInfos.
   void _initChatRoomWithInfos() {
@@ -42,16 +47,17 @@ class _ChatMessageRoomState extends State<ChatMessageRoom> {
       // This means that this is a private chat, so save the other user as a state
       widget.chatRoomsInfos!.mems.forEach((element) {
         if (widget.currentUser.uid != element.userUid) {
-          widget.otherPrivateChatRoomUser = element;
+          otherPrivateChatRoomUser = element;
         }
       });
     } else {
       // This means that this is a group chat
+      // TODO Finish the group chat initilization
       isGroupChat = true;
     }
   }
 
-  /// When a [chatRoomUid] is found from either [findChatRoomsInFirestore] or the [setNewChatRoomUid] callback after creating a
+  /// When a [chatRoomUid] is found from either [findPrivateChatRoomsInFirestore] or the [setNewChatRoomUid] callback after creating a
   /// new request, use this method to fetch the new [ChatRoomsInfos] and set it in [ChatMessageRoom]
   Future getAndSetChatRoomsInfos(String chatRoomUid) async {
     final rtdSnapshot = await context.read<RealtimeDatabaseService>().getChatRoomsInfoPromise(chatRoomUid: chatRoomUid);
@@ -67,12 +73,12 @@ class _ChatMessageRoomState extends State<ChatMessageRoom> {
     }
   }
 
-  /// When the [chatRoomsInfos] is null, use [otherPrivateChatRoomUser] to find the chatRoomsInfos
-  /// from Firestore. If none is found, set [noChatRoomFound] to true
-  Future findChatRoomsInFirestore() async {
+  /// When the [chatRoomsInfos] is null, use [otherPrivateChatRoomUser] to find the Private chatRoomsInfos from Firestore
+  /// If none is found, set [noChatRoomFound] to true since both [widget.chatRoomsInfos] and [otherPrivateChatRoomUser] is null
+  Future findPrivateChatRoomsInFirestore() async {
     final firestoreChatRecord = await context.read<FirestoreService>().findPrivateChatWithUser(
           widget.currentUser.uid,
-          widget.otherPrivateChatRoomUser!.userUid,
+          otherPrivateChatRoomUser!.userUid,
         );
 
     if (firestoreChatRecord.docs.isNotEmpty) {
@@ -85,10 +91,15 @@ class _ChatMessageRoomState extends State<ChatMessageRoom> {
     }
   }
 
+  /// Depending on [widget.chatRoomsInfos] being null or not. If [widget.chatRoomsInfos] is not null, the chatRoom can be
+  /// either a group of not. [_initChatRoomWithInfos] is called to designate this [ChatMessageRoom] as [isGroupChat] or not
+  /// [widget.chatRoomsInfos] is null. Then check to see if this chatRoom was searched and there is already a Private
+  /// chatRoom for the [widget.otherUser]
   @override
   void initState() {
     if (widget.chatRoomsInfos == null) {
-      findChatRoomsInFirestore();
+      otherPrivateChatRoomUser = ChatRoomsInfosMem.fromUserFirestore(widget.otherUser!);
+      findPrivateChatRoomsInFirestore();
     } else {
       _initChatRoomWithInfos();
     }
@@ -107,7 +118,7 @@ class _ChatMessageRoomState extends State<ChatMessageRoom> {
             children: [
               ChatTopBar(
                 chatRoomsInfos: widget.chatRoomsInfos,
-                otherPrivateChatRoomUser: widget.otherPrivateChatRoomUser!,
+                otherPrivateChatRoomUser: otherPrivateChatRoomUser!,
               ),
               // The mesasges list
               Expanded(
@@ -121,12 +132,12 @@ class _ChatMessageRoomState extends State<ChatMessageRoom> {
                             child: Text("preparing..."),
                           )
                         : Center(
-                            child: Text("You haven't texted them yet!"),
+                            child: Text("You haven't sent a message yet!"),
                           ),
               ),
               ChatBottomBar(
                 chatRoomsInfos: widget.chatRoomsInfos,
-                otherUser: widget.otherPrivateChatRoomUser!,
+                otherUser: otherPrivateChatRoomUser!,
                 currentUser: widget.currentUser,
                 setNewChatRoomUid: (newChatRoomUid) {
                   getAndSetChatRoomsInfos(newChatRoomUid);
@@ -509,19 +520,18 @@ class _ChatBottomBarState extends State<ChatBottomBar> {
               children: [
                 Flexible(
                   child: Container(
-                    margin: EdgeInsets.only(bottom: 2),
                     child: TextField(
                       maxLines: 5,
                       minLines: 1,
                       textCapitalization: TextCapitalization.sentences,
-                      style: TextStyle(fontFamily: HelveticaFont.Roman),
+                      style: TextStyle(fontFamily: HelveticaFont.Medium),
                       maxLength: 200,
                       controller: chatMsgTextController,
                       decoration: InputDecoration(
                         counterText: "",
                         contentPadding: EdgeInsets.symmetric(vertical: 14.0, horizontal: 20.0),
-                        hintText: 'Type your message here...',
-                        hintStyle: TextStyle(fontFamily: HelveticaFont.Roman, fontSize: 14),
+                        hintText: 'Say hi...',
+                        hintStyle: TextStyle(fontFamily: HelveticaFont.Medium, fontSize: 14),
                         border: InputBorder.none,
                       ),
                       onChanged: ((value) {

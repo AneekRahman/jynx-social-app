@@ -32,7 +32,7 @@ class _RequestsPageState extends State<RequestsPage> {
           children: [
             HomeAppBar(),
             RTDUsersChatsList(
-              stream: context.read<RealtimeDatabaseService>().getUsersChatsStream(userUid: _currentUser!.uid),
+              stream: context.read<RealtimeDatabaseService>().getUsersRequestedChatsStream(userUid: _currentUser!.uid),
               currentUser: _currentUser!,
             ),
             // Expanded(
