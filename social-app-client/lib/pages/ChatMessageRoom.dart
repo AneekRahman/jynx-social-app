@@ -9,6 +9,7 @@ import 'package:social_app/services/firestore_service.dart';
 import 'package:social_app/services/rtd_service.dart';
 
 import '../models/MsgRow.dart';
+import '../modules/LoadingBar.dart';
 import '../modules/MessageBubble.dart';
 import '../modules/constants.dart';
 import 'OthersProfilePage.dart';
@@ -447,8 +448,13 @@ class _ChatBottomBarState extends State<ChatBottomBar> {
   final chatMsgTextController = TextEditingController();
   String _textInputValue = "";
   bool _alreadySending = false;
+  bool _creatingNewChatRoom = false;
 
   Future createNewChatRoomAndSendMsg() async {
+    if (_creatingNewChatRoom) return;
+    setState(() {
+      _creatingNewChatRoom = true;
+    });
     try {
       // Create the chatRoom first in the Realtime Database and retrieve a new [chatRoomUid]
       final String chatRoomUid = await context
@@ -471,6 +477,9 @@ class _ChatBottomBarState extends State<ChatBottomBar> {
       ));
       throw e;
     }
+    setState(() {
+      _creatingNewChatRoom = false;
+    });
   }
 
   Future sendMessageToChatRoom() async {
@@ -521,6 +530,10 @@ class _ChatBottomBarState extends State<ChatBottomBar> {
     return Column(
       children: [
         widget.fromRequestList ? _buildRequestedNotice() : SizedBox(),
+        LoadingBar(
+          loading: _creatingNewChatRoom,
+          barColor: Colors.lightBlue,
+        ),
         Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [

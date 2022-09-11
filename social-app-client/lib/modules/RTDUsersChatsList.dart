@@ -13,6 +13,7 @@ import 'package:social_app/pages/ChatMessageRoom.dart';
 import '../pages/ChatRoomPage.dart';
 import '../services/rtd_service.dart';
 import 'LoadingBar.dart';
+import 'constants.dart';
 
 class RTDUsersChatsList extends StatefulWidget {
   final Stream<DatabaseEvent> stream;
@@ -116,37 +117,67 @@ class _RTDUsersChatsListState extends State<RTDUsersChatsList> {
             loading: _loading,
           ),
           Expanded(
-            child: CustomScrollView(
-              physics: BouncingScrollPhysics(),
-              slivers: [
-                SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      ChatRoomsInfos chatRoomsInfos = _chatRoomsInfosList[index];
+            child: _chatRoomsInfosList.length != 0 && !_loading
+                // _chatRoomsInfosList.length == 0 && !_loading
+                ? _buildNoChatsFoundMsg()
+                : CustomScrollView(
+                    physics: BouncingScrollPhysics(),
+                    slivers: [
+                      SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) {
+                            ChatRoomsInfos chatRoomsInfos = _chatRoomsInfosList[index];
 
-                      return TextButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              CupertinoPageRoute(
-                                  builder: (context) => ChatMessageRoom(
-                                        fromRequestList: widget.fromRequestList,
-                                        chatRoomsInfos: chatRoomsInfos,
-                                        currentUser: widget.currentUser,
-                                      )),
-                            );
+                            return TextButton(
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    CupertinoPageRoute(
+                                        builder: (context) => ChatMessageRoom(
+                                              fromRequestList: widget.fromRequestList,
+                                              chatRoomsInfos: chatRoomsInfos,
+                                              currentUser: widget.currentUser,
+                                            )),
+                                  );
+                                },
+                                child: UsersChatRoomsRow(
+                                  chatRoomsInfos: chatRoomsInfos,
+                                  currentUser: widget.currentUser,
+                                ));
                           },
-                          child: UsersChatRoomsRow(
-                            chatRoomsInfos: chatRoomsInfos,
-                            currentUser: widget.currentUser,
-                          ));
-                    },
-                    childCount: _chatRoomsInfosList.length,
+                          childCount: _chatRoomsInfosList.length,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
-            ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNoChatsFoundMsg() {
+    return Padding(
+      padding: EdgeInsets.only(top: MediaQuery.of(context).size.height * .2),
+      child: Column(
+        children: [
+          Icon(
+            Icons.fastfood_outlined,
+            color: Colors.white.withAlpha(50),
+            size: 100,
+          ),
+          Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Text(
+              "Looks like we need some \nfriends in this chat :D",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: HelveticaFont.Roman,
+                fontSize: 20,
+                color: Colors.white.withAlpha(50),
+              ),
+            ),
+          )
         ],
       ),
     );
