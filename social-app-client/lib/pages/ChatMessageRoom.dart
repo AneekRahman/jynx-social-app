@@ -467,7 +467,7 @@ class _ChatBottomBarState extends State<ChatBottomBar> {
       widget.setNewChatRoomUid(chatRoomUid);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text("Unable to send the message to the user currently"),
+        content: Text("Unable to message the user currently."),
       ));
       throw e;
     }
@@ -494,7 +494,8 @@ class _ChatBottomBarState extends State<ChatBottomBar> {
         });
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("There was a network issue while sending the message")));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text("There was a network issue while sending the message. Try again!")));
       throw e;
     }
   }

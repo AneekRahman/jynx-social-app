@@ -5,35 +5,32 @@ import 'dart:async';
 
 import 'package:social_app/modules/constants.dart';
 
-class UsersChatRoomsRow extends StatefulWidget {
+class UsersChatRoomsRow extends StatelessWidget {
   final User currentUser;
   final ChatRoomsInfos chatRoomsInfos;
-  UsersChatRoomsRow({required this.chatRoomsInfos, required this.currentUser});
-  @override
-  _UsersChatRoomsRowState createState() => _UsersChatRoomsRowState();
-}
-
-class _UsersChatRoomsRowState extends State<UsersChatRoomsRow> {
-  late String sentTimeFormattedString;
   bool isGroupChat = false;
-  ChatRoomsInfosMem? otherPrivateChatRoomUser;
 
-  void _recalculateTimePassed() {
-    // Every 1 minute
-    Timer.periodic(new Duration(seconds: 1), (timer) {
-      DateTime sentTime = new DateTime.fromMillisecondsSinceEpoch(widget.chatRoomsInfos.lTime);
-      if (this.mounted)
-        setState(() {
-          sentTimeFormattedString = convertToTimeAgo(sentTime);
-        });
-    });
-  }
+  UsersChatRoomsRow({super.key, required this.chatRoomsInfos, required this.currentUser});
 
-  void initUsersChatRoomsRowInfos() {
-    if (!widget.chatRoomsInfos.grp) {
+  //  void _recalculateTimePassed() {
+  //   // Every 1 minute
+  //   Timer.periodic(new Duration(seconds: 1), (timer) {
+  //     DateTime sentTime = new DateTime.fromMillisecondsSinceEpoch(widget.chatRoomsInfos.lTime);
+  //     if (this.mounted)
+  //       setState(() {
+  //         sentTimeFormattedString = convertToTimeAgo(sentTime);
+  //       });
+  //   });
+  // }
+
+  @override
+  Widget build(BuildContext context) {
+    ChatRoomsInfosMem? otherPrivateChatRoomUser;
+
+    if (!chatRoomsInfos.grp) {
       // This means that this is a private chat, so save the other user as a state
-      widget.chatRoomsInfos.mems.forEach((element) {
-        if (widget.currentUser.uid != element.userUid) {
+      chatRoomsInfos.mems.forEach((element) {
+        if (currentUser.uid != element.userUid) {
           otherPrivateChatRoomUser = element;
         }
       });
@@ -41,23 +38,12 @@ class _UsersChatRoomsRowState extends State<UsersChatRoomsRow> {
       // This means that this is a group chat
       isGroupChat = true;
     }
-    setState(() {});
-  }
 
-  @override
-  void initState() {
-    initUsersChatRoomsRowInfos();
-    _recalculateTimePassed();
-    super.initState();
-  }
+    final fontFamily = chatRoomsInfos.seenByThisUser == 0 ? HelveticaFont.Heavy : HelveticaFont.Medium;
+    final String chatRoomRowImageURL = isGroupChat ? chatRoomsInfos.groupChatImageURL! : otherPrivateChatRoomUser!.url;
 
-  @override
-  Widget build(BuildContext context) {
-    final fontFamily = widget.chatRoomsInfos.seenByThisUser == 0 ? HelveticaFont.Heavy : HelveticaFont.Medium;
-    String chatRoomRowImageURL = isGroupChat ? widget.chatRoomsInfos.groupChatImageURL! : otherPrivateChatRoomUser!.url;
-
-    DateTime sentTime = new DateTime.fromMillisecondsSinceEpoch(widget.chatRoomsInfos.lTime);
-    sentTimeFormattedString = convertToTimeAgo(sentTime);
+    final DateTime sentTime = new DateTime.fromMillisecondsSinceEpoch(chatRoomsInfos.lTime);
+    final String sentTimeFormattedString = convertToTimeAgo(sentTime);
 
     return Container(
       padding: EdgeInsets.symmetric(
@@ -118,24 +104,22 @@ class _UsersChatRoomsRowState extends State<UsersChatRoomsRow> {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Icon(
-                          widget.chatRoomsInfos.seenByThisUser == 0 ? Icons.chat_bubble : Icons.chat_bubble_outline,
+                          chatRoomsInfos.seenByThisUser == 0 ? Icons.chat_bubble : Icons.chat_bubble_outline,
                           size: 14,
-                          color: widget.chatRoomsInfos.seenByThisUser == 0 ? Colors.yellow : Colors.white,
+                          color: chatRoomsInfos.seenByThisUser == 0 ? Colors.yellow : Colors.white,
                         ),
                         SizedBox(
                           width: 5,
                         ),
                         Flexible(
                           child: Text(
-                            // !widget._chatRow.seen! ? "New message" : "Opened",
-                            widget.chatRoomsInfos.seenByThisUser == 0
-                                ? "New: " + widget.chatRoomsInfos.lMsg
-                                : "Read: " + widget.chatRoomsInfos.lMsg,
+                            // !_chatRow.seen! ? "New message" : "Opened",
+                            chatRoomsInfos.seenByThisUser == 0 ? "New: " + chatRoomsInfos.lMsg : "Read: " + chatRoomsInfos.lMsg,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               fontFamily: fontFamily,
                               fontSize: 12,
-                              color: widget.chatRoomsInfos.seenByThisUser == 0 ? Colors.yellow : Colors.white,
+                              color: chatRoomsInfos.seenByThisUser == 0 ? Colors.yellow : Colors.white,
                             ),
                           ),
                         ),

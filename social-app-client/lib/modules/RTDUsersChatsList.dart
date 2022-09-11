@@ -52,24 +52,23 @@ class _RTDUsersChatsListState extends State<RTDUsersChatsList> {
   }
 
   Future getChatRoomsInfosFromUids(UsersChatRooms usersChatRoomList) async {
-    print("GOT total usersChatRoomList: ${usersChatRoomList.usersChatRooms.length}");
-    List<Future<DataSnapshot>> _promises = [];
+    List<Future<DataSnapshot>> chatRoomsInfosPromises = [];
 
     usersChatRoomList.usersChatRooms.forEach((UsersChatRoom usersChatRoom) {
-      _promises.add(context.read<RealtimeDatabaseService>().getChatRoomsInfoPromise(chatRoomUid: usersChatRoom.chatRoomUid));
+      chatRoomsInfosPromises.add(context.read<RealtimeDatabaseService>().getChatRoomsInfoPromise(chatRoomUid: usersChatRoom.chatRoomUid));
     });
 
-    /// The order of entries in [chatRoomsInfosList] matches the order of entries in [usersChatRoomList] which were given
+    /// The order of entries in [newChatRoomsInfosList] matches the order of entries in [usersChatRoomList] which were given
     /// So, looping through will have both lists index match each other!
-    List<DataSnapshot> chatRoomsInfosList = await Future.wait(_promises);
+    List<DataSnapshot> newChatRoomsInfosList = await Future.wait(chatRoomsInfosPromises);
 
-    /// First, add the newest version of the entry and remove the older version. Also map [seenByThisUser]
-    for (var i = 0; i < chatRoomsInfosList.length; i++) {
-      final element = chatRoomsInfosList[i];
+    /// Delete the newest few entries from [_chatRoomsInfosList] sinces [usersChatRoomList] returned the newest 10 entries
+    if (_chatRoomsInfosList.isNotEmpty) _chatRoomsInfosList.removeRange(0, newChatRoomsInfosList.length);
+
+    /// Add the newest version of the entry and Also map [seenByThisUser]
+    for (var i = 0; i < newChatRoomsInfosList.length; i++) {
+      final element = newChatRoomsInfosList[i];
       if (element.exists) {
-        /// [listPreAddDuplicateRemoval] loops through [_chatRoomsInfosList] to find if [element.key] matches any element
-        /// then it removes [element] and then we can add the newest version.
-        listPreAddDuplicateRemoval(element.key!);
         _chatRoomsInfosList.add(ChatRoomsInfos.fromMap(
           element.value as Map,
           chatRoomUid: element.key!,
@@ -78,7 +77,7 @@ class _RTDUsersChatsListState extends State<RTDUsersChatsList> {
       }
     }
 
-    /// Secondly, sort the new [_chatRoomsInfosList] from newest to the oldest
+    /// Lastly, sort the new [_chatRoomsInfosList] from newest to the oldest
     _chatRoomsInfosList.sort((a, b) => b.lTime.compareTo(a.lTime));
 
     /// Use [setState] to update the UI
