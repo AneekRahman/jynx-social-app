@@ -10,28 +10,21 @@ class RealtimeDatabaseService {
   const RealtimeDatabaseService(this._firebaseDatabase);
 
   Stream<DatabaseEvent> getUsersChatsStream({required String userUid}) {
-    // TODO Change from 3 to 10
-    return _firebaseDatabase.ref("usersChatRooms/$userUid/chatRooms").orderByChild("lTime").limitToLast(3).onValue;
+    return _firebaseDatabase.ref("usersChatRooms/$userUid/chatRooms").orderByChild("lTime").limitToLast(10).onChildChanged;
   }
 
   Future<DataSnapshot> getUsersChatRoom({required String userUid, required String chatRoomUid}) {
     return _firebaseDatabase.ref("usersChatRooms/$userUid/chatRooms/$chatRoomUid").get();
   }
 
-  Future<DataSnapshot> getMoreUsersChatsOnScroll({required String userUid, required int lastChatRoomLTime}) {
+  Future<DataSnapshot> getMoreUsersChats({required String userUid, required int lastChatRoomLTime}) {
     if (lastChatRoomLTime == 0) {
-      return _firebaseDatabase
-          .ref("usersChatRooms/$userUid/chatRooms")
-          .orderByChild("lTime")
-          // TODO Change from 3 to 10
-          .limitToLast(3)
-          .get();
+      return _firebaseDatabase.ref("usersChatRooms/$userUid/chatRooms").orderByChild("lTime").limitToLast(10).get();
     } else {
       return _firebaseDatabase
           .ref("usersChatRooms/$userUid/chatRooms")
           .orderByChild("lTime")
-          // TODO Change from 3 to 10
-          .limitToLast(3)
+          .limitToLast(10)
           .endBefore(lastChatRoomLTime)
           .get();
     }

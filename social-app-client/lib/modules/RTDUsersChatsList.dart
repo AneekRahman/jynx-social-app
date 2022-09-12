@@ -27,7 +27,6 @@ class RTDUsersChatsList extends StatefulWidget {
 class _RTDUsersChatsListState extends State<RTDUsersChatsList> {
   StreamSubscription<DatabaseEvent>? _streamSubscription;
   List<ChatRoomsInfos> _chatRoomsInfosList = [];
-  bool _loadingStream = true;
   bool _loadingMoreChats = false;
   bool _reachedEndOfResults = false;
   ScrollController? _scrollController = ScrollController();
@@ -37,79 +36,9 @@ class _RTDUsersChatsListState extends State<RTDUsersChatsList> {
     for (var i = 0; i < _chatRoomsInfosList.length; i++) {
       if (_chatRoomsInfosList[i].chatRoomUid == chatRoomUid) {
         _chatRoomsInfosList.removeAt(i);
-        print("GOT: removed duplicate: " + chatRoomUid);
+        // print("GOT: removed duplicate: " + chatRoomUid);
       }
     }
-  }
-
-  Future addNewChangedChatRoomsInfos(String chatRoomUid) async {
-    ChatRoomsInfos? prevChatRoomsInfos;
-    _chatRoomsInfosList.forEach((element) {
-      if (element.chatRoomUid == chatRoomUid) prevChatRoomsInfos = element;
-    });
-
-    final DataSnapshot chatRoomsInfosSnapshot = await context.read<RealtimeDatabaseService>().getChatRoomsInfo(chatRoomUid: chatRoomUid);
-
-    if (prevChatRoomsInfos != null && chatRoomsInfosSnapshot.exists) {
-      ChatRoomsInfos newChatRoomsInfos = ChatRoomsInfos.fromMap(
-        chatRoomsInfosSnapshot.value as Map,
-        chatRoomUid: chatRoomUid,
-        seenByThisUser: prevChatRoomsInfos!.seenByThisUser,
-      );
-      listPreAddDuplicateRemoval(chatRoomUid);
-      _chatRoomsInfosList.add(newChatRoomsInfos);
-      _chatRoomsInfosList.sort((a, b) => b.lTime.compareTo(a.lTime));
-    }
-  }
-
-  void _handleStreamListener(DatabaseEvent event) async {
-    // _loadingMoreChats is evaltuated inside of [stream.addListener]
-    _loadingMoreChats = true;
-
-    if (event.snapshot.exists) {
-      final DataSnapshot newUsersChatRoomsSnapshot = event.snapshot;
-      print("!! Stream GOT (length) called: " + newUsersChatRoomsSnapshot.children.length.toString());
-      print("!! Stream GOT (first children value) called: " + newUsersChatRoomsSnapshot.children.first.value.toString());
-      print("!! Stream GOT (value) called: " + newUsersChatRoomsSnapshot.value.toString());
-
-      // Get this to verify if the childrens child has either [lTime] and [seen] or both
-      final DataSnapshot firstChildrenSnapshot = newUsersChatRoomsSnapshot.children.first;
-
-      if (firstChildrenSnapshot.hasChild("lTime") && firstChildrenSnapshot.hasChild("seen")) {
-        // Both lTime and seen are present in the [newUsersChatRoomsSnapshot]
-        print("!! Stream GOT INSIDE 1");
-
-        final usersChatRoomsList = UsersChatRooms.fromMap(newUsersChatRoomsSnapshot.value as Map);
-        await appendInfosFromUsersChatRoomsUids(usersChatRoomsList);
-      } else if (firstChildrenSnapshot.hasChild("lTime") && !firstChildrenSnapshot.hasChild("seen")) {
-        // Only lTime is present. So, retrive only the /chatRoomsInfos/ using [addNewChangedChatRoomsInfos]
-        print("!! Stream GOT INSIDE 2");
-
-        await addNewChangedChatRoomsInfos(firstChildrenSnapshot.key!);
-      } else if (firstChildrenSnapshot.hasChild("seen") && !firstChildrenSnapshot.hasChild("lTime")) {
-        // Only seen is present. So, update only the seen in for the specific [_chatRoomsInfosList] element
-        print("!! Stream GOT INSIDE 3");
-
-        newUsersChatRoomsSnapshot.children.forEach((usersChatRoomsSnapshot) {
-          _chatRoomsInfosList.forEach((element) {
-            if (element.chatRoomUid == usersChatRoomsSnapshot.key) {
-              element.seenByThisUser = (usersChatRoomsSnapshot.value as Map)["seen"];
-            }
-          });
-        });
-      }
-    } else {
-      // This will only when [_reachedEndOfResults] has been set to false after the very first run
-      if (!_loadingStream)
-        setState(() {
-          _reachedEndOfResults = true;
-        });
-    }
-    //
-    setState(() {
-      _loadingStream = false;
-      _loadingMoreChats = false;
-    });
   }
 
   Future appendInfosFromUsersChatRoomsUids(UsersChatRooms usersChatRoomList) async {
@@ -139,32 +68,83 @@ class _RTDUsersChatsListState extends State<RTDUsersChatsList> {
 
     /// Sort the new [newChatRoomsInfosList] from newest to the oldest
     _chatRoomsInfosList.sort((a, b) => b.lTime.compareTo(a.lTime));
-
     _lastUsersChatRoomsLTime = _chatRoomsInfosList.last.lTime;
 
     setState(() {});
   }
 
   Future _loadUsersChatRooms() async {
-    print("GOT: Loading more after: lTime: " + _lastUsersChatRoomsLTime!.toString());
-    context.read<RealtimeDatabaseService>().getMoreUsersChatsOnScroll(
+    if (_reachedEndOfResults || _loadingMoreChats) return;
+    setState(() {
+      _loadingMoreChats = true;
+    });
+    // print("GOT: Loading more after: lTime: " + _lastUsersChatRoomsLTime!.toString());
+    DataSnapshot newUsersChatRoomsSnapshot = await context.read<RealtimeDatabaseService>().getMoreUsersChats(
           userUid: widget.currentUser.uid,
           lastChatRoomLTime: _lastUsersChatRoomsLTime!,
         );
+    // TODO Finish this
+    if (newUsersChatRoomsSnapshot.exists) {
+      // print("GOT: newUsersChatRoomsSnapshot (value): " + newUsersChatRoomsSnapshot.value.toString());
+      final usersChatRoomsList = UsersChatRooms.fromMap(newUsersChatRoomsSnapshot.value as Map);
+      await appendInfosFromUsersChatRoomsUids(usersChatRoomsList);
+    } else {
+      setState(() {
+        _reachedEndOfResults = true;
+      });
+    }
+
+    setState(() {
+      _loadingMoreChats = false;
+    });
+  }
+
+  void _handleStreamListener(DatabaseEvent event) async {
+    if (event.snapshot.exists) {
+      final DataSnapshot newUsersChatRoomsSnapshot = event.snapshot;
+      // print("!! Stream GOT (value) called: " + newUsersChatRoomsSnapshot.value.toString());
+
+      if (newUsersChatRoomsSnapshot.hasChild("lTime") && newUsersChatRoomsSnapshot.hasChild("seen")) {
+        // Both lTime and seen are present in the [newUsersChatRoomsSnapshot]
+        // print("!! Stream GOT INSIDE");
+
+        final usersChatRoomsList = UsersChatRooms.fromList([
+          UsersChatRoom.fromMap(
+            newUsersChatRoomsSnapshot.value as Map,
+            chatRoomUid: newUsersChatRoomsSnapshot.key!,
+          )
+        ]);
+        await appendInfosFromUsersChatRoomsUids(usersChatRoomsList);
+      } else if (newUsersChatRoomsSnapshot.hasChild("seen") && !newUsersChatRoomsSnapshot.hasChild("lTime")) {
+        for (int i = 0; i < _chatRoomsInfosList.length; i++) {
+          if (_chatRoomsInfosList[i].chatRoomUid == newUsersChatRoomsSnapshot.key)
+            _chatRoomsInfosList[i].seenByThisUser = (newUsersChatRoomsSnapshot.value as Map)["seen"];
+        }
+      }
+    }
+  }
+
+  void initOrRefreshListener() {
+    _streamSubscription = widget.stream.listen(_handleStreamListener, onError: (error) {
+      throw error;
+    });
   }
 
   @override
   void initState() {
-    _streamSubscription = widget.stream.listen(_handleStreamListener);
+    // Load user chats 2 times.
+    _loadUsersChatRooms();
 
     // Listen to the scroll to load more UsersChatRooms node when scroll reaches the end
     _scrollController!.addListener(() {
+      // print("GOT Scroll: " + _scrollController!.offset.toString());
       if (_scrollController!.offset > _scrollController!.position.maxScrollExtent - 30 && !_scrollController!.position.outOfRange) {
         // Reached bottom
-        if (!_reachedEndOfResults && !_loadingMoreChats) _loadUsersChatRooms();
+        _loadUsersChatRooms();
       }
     });
 
+    initOrRefreshListener();
     super.initState();
   }
 
@@ -180,53 +160,66 @@ class _RTDUsersChatsListState extends State<RTDUsersChatsList> {
       child: Column(
         children: [
           LoadingBar(
-            loading: _loadingStream,
+            loading: _loadingMoreChats,
           ),
           Expanded(
-            child: _chatRoomsInfosList.length == 0 && !_loadingStream
+            child: _chatRoomsInfosList.length == 0 && !_loadingMoreChats
                 ? _buildNoChatsFoundMsg()
-                : CustomScrollView(
-                    controller: _scrollController,
-                    physics: BouncingScrollPhysics(),
-                    slivers: [
-                      SliverList(
-                        delegate: SliverChildBuilderDelegate(
-                          (context, index) {
-                            ChatRoomsInfos chatRoomsInfos = _chatRoomsInfosList[index];
+                : RefreshIndicator(
+                    color: Colors.yellow,
+                    onRefresh: () {
+                      return Future.delayed(
+                        Duration(seconds: 1),
+                      );
+                    },
+                    child: CustomScrollView(
+                      controller: _scrollController,
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      slivers: [
+                        SliverList(
+                          delegate: SliverChildBuilderDelegate(
+                            (context, index) {
+                              ChatRoomsInfos chatRoomsInfos = _chatRoomsInfosList[index];
 
-                            return TextButton(
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    CupertinoPageRoute(
-                                        builder: (context) => ChatMessageRoom(
-                                              fromRequestList: widget.fromRequestList,
-                                              chatRoomsInfos: chatRoomsInfos,
-                                              currentUser: widget.currentUser,
-                                            )),
-                                  );
-                                },
-                                child: UsersChatRoomsRow(
-                                  chatRoomsInfos: chatRoomsInfos,
-                                  currentUser: widget.currentUser,
-                                ));
-                          },
-                          childCount: _chatRoomsInfosList.length,
+                              return TextButton(
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      CupertinoPageRoute(
+                                          builder: (context) => ChatMessageRoom(
+                                                fromRequestList: widget.fromRequestList,
+                                                chatRoomsInfos: chatRoomsInfos,
+                                                currentUser: widget.currentUser,
+                                              )),
+                                    );
+                                  },
+                                  child: UsersChatRoomsRow(
+                                    chatRoomsInfos: chatRoomsInfos,
+                                    currentUser: widget.currentUser,
+                                  ));
+                            },
+                            childCount: _chatRoomsInfosList.length,
+                          ),
                         ),
-                      ),
-                      SliverToBoxAdapter(
-                        child: Padding(
-                          padding: const EdgeInsets.only(top: 5, bottom: 30.0),
-                          child: Center(
-                              child: !_reachedEndOfResults
-                                  ? CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: Colors.yellow,
+                        SliverToBoxAdapter(
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: 5, bottom: 30.0),
+                            child: Center(
+                              child: _reachedEndOfResults
+                                  ? Text(
+                                      "Reached the end",
+                                      style: TextStyle(color: Colors.white38),
                                     )
-                                  : Text("reached the end")),
+                                  : Text(
+                                      // "Loading...",
+                                      "",
+                                      style: TextStyle(color: Colors.white38),
+                                    ),
+                            ),
+                          ),
                         ),
-                      )
-                    ],
+                      ],
+                    ),
                   ),
           ),
         ],

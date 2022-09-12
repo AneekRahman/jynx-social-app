@@ -47,8 +47,8 @@ class UsersChatRoomsRow extends StatelessWidget {
 
     return Container(
       padding: EdgeInsets.symmetric(
-        // vertical: 16,
-        vertical: 160,
+        vertical: 16,
+        // vertical: 160,
         horizontal: 20,
       ),
       child: Row(
