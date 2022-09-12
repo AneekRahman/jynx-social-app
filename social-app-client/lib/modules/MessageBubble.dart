@@ -26,7 +26,7 @@ class MessageBubble extends StatelessWidget {
             Flexible(
               child: Container(
                 margin: EdgeInsets.only(
-                  top: !prevMsgSameUser ? 40 : 4,
+                  top: !prevMsgSameUser ? 20 : 4,
                   right: isUsersMsg ? 14 : 0,
                   left: !isUsersMsg ? 14 : 0,
                 ),
@@ -66,16 +66,29 @@ class MessageBubble extends StatelessWidget {
                 ),
               ),
             ),
-            Container(
-              margin: EdgeInsets.only(bottom: 8, left: !isUsersMsg ? 6 : 60, right: isUsersMsg ? 6 : 60),
-              child: !nextMsgSameUser
-                  ? Text(
-                      sentTimeFormattedString + " ago",
-                      style: TextStyle(fontFamily: HelveticaFont.Roman, fontSize: 11, color: Colors.black26),
-                    )
-                  : SizedBox(),
-            ),
+            // Container(
+            //   margin: EdgeInsets.only(bottom: 8, left: !isUsersMsg ? 6 : 60, right: isUsersMsg ? 6 : 60),
+            //   child: !nextMsgSameUser
+            //       ? Text(
+            //           sentTimeFormattedString + " ago",
+            //           style: TextStyle(fontFamily: HelveticaFont.Roman, fontSize: 11, color: Colors.black26),
+            //         )
+            //       : SizedBox(),
+            // ),
           ],
+        ),
+        Container(
+          margin: EdgeInsets.only(
+            top: 2,
+            right: !isUsersMsg ? 0 : 30,
+            left: isUsersMsg ? 0 : 30,
+          ),
+          child: !nextMsgSameUser
+              ? Text(
+                  sentTimeFormattedString + " ago",
+                  style: TextStyle(fontFamily: HelveticaFont.Roman, fontSize: 11, color: Colors.black26),
+                )
+              : SizedBox(),
         ),
       ],
     );
