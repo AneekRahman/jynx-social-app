@@ -96,11 +96,11 @@ class _FinalSignUpUpdatePageState extends State<FinalSignUpUpdatePage> {
             ),
             Builder(builder: (context) {
               return Padding(
-                padding: const EdgeInsets.all(20.0),
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
                 child: buildYellowButton(
                   child: Text(
                     "Finish Account",
-                    style: TextStyle(color: Colors.black, fontFamily: HelveticaFont.Bold, fontSize: 18),
+                    style: TextStyle(color: Colors.black, fontFamily: HelveticaFont.Bold, fontSize: 15),
                     textAlign: TextAlign.center,
                   ),
                   onTap: () async {
@@ -126,7 +126,7 @@ class _FinalSignUpUpdatePageState extends State<FinalSignUpUpdatePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SizedBox(height: MediaQuery.of(context).size.height * .05),
-            Text("Complete Account", style: singInHeadingStyle),
+            Text("Complete Account", style: Constants.SignInHeadingStyle),
             SizedBox(height: 10),
             Text(
               'Select a new username and enter your full name to complete the account creation',

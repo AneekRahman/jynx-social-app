@@ -43,7 +43,7 @@ class UsersChatRoomsRow extends StatelessWidget {
     final String chatRoomRowImageURL = isGroupChat ? chatRoomsInfos.groupChatImageURL! : otherPrivateChatRoomUser!.url;
 
     final DateTime sentTime = new DateTime.fromMillisecondsSinceEpoch(chatRoomsInfos.lTime);
-    final String sentTimeFormattedString = convertToTimeAgo(sentTime);
+    final String sentTimeFormattedString = Constants.convertToTimeAgo(sentTime);
 
     return Container(
       padding: EdgeInsets.symmetric(

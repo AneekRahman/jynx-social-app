@@ -3,14 +3,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:social_app/models/ChatRoomsInfos.dart';
 import 'package:social_app/models/UserFirestore.dart';
 import 'package:social_app/modules/constants.dart';
 import 'package:social_app/pages/ChatMessageRoom.dart';
 import 'package:social_app/services/firestore_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'ChatRoomPage.dart';
 import 'MyProfilePage.dart';
 
 class OthersProfilePage extends StatefulWidget {

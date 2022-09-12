@@ -10,7 +10,6 @@ import 'package:social_app/models/UsersChatRooms.dart';
 import 'package:social_app/modules/UsersChatRoomsRow.dart';
 import 'package:social_app/pages/ChatMessageRoom.dart';
 
-import '../pages/ChatRoomPage.dart';
 import '../services/rtd_service.dart';
 import 'LoadingBar.dart';
 import 'constants.dart';
@@ -80,9 +79,7 @@ class _RTDUsersChatsListState extends State<RTDUsersChatsList> {
     });
     // print("GOT: Loading more after: lTime: " + _lastUsersChatRoomsLTime!.toString());
     DataSnapshot newUsersChatRoomsSnapshot = await context.read<RealtimeDatabaseService>().getMoreUsersChats(
-          userUid: widget.currentUser.uid,
-          lastChatRoomLTime: _lastUsersChatRoomsLTime!,
-        );
+        userUid: widget.currentUser.uid, lastChatRoomLTime: _lastUsersChatRoomsLTime!, fromRequestList: widget.fromRequestList);
     // TODO Finish this
     if (newUsersChatRoomsSnapshot.exists) {
       // print("GOT: newUsersChatRoomsSnapshot (value): " + newUsersChatRoomsSnapshot.value.toString());

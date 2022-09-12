@@ -13,7 +13,7 @@ class MessageBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     DateTime sentTime = new DateTime.fromMillisecondsSinceEpoch(msgRow.sentTime!);
-    String sentTimeFormattedString = convertToTimeAgo(sentTime);
+    String sentTimeFormattedString = Constants.convertToTimeAgo(sentTime);
 
     return Column(
       crossAxisAlignment: isUsersMsg ? CrossAxisAlignment.end : CrossAxisAlignment.start,

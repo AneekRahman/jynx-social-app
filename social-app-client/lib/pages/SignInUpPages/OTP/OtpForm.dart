@@ -54,7 +54,7 @@ class _OtpFormState extends State<OtpForm> {
         style: TextStyle(fontSize: 24),
         keyboardType: TextInputType.number,
         textAlign: TextAlign.center,
-        decoration: otpInputDecoration,
+        decoration: Constants.OtpInputDecoration,
         maxLength: 1,
         onChanged: (value) {
           if (value.isEmpty) {
@@ -91,7 +91,7 @@ class _OtpFormState extends State<OtpForm> {
                   keyboardType: TextInputType.number,
                   textAlign: TextAlign.center,
                   maxLength: 1,
-                  decoration: otpInputDecoration,
+                  decoration: Constants.OtpInputDecoration,
                   onChanged: (value) {
                     if (value.isEmpty) {
                       values[5] = null;

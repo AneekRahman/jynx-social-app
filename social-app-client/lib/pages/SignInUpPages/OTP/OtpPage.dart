@@ -142,7 +142,7 @@ class _OtpPageState extends State<OtpPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   SizedBox(height: MediaQuery.of(context).size.height * .05),
-                  Text("Enter verification code", style: singInHeadingStyle),
+                  Text("Enter verification code", style: Constants.SignInHeadingStyle),
                   SizedBox(height: 10),
                   Row(
                     children: [
@@ -183,11 +183,11 @@ class _OtpPageState extends State<OtpPage> {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.all(20.0),
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
           child: buildYellowButton(
             child: Text(
               "Verify code",
-              style: TextStyle(color: Colors.black, fontFamily: HelveticaFont.Bold, fontSize: 18),
+              style: TextStyle(color: Colors.black, fontFamily: HelveticaFont.Bold, fontSize: 15),
               textAlign: TextAlign.center,
             ),
             onTap: _phoneSignIn,

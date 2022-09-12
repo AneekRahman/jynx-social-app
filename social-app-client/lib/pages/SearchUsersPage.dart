@@ -1,13 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 import 'package:social_app/models/UserFirestore.dart';
 import 'package:social_app/modules/LoadingBar.dart';
 import 'package:social_app/modules/constants.dart';
-import 'package:social_app/pages/ChatRoomPage.dart';
 import 'package:provider/provider.dart';
 import 'package:social_app/pages/OthersProfilePage.dart';
 

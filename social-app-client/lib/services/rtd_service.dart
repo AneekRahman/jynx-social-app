@@ -9,20 +9,28 @@ class RealtimeDatabaseService {
 
   const RealtimeDatabaseService(this._firebaseDatabase);
 
+  /// Using [userUid] listen to the changes of currentUsers /usersChatRooms/ stream to get the newest [10] entries onChildChanged
   Stream<DatabaseEvent> getUsersChatsStream({required String userUid}) {
     return _firebaseDatabase.ref("usersChatRooms/$userUid/chatRooms").orderByChild("lTime").limitToLast(10).onChildChanged;
   }
 
-  Future<DataSnapshot> getUsersChatRoom({required String userUid, required String chatRoomUid}) {
-    return _firebaseDatabase.ref("usersChatRooms/$userUid/chatRooms/$chatRoomUid").get();
+  /// Using [userUid] listen to the changes of currentUsers /requestedUsersChatRooms/ stream to get the newest [10] entries onChildChanged
+  Stream<DatabaseEvent> getUsersRequestedChatsStream({required String userUid}) {
+    return _firebaseDatabase.ref("requestedUsersChatRooms/$userUid/chatRooms").orderByChild("lTime").limitToLast(10).onChildChanged;
   }
 
-  Future<DataSnapshot> getMoreUsersChats({required String userUid, required int lastChatRoomLTime}) {
+  /// Get [10] of the currentUsers /usersChatRooms/ or /requestedUsersChatRooms/ nodes depending on [fromRequestList]
+  /// If [lastChatRoomLTime] is 0 then the newest entries will be fetched
+  Future<DataSnapshot> getMoreUsersChats({required String userUid, required int lastChatRoomLTime, required bool fromRequestList}) {
     if (lastChatRoomLTime == 0) {
-      return _firebaseDatabase.ref("usersChatRooms/$userUid/chatRooms").orderByChild("lTime").limitToLast(10).get();
+      return _firebaseDatabase
+          .ref("${fromRequestList ? 'requestedUsersChatRooms' : 'usersChatRooms'}/$userUid/chatRooms")
+          .orderByChild("lTime")
+          .limitToLast(10)
+          .get();
     } else {
       return _firebaseDatabase
-          .ref("usersChatRooms/$userUid/chatRooms")
+          .ref("${fromRequestList ? 'requestedUsersChatRooms' : 'usersChatRooms'}/$userUid/chatRooms")
           .orderByChild("lTime")
           .limitToLast(10)
           .endBefore(lastChatRoomLTime)
@@ -30,18 +38,22 @@ class RealtimeDatabaseService {
     }
   }
 
-  Stream<DatabaseEvent> getUsersRequestedChatsStream({required String userUid}) {
-    return _firebaseDatabase.ref("requestedUsersChatRooms/$userUid/chatRooms").orderByChild("lTime").limitToLast(10).onValue;
+  /// Using [userUid] and [chatRoomUid] get [1] of the currentUsers /usersChatRooms/ node
+  Future<DataSnapshot> getUsersChatRoom({required String userUid, required String chatRoomUid}) {
+    return _firebaseDatabase.ref("usersChatRooms/$userUid/chatRooms/$chatRoomUid").get();
   }
 
+  /// Using [chatRoomUid] get[1] of the /chatRoomsInfos/ node. This is primarily used after /usersChatRooms/ retrives a [chatRoomUid]
   Future<DataSnapshot> getChatRoomsInfo({required String chatRoomUid}) {
     return _firebaseDatabase.ref("chatRoomsInfos/$chatRoomUid").get();
   }
 
+  /// Listen to the newest [17] messages sent to /chatRooms/---[chatRoomUid]/messages
   Stream<DatabaseEvent> getChatRoomMessagesStream(String chatRoomUid) {
-    return _firebaseDatabase.ref('chatRooms/$chatRoomUid/messages').orderByChild("sentTime").limitToLast(10).onValue;
+    return _firebaseDatabase.ref('chatRooms/$chatRoomUid/messages').orderByChild("sentTime").limitToLast(17).onValue;
   }
 
+  /// Listen to the changes in /chatRooms/---[chatRoomUid]/members/ node to check if the otherUser was blocked
   Stream<DatabaseEvent> getChatRoomsMembersStream(String chatRoomUid) {
     return _firebaseDatabase.ref('chatRooms/$chatRoomUid/members').onValue;
   }
@@ -109,6 +121,9 @@ class RealtimeDatabaseService {
     return newChatRoomUid;
   }
 
+  /// When [ChatRoomsInfos] is not null then push a new message to /chatRooms/---[chatRoomUid]/messages.
+  /// Also, update the [lTime] for this users /usersChatRooms/---[userUid]/chatRooms/---[chatRoomUid] node and
+  /// update the [lTime] and [lMsg] for this chatRooms /chatRoomsInfos/---[chatRoomUid] node
   Future<void> sendMessageInRoom({
     required String chatRoomUid,
     required String msg,
@@ -138,6 +153,7 @@ class RealtimeDatabaseService {
     await _firebaseDatabase.ref().update(updates);
   }
 
+  /// When the [fromRequestList] is true in [RTDUsersChatsList] accept the request
   Future acceptChatRequest({
     required String chatRoomUid,
     required String currentUserUid,
@@ -150,6 +166,8 @@ class RealtimeDatabaseService {
     await _firebaseDatabase.ref("usersInfos/$currentUserUid/contacts/$otherUserUid").set(chatRoomUid);
   }
 
+  /// When [seen] for a /userChatRooms/ or /requestedUsersChatRooms/ node is 0 (meaning false), call this method to set that
+  /// nodes seen child as 1 (meaing true) depending on [fromRequestList]
   Future setMessageAsSeen({required String chatRoomUid, required String userUid, required bool fromRequestList}) async {
     final Map<String, dynamic> updates = {};
     if (fromRequestList)
@@ -159,17 +177,21 @@ class RealtimeDatabaseService {
     await _firebaseDatabase.ref().update(updates);
   }
 
+  /// When currentUsers /chatRooms/---[chatRoomUid]/members/---currentUserUid/ == true (meaning is not blocked) then the user can user
+  /// this method to block the otherUser using [blockedUserUid]
   Future blockInRTDatabase(String chatRoomUid, String blockedUserUid) async {
     final Map<String, dynamic> updates = {};
 
     /// When /chatRooms/ record is set as FALSE, users will not be able to create new messages in /messages/
-    updates['/chatRooms/$chatRoomUid/members/$blockedUserUid'] = false;
+    updates['chatRooms/$chatRoomUid/members/$blockedUserUid'] = false;
     await _firebaseDatabase.ref().update(updates);
   }
 
+  /// If the currentUser has blocked the otherUser using [blockedUserUid], then use this method to set the otherUsers blocked/unblocked
+  /// value to chatRooms/---[chatRoomUid]/members/---[blockedUserUid] == true (meaning is not blocked)
   Future unBlockInRTDatabase(String chatRoomUid, String blockedUserUid) async {
     final Map<String, dynamic> updates = {};
-    updates['/chatRooms/$chatRoomUid/members/$blockedUserUid'] = true;
+    updates['chatRooms/$chatRoomUid/members/$blockedUserUid'] = true;
     await _firebaseDatabase.ref().update(updates);
   }
 }

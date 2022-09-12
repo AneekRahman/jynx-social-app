@@ -1,23 +1,18 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 
 import 'constants.dart';
-import '../pages/ChatRoomPage.dart';
-import '../services/firestore_service.dart';
-import '../services/rtd_service.dart';
-import '../models/ChatRow.dart';
 import '../models/UserFirestore.dart';
 
-class ChatBottomBar extends StatefulWidget {
+class OldChatBottomBar extends StatefulWidget {
   BuildContext rootContext;
-  ChatRow? chatRow;
+  // ChatRow? chatRow;
   User currentUser;
   UserFirestore otherUser;
   Function setNewChatRoomUid;
-  ChatBottomBar({
+  OldChatBottomBar({
     Key? key,
-    this.chatRow,
+    // this.chatRow,
     required this.currentUser,
     required this.otherUser,
     required this.setNewChatRoomUid,
@@ -25,10 +20,10 @@ class ChatBottomBar extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<ChatBottomBar> createState() => _ChatBottomBarState();
+  State<OldChatBottomBar> createState() => _OldChatBottomBarState();
 }
 
-class _ChatBottomBarState extends State<ChatBottomBar> {
+class _OldChatBottomBarState extends State<OldChatBottomBar> {
   final chatMsgTextController = TextEditingController();
   String _textInputValue = "";
   bool _alreadySending = false;
@@ -83,16 +78,16 @@ class _ChatBottomBarState extends State<ChatBottomBar> {
   }
 
   void _onSendHandler(context) async {
-    if (_alreadySending) return;
-    _alreadySending = true;
+    // if (_alreadySending) return;
+    // _alreadySending = true;
 
-    if (widget.chatRow != null) {
-      await _sendMessageToChatRoom(context, false);
-    } else {
-      // Send a message to the chatRoomUid
-      await _createRequestAndSendMsg(context, true);
-    }
-    _alreadySending = false;
+    // if (widget.chatRow != null) {
+    //   await _sendMessageToChatRoom(context, false);
+    // } else {
+    //   // Send a message to the chatRoomUid
+    //   await _createRequestAndSendMsg(context, true);
+    // }
+    // _alreadySending = false;
   }
 
   @override
