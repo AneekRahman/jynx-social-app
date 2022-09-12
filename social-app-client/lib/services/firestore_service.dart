@@ -71,13 +71,14 @@ class FirestoreService {
         .get();
   }
 
-  /// Create a chatRoomRecord so that the Private [chatRoomUid] for 2 users can be found after querying
   Future createNewChatRoomRecords({
     required String chatRoomUid,
     required bool isGroup,
     required String currentUserUid,
     required String otherUserUid,
   }) async {
+    /// Create a chatRoomRecord so that the Private [chatRoomUid] for 2 users can be found after querying
+    /// after [ChatMessageRoom] is initializaed with [chatRoomsInfos]
     await _firestoreInstance.collection("chatRoomRecords").doc(chatRoomUid).set({
       "isGroup": isGroup,
       "members": {

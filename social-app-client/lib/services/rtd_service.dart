@@ -36,7 +36,11 @@ class RealtimeDatabaseService {
 
     Map<String, Object?> updates = {};
 
-    // First, show this new chatRoom in the users own chatList
+    // Create a /contacts/ record in  currentUsers /usersInfos/ node.
+    // If currentUser already has a contact (Private chat) with otherUser, this will be denied
+    updates["usersInfos/${currentUser.uid}/contacts/${otherUser.userUid}"] = newChatRoomUid;
+
+    // Create a record for this new chatRoom in the users own chatList
     updates["usersChatRooms/${currentUser.uid}/chatRooms/$newChatRoomUid"] = {
       "lTime": lTime,
       "seen": 1,
@@ -130,6 +134,8 @@ class RealtimeDatabaseService {
 
   Future blockInRTDatabase(String chatRoomUid, String blockedUserUid) async {
     final Map<String, dynamic> updates = {};
+
+    /// When /chatRooms/ record is set as FALSE, users will not be able to create new messages in /messages/
     updates['/chatRooms/$chatRoomUid/members/$blockedUserUid'] = false;
     await _firebaseDatabase.ref().update(updates);
   }

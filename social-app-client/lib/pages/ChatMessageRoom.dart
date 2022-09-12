@@ -140,12 +140,12 @@ class _ChatMessageRoomState extends State<ChatMessageRoom> {
                         chatRoomUid: widget.chatRoomsInfos!.chatRoomUid,
                         currentUser: widget.currentUser,
                       )
-                    : !noChatRoomFound
+                    : noChatRoomFound
                         ? Center(
-                            child: Text("preparing..."),
+                            child: Text("You haven't sent a message yet!"),
                           )
                         : Center(
-                            child: Text("You haven't sent a message yet!"),
+                            child: Text("preparing..."),
                           ),
               ),
               ChatBottomBar(
@@ -485,7 +485,6 @@ class _ChatBottomBarState extends State<ChatBottomBar> {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text("Unable to message the user currently."),
       ));
-      throw e;
     }
     setState(() {
       _creatingNewChatRoom = false;
