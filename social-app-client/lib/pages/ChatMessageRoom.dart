@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
@@ -37,11 +40,26 @@ class ChatMessageRoom extends StatefulWidget {
 class _ChatMessageRoomState extends State<ChatMessageRoom> {
   bool noChatRoomFound = false;
   bool isGroupChat = false;
+  bool otherUserBlockedInPrivateChat = false;
+  StreamSubscription<DatabaseEvent>? _chatRoomsMembersListener;
 
   /// In order to make sure there is always an other user, when [isGroupChat] is false, this [otherPrivateChatRoomUser] is
   /// initialized inside [initState] once if [widget.chatRoomsInfos] is not null. If [widget.chatRoomsInfos] is null then
   /// [otherPrivateChatRoomUser] is initialized after [findPrivateChatRoomsInFirestore] finds a private chatRoom
   ChatRoomsInfosMem? otherPrivateChatRoomUser;
+
+  /// Listen to /chatRooms/[chatRoomUid]/members/ if [isGroupChat] is Private to see if otherUser was blocked by currentUser
+  void _initChatRoomsMembersListener() {
+    _chatRoomsMembersListener =
+        context.read<RealtimeDatabaseService>().getChatRoomsMembersStream(widget.chatRoomsInfos!.chatRoomUid).listen((DatabaseEvent event) {
+      if (event.snapshot.exists) {
+        setState(() {
+          bool? membersOtherUserValue = (event.snapshot.value as Map)[otherPrivateChatRoomUser!.userUid];
+          otherUserBlockedInPrivateChat = membersOtherUserValue == false;
+        });
+      }
+    });
+  }
 
   /// This is called after [chatRoomsInfos] is not null. If [chatRoomsInfos] is available it will run right
   /// after the initState. If [chatRoomsInfos] is null, it will run after [getChatRoomInfos] finds a chatRoomsInfos.
@@ -54,6 +72,9 @@ class _ChatMessageRoomState extends State<ChatMessageRoom> {
           otherPrivateChatRoomUser = element;
         }
       });
+
+      // Since this is a private group, check if otherUser is blocked by listening to /members/ stream
+      _initChatRoomsMembersListener();
     } else {
       // This means that this is a group chat
       // TODO Finish the group chat initilization
@@ -82,6 +103,7 @@ class _ChatMessageRoomState extends State<ChatMessageRoom> {
       );
       // Finally initialize the chatRoom using the chatRoomsInfos
       _initChatRoomWithInfos();
+      // Update the UI since [_initChatRoomWithInfos] doesn't update it
       if (mounted) setState(() {});
     }
   }
@@ -121,6 +143,12 @@ class _ChatMessageRoomState extends State<ChatMessageRoom> {
   }
 
   @override
+  void dispose() {
+    if (_chatRoomsMembersListener != null) _chatRoomsMembersListener!.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(statusBarColor: Colors.transparent, statusBarIconBrightness: Brightness.dark),
@@ -132,6 +160,8 @@ class _ChatMessageRoomState extends State<ChatMessageRoom> {
               ChatTopBar(
                 chatRoomsInfos: widget.chatRoomsInfos,
                 otherPrivateChatRoomUser: otherPrivateChatRoomUser!,
+                otherUserBlockedInPrivateChat: otherUserBlockedInPrivateChat,
+                rootContext: context,
               ),
               // The mesasges list
               Expanded(
@@ -168,14 +198,32 @@ class _ChatMessageRoomState extends State<ChatMessageRoom> {
 class ChatTopBar extends StatelessWidget {
   /// [chatRoomsInfos] Might be null, but [otherPrivateChatRoomUser] will always be available. [otherPrivateChatRoomUser] is either
   /// passed directly from the previous page or derived from [chatRoomsInfos] if [otherPrivateChatRoomUser] is null to begin with.
-  ChatRoomsInfos? chatRoomsInfos;
+  final ChatRoomsInfos? chatRoomsInfos;
   final ChatRoomsInfosMem otherPrivateChatRoomUser;
+  final bool otherUserBlockedInPrivateChat;
+  final BuildContext rootContext;
 
   ChatTopBar({
     super.key,
     this.chatRoomsInfos,
     required this.otherPrivateChatRoomUser,
+    required this.otherUserBlockedInPrivateChat,
+    required this.rootContext,
   });
+
+  Future blockUnblockUser() async {
+    if (otherUserBlockedInPrivateChat) {
+      await rootContext.read<RealtimeDatabaseService>().unBlockInRTDatabase(
+            chatRoomsInfos!.chatRoomUid,
+            otherPrivateChatRoomUser.userUid,
+          );
+    } else {
+      await rootContext.read<RealtimeDatabaseService>().blockInRTDatabase(
+            chatRoomsInfos!.chatRoomUid,
+            otherPrivateChatRoomUser.userUid,
+          );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -253,14 +301,13 @@ class ChatTopBar extends StatelessWidget {
           onSelected: ((value) {
             if (value == 1) _showOtherUsersProfileModal(context);
             if (value == 2) Clipboard.setData(ClipboardData(text: otherPrivateChatRoomUser.uName));
-            // if (value == 3 && _chatRequestActionsGlobalKey.currentState != null)
-            //   _chatRequestActionsGlobalKey.currentState!.blockUnblockUser();
+            if (value == 3) blockUnblockUser();
           }),
           itemBuilder: (ctx) => chatRoomsInfos != null
               ? [
                   _buildPopupMenuItem(context, 'View profile', Icons.person_outline, 1),
                   _buildPopupMenuItem(context, 'Copy username', Icons.copy, 2),
-                  _buildPopupMenuItem(context, "Block user", Icons.person_off, 3),
+                  _buildPopupMenuItem(context, otherUserBlockedInPrivateChat ? "Unblock user" : "Block user", Icons.person_off, 3),
                 ]
               : [],
         ),

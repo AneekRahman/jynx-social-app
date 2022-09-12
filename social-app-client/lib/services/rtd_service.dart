@@ -23,8 +23,12 @@ class RealtimeDatabaseService {
     return _firebaseDatabase.ref("chatRoomsInfos").child(chatRoomUid).get();
   }
 
-  Stream getChatRoomMessagesStream(String chatRoomUid) {
+  Stream<DatabaseEvent> getChatRoomMessagesStream(String chatRoomUid) {
     return _firebaseDatabase.ref().child('chatRooms/$chatRoomUid/messages').orderByChild("sentTime").limitToLast(10).onValue;
+  }
+
+  Stream<DatabaseEvent> getChatRoomsMembersStream(String chatRoomUid) {
+    return _firebaseDatabase.ref().child('chatRooms/$chatRoomUid/members').onValue;
   }
 
   /// Called when a new request is needed to be created because the [ChatRoomsInfos] object is null.
