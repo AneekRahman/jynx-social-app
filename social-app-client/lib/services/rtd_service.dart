@@ -119,6 +119,15 @@ class RealtimeDatabaseService {
     await _firebaseDatabase.ref("requestedUsersChatRooms/$userUid/chatRooms/$chatRoomUid").remove();
   }
 
+  Future setMessageAsSeen({required String chatRoomUid, required String userUid, required bool fromRequestList}) async {
+    final Map<String, dynamic> updates = {};
+    if (fromRequestList)
+      updates["requestedUsersChatRooms/$userUid/chatRooms/$chatRoomUid/seen"] = 1;
+    else
+      updates["usersChatRooms/$userUid/chatRooms/$chatRoomUid/seen"] = 1;
+    await _firebaseDatabase.ref().update(updates);
+  }
+
   Future blockInRTDatabase(String chatRoomUid, String blockedUserUid) async {
     final Map<String, dynamic> updates = {};
     updates['/chatRooms/$chatRoomUid/members/$blockedUserUid'] = false;

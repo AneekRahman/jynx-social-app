@@ -43,9 +43,10 @@ class _ChatMessageRoomState extends State<ChatMessageRoom> {
   /// [otherPrivateChatRoomUser] is initialized after [findPrivateChatRoomsInFirestore] finds a private chatRoom
   ChatRoomsInfosMem? otherPrivateChatRoomUser;
 
-  /// This is called after [chatRoomsInfos] is prepared. If [chatRoomsInfos] is available it will run right
+  /// This is called after [chatRoomsInfos] is not null. If [chatRoomsInfos] is available it will run right
   /// after the initState. If [chatRoomsInfos] is null, it will run after [getChatRoomInfos] finds a chatRoomsInfos.
-  void _initChatRoomWithInfos() {
+  Future _initChatRoomWithInfos() async {
+    // Check if this chatRooms is a Group chat or Private
     if (!widget.chatRoomsInfos!.grp) {
       // This means that this is a private chat, so save the other user as a state
       widget.chatRoomsInfos!.mems.forEach((element) {
@@ -57,6 +58,15 @@ class _ChatMessageRoomState extends State<ChatMessageRoom> {
       // This means that this is a group chat
       // TODO Finish the group chat initilization
       isGroupChat = true;
+    }
+
+    // Check if the chat was not seen (0 == NOT SEEN) yet by this [currentUser]. If not seen then set it as seen
+    if (widget.chatRoomsInfos!.seenByThisUser == 0) {
+      await context.read<RealtimeDatabaseService>().setMessageAsSeen(
+            chatRoomUid: widget.chatRoomsInfos!.chatRoomUid,
+            userUid: widget.currentUser.uid,
+            fromRequestList: widget.fromRequestList,
+          );
     }
   }
 
