@@ -7,7 +7,15 @@ class FirestoreService {
 
   Stream<DocumentSnapshot> getUserDocumentStream(String userUid) {
     return _firestoreInstance.collection("users").doc(userUid).snapshots();
-    // return MyUserObject.fromJson(snapshot.data());
+  }
+
+  Future<DocumentSnapshot> getUserDocument(String userUid) {
+    return _firestoreInstance.collection("users").doc(userUid).get();
+  }
+
+  Future updateUser(User user, newValues) async {
+    // Try to Save the /users/ and /takenUserNames/ documents
+    await _firestoreInstance.collection("users").doc(user.uid).update(newValues);
   }
 
   /// Use the [currentUserUid] and [otherUserUid] to find a commonly shared private message in Firestore
@@ -35,10 +43,5 @@ class FirestoreService {
         otherUserUid: true, // False means this user is blocked by the other user
       },
     });
-  }
-
-  Future updateUser(User user, newValues) async {
-    // Try to Save the /users/ and /takenUserNames/ documents
-    await _firestoreInstance.collection("users").doc(user.uid).update(newValues);
   }
 }

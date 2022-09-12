@@ -39,14 +39,10 @@ class _OthersProfilePageState extends State<OthersProfilePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Color(0xFF1f1f1f),
-      body: StreamBuilder(
-        stream: context.watch<FirestoreService>().getUserDocumentStream(widget.otherUsersProfileObject.userUid),
+      body: FutureBuilder(
+        future: context.watch<FirestoreService>().getUserDocument(widget.otherUsersProfileObject.userUid),
         builder: (context, AsyncSnapshot<DocumentSnapshot> snapshot) {
-          if (snapshot.data == null) return SizedBox();
-
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: SizedBox(height: 30, width: 30, child: CircularProgressIndicator(strokeWidth: 2)));
-          } else if (snapshot.hasData && snapshot.data!.exists) {
+          if (snapshot.hasData && snapshot.data!.exists) {
             UserFirestore _myUserObject = UserFirestore.fromMap(snapshot.data!.data() as Map<String, dynamic>, snapshot.data!.id);
 
             return Padding(
@@ -100,7 +96,15 @@ class _OthersProfilePageState extends State<OthersProfilePage> {
               ),
             );
           } else {
-            return Center(child: Text("There was an error, try again", style: TextStyle(color: Colors.white)));
+            return Center(
+              child: SizedBox(
+                  height: 30,
+                  width: 30,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.yellow,
+                  )),
+            );
           }
         },
       ),
