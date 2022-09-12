@@ -119,8 +119,16 @@ class RealtimeDatabaseService {
     await _firebaseDatabase.ref().update(updates);
   }
 
-  Future deleteRequestedUsersChatRooms({required String chatRoomUid, required String userUid}) async {
-    await _firebaseDatabase.ref("requestedUsersChatRooms/$userUid/chatRooms/$chatRoomUid").remove();
+  Future acceptChatRequest({
+    required String chatRoomUid,
+    required String currentUserUid,
+    required String otherUserUid,
+  }) async {
+    /// Remove from currentUsers /requestedUsersChatRooms/ list
+    await _firebaseDatabase.ref("requestedUsersChatRooms/$currentUserUid/chatRooms/$chatRoomUid").remove();
+
+    /// Create add to users /usersInfos/contacts/ list
+    await _firebaseDatabase.ref("usersInfos/$currentUserUid/contacts/$otherUserUid").set(chatRoomUid);
   }
 
   Future setMessageAsSeen({required String chatRoomUid, required String userUid, required bool fromRequestList}) async {

@@ -502,9 +502,10 @@ class _ChatBottomBarState extends State<ChatBottomBar> {
 
       // If this is [widget.fromRequestList] then DELETE this chatRoom entry from /requestedUsersChatRooms/
       if (widget.fromRequestList) {
-        await context.read<RealtimeDatabaseService>().deleteRequestedUsersChatRooms(
+        await context.read<RealtimeDatabaseService>().acceptChatRequest(
               chatRoomUid: widget.chatRoomsInfos!.chatRoomUid,
-              userUid: widget.currentUser.uid,
+              currentUserUid: widget.currentUser.uid,
+              otherUserUid: widget.otherUser.userUid,
             );
         // Update the UI and stop showing the [_buildRequestedNotice]
         setState(() {

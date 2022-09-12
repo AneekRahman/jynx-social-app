@@ -33,7 +33,7 @@ class _RTDUsersChatsListState extends State<RTDUsersChatsList> {
     _streamSubscription = widget.stream.listen((DatabaseEvent event) {
       if (event.snapshot.exists) {
         final usersChatRoomsList = UsersChatRooms.fromMap(event.snapshot.value as Map);
-        getChatRoomsInfosFromUids(usersChatRoomsList);
+        getChatRoomsInfosFromUidsInStream(usersChatRoomsList);
       } else {
         // There were no chatRooms found for this user
         setState(() {
@@ -52,7 +52,7 @@ class _RTDUsersChatsListState extends State<RTDUsersChatsList> {
     }
   }
 
-  Future getChatRoomsInfosFromUids(UsersChatRooms usersChatRoomList) async {
+  Future getChatRoomsInfosFromUidsInStream(UsersChatRooms usersChatRoomList) async {
     List<Future<DataSnapshot>> chatRoomsInfosPromises = [];
 
     usersChatRoomList.usersChatRooms.forEach((UsersChatRoom usersChatRoom) {
@@ -72,6 +72,8 @@ class _RTDUsersChatsListState extends State<RTDUsersChatsList> {
         /// [_chatRoomsInfosList] has 10 or more entries
         _chatRoomsInfosList.removeRange(0, newChatRoomsInfosList.length);
       }
+    } else {
+      _chatRoomsInfosList = [];
     }
 
     /// Add the newest version of the entry and Also map [seenByThisUser]
