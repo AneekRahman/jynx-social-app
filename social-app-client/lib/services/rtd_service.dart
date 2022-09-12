@@ -1,8 +1,6 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:social_app/models/ChatRoomsInfos.dart';
-import 'package:social_app/models/UserFirestore.dart';
 
 import '../models/CustomClaims.dart';
 
@@ -11,31 +9,42 @@ class RealtimeDatabaseService {
 
   const RealtimeDatabaseService(this._firebaseDatabase);
 
-  Stream<DatabaseEvent> getUsersChatsStream({required userUid}) {
-    return _firebaseDatabase.ref("usersChatRooms").child(userUid).child("chatRooms").orderByChild("lTime").limitToLast(10).onValue;
+  Stream<DatabaseEvent> getUsersChatsStream({required String userUid}) {
+    // TODO Change from 3 to 10
+    return _firebaseDatabase.ref("usersChatRooms/$userUid/chatRooms").orderByChild("lTime").limitToLast(3).onValue;
   }
 
-  Stream<DatabaseEvent> getUsersRequestedChatsStream({required userUid}) {
-    return _firebaseDatabase.ref("requestedUsersChatRooms").child(userUid).child("chatRooms").orderByChild("lTime").limitToLast(10).onValue;
+  Future<DataSnapshot> getMoreUsersChatsOnScroll({required String userUid, required int lastChatRoomLTime}) {
+    // TODO Change from 3 to 10
+    return _firebaseDatabase
+        .ref("usersChatRooms/$userUid/chatRooms")
+        .orderByChild("lTime")
+        .limitToLast(3)
+        .endBefore(lastChatRoomLTime)
+        .get();
   }
 
-  Future<DataSnapshot> getChatRoomsInfoPromise({required chatRoomUid}) {
-    return _firebaseDatabase.ref("chatRoomsInfos").child(chatRoomUid).get();
+  Stream<DatabaseEvent> getUsersRequestedChatsStream({required String userUid}) {
+    return _firebaseDatabase.ref("requestedUsersChatRooms/$userUid/chatRooms").orderByChild("lTime").limitToLast(10).onValue;
+  }
+
+  Future<DataSnapshot> getChatRoomsInfoPromise({required String chatRoomUid}) {
+    return _firebaseDatabase.ref("chatRoomsInfos/$chatRoomUid").get();
   }
 
   Stream<DatabaseEvent> getChatRoomMessagesStream(String chatRoomUid) {
-    return _firebaseDatabase.ref().child('chatRooms/$chatRoomUid/messages').orderByChild("sentTime").limitToLast(10).onValue;
+    return _firebaseDatabase.ref('chatRooms/$chatRoomUid/messages').orderByChild("sentTime").limitToLast(10).onValue;
   }
 
   Stream<DatabaseEvent> getChatRoomsMembersStream(String chatRoomUid) {
-    return _firebaseDatabase.ref().child('chatRooms/$chatRoomUid/members').onValue;
+    return _firebaseDatabase.ref('chatRooms/$chatRoomUid/members').onValue;
   }
 
   /// Called when a new request is needed to be created because the [ChatRoomsInfos] object is null.
   Future createNewRequest({required User currentUser, required ChatRoomsInfosMem otherUser, required String msg}) async {
     // Get [CustomClaims] for userName
     CustomClaims claims = await CustomClaims.getClaims(false);
-    String? newChatRoomUid = FirebaseDatabase.instance.ref().child("chatRooms").push().key;
+    String? newChatRoomUid = FirebaseDatabase.instance.ref('chatRooms').push().key;
     int lTime = new DateTime.now().millisecondsSinceEpoch;
 
     Map<String, Object?> updates = {};

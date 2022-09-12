@@ -27,17 +27,22 @@ class RTDUsersChatsList extends StatefulWidget {
 class _RTDUsersChatsListState extends State<RTDUsersChatsList> {
   late StreamSubscription<DatabaseEvent> _streamSubscription;
   List<ChatRoomsInfos> _chatRoomsInfosList = [];
-  bool _loading = true;
+  bool _loadingStream = true;
+  bool _loadingMoreChatsOnScroll = false;
+  bool _reachedEndOfResults = false;
+  ScrollController? _scrollController = ScrollController();
+  int? _lastUsersChatRoomsLTime;
 
-  void initUsersChatRoomsStreamListener() {
+  void _initUsersChatRoomsStreamListener() {
     _streamSubscription = widget.stream.listen((DatabaseEvent event) {
+      print("!! Stream GOT called");
       if (event.snapshot.exists) {
         final usersChatRoomsList = UsersChatRooms.fromMap(event.snapshot.value as Map);
-        getChatRoomsInfosFromUidsInStream(usersChatRoomsList);
+        loadChatRoomsInfosFromUids(usersChatRoomsList, true);
       } else {
         // There were no chatRooms found for this user
         setState(() {
-          if (_loading) _loading = false;
+          if (_loadingStream) _loadingStream = false;
         });
       }
     });
@@ -47,12 +52,12 @@ class _RTDUsersChatsListState extends State<RTDUsersChatsList> {
     for (var i = 0; i < _chatRoomsInfosList.length; i++) {
       if (_chatRoomsInfosList[i].chatRoomUid == chatRoomUid) {
         _chatRoomsInfosList.removeAt(i);
-        print("GOT: removed: " + chatRoomUid);
+        print("GOT: removed duplicate: " + chatRoomUid);
       }
     }
   }
 
-  Future getChatRoomsInfosFromUidsInStream(UsersChatRooms usersChatRoomList) async {
+  Future loadChatRoomsInfosFromUids(UsersChatRooms usersChatRoomList, bool fromStream) async {
     List<Future<DataSnapshot>> chatRoomsInfosPromises = [];
 
     usersChatRoomList.usersChatRooms.forEach((UsersChatRoom usersChatRoom) {
@@ -63,20 +68,8 @@ class _RTDUsersChatsListState extends State<RTDUsersChatsList> {
     /// So, looping through will have both lists index match each other!
     List<DataSnapshot> newChatRoomsInfosList = await Future.wait(chatRoomsInfosPromises);
 
-    /// Delete the newest few entries from [_chatRoomsInfosList] sinces [usersChatRoomList] returned the newest 10 entries
-    if (_chatRoomsInfosList.isNotEmpty) {
-      if (_chatRoomsInfosList.length < 10) {
-        /// [_chatRoomsInfosList] has less than 10 entries
-        _chatRoomsInfosList.removeRange(0, _chatRoomsInfosList.length);
-      } else {
-        /// [_chatRoomsInfosList] has 10 or more entries
-        _chatRoomsInfosList.removeRange(0, newChatRoomsInfosList.length);
-      }
-    } else {
-      _chatRoomsInfosList = [];
-    }
-
     /// Add the newest version of the entry and Also map [seenByThisUser]
+    /// If [fromStream] is false this will append the new entries to the old ones in [_chatRoomsInfosList]
     for (var i = 0; i < newChatRoomsInfosList.length; i++) {
       final element = newChatRoomsInfosList[i];
       if (element.exists) {
@@ -88,18 +81,54 @@ class _RTDUsersChatsListState extends State<RTDUsersChatsList> {
       }
     }
 
-    /// Lastly, sort the new [_chatRoomsInfosList] from newest to the oldest
+    /// Sort the new [_chatRoomsInfosList] from newest to the oldest
     _chatRoomsInfosList.sort((a, b) => b.lTime.compareTo(a.lTime));
 
+    if (fromStream)
+      _chatRoomsInfosList.forEach((element) {
+        print('GOT: Stream ChatRoomInfos: ${element.chatRoomUid} (lTime): ${element.lTime}');
+      });
+
+    // Save the _lastUsersChatRoomsDataSnapshot for loading more chats onScroll
+    _lastUsersChatRoomsLTime = _chatRoomsInfosList.last.lTime;
+
     /// Use [setState] to update the UI
+
     setState(() {
-      if (_loading) _loading = false;
+      _loadingStream = false;
     });
+  }
+
+  Future _loadMoreUsersChatRoomsOnScroll() async {
+    if (_loadingMoreChatsOnScroll || _lastUsersChatRoomsLTime == null) return;
+    _loadingMoreChatsOnScroll = true;
+
+    print("ON SCROLL GOT called");
+
+    try {
+      print("GOT: Loading more after: lTime: " + _lastUsersChatRoomsLTime!.toString());
+
+      // Don't know why :/ But when this is called (but probably data not fetched) the value that should have returned here
+      // gets returned in the stream. Meaning the endBefore value gets sent to the stream.
+      context.read<RealtimeDatabaseService>().getMoreUsersChatsOnScroll(
+            userUid: widget.currentUser.uid,
+            lastChatRoomLTime: _lastUsersChatRoomsLTime!,
+          );
+    } catch (e) {}
+    _loadingMoreChatsOnScroll = false;
   }
 
   @override
   void initState() {
-    initUsersChatRoomsStreamListener();
+    _initUsersChatRoomsStreamListener();
+
+    // Listen to the scroll to load more UsersChatRooms node when scroll reaches the end
+    _scrollController!.addListener(() {
+      if (_scrollController!.offset > _scrollController!.position.maxScrollExtent - 30 && !_scrollController!.position.outOfRange) {
+        // Reached bottom
+        _loadMoreUsersChatRoomsOnScroll();
+      }
+    });
 
     super.initState();
   }
@@ -116,12 +145,13 @@ class _RTDUsersChatsListState extends State<RTDUsersChatsList> {
       child: Column(
         children: [
           LoadingBar(
-            loading: _loading,
+            loading: _loadingStream,
           ),
           Expanded(
-            child: _chatRoomsInfosList.length == 0 && !_loading
+            child: _chatRoomsInfosList.length == 0 && !_loadingStream
                 ? _buildNoChatsFoundMsg()
                 : CustomScrollView(
+                    controller: _scrollController,
                     physics: BouncingScrollPhysics(),
                     slivers: [
                       SliverList(
@@ -149,6 +179,16 @@ class _RTDUsersChatsListState extends State<RTDUsersChatsList> {
                           childCount: _chatRoomsInfosList.length,
                         ),
                       ),
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.only(top: 5, bottom: 20.0),
+                          child: Center(
+                              child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.yellow,
+                          )),
+                        ),
+                      )
                     ],
                   ),
           ),
