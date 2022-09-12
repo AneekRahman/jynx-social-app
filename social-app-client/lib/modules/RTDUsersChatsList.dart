@@ -25,28 +25,13 @@ class RTDUsersChatsList extends StatefulWidget {
 }
 
 class _RTDUsersChatsListState extends State<RTDUsersChatsList> {
-  late StreamSubscription<DatabaseEvent> _streamSubscription;
+  StreamSubscription<DatabaseEvent>? _streamSubscription;
   List<ChatRoomsInfos> _chatRoomsInfosList = [];
   bool _loadingStream = true;
-  bool _loadingMoreChatsOnScroll = false;
+  bool _loadingMoreChats = false;
   bool _reachedEndOfResults = false;
   ScrollController? _scrollController = ScrollController();
-  int? _lastUsersChatRoomsLTime;
-
-  void _initUsersChatRoomsStreamListener() {
-    _streamSubscription = widget.stream.listen((DatabaseEvent event) {
-      print("!! Stream GOT called");
-      if (event.snapshot.exists) {
-        final usersChatRoomsList = UsersChatRooms.fromMap(event.snapshot.value as Map);
-        loadChatRoomsInfosFromUids(usersChatRoomsList, true);
-      } else {
-        // There were no chatRooms found for this user
-        setState(() {
-          if (_loadingStream) _loadingStream = false;
-        });
-      }
-    });
-  }
+  int? _lastUsersChatRoomsLTime = 0;
 
   void listPreAddDuplicateRemoval(String chatRoomUid) {
     for (var i = 0; i < _chatRoomsInfosList.length; i++) {
@@ -57,22 +42,93 @@ class _RTDUsersChatsListState extends State<RTDUsersChatsList> {
     }
   }
 
-  Future loadChatRoomsInfosFromUids(UsersChatRooms usersChatRoomList, bool fromStream) async {
+  Future addNewChangedChatRoomsInfos(String chatRoomUid) async {
+    ChatRoomsInfos? prevChatRoomsInfos;
+    _chatRoomsInfosList.forEach((element) {
+      if (element.chatRoomUid == chatRoomUid) prevChatRoomsInfos = element;
+    });
+
+    final DataSnapshot chatRoomsInfosSnapshot = await context.read<RealtimeDatabaseService>().getChatRoomsInfo(chatRoomUid: chatRoomUid);
+
+    if (prevChatRoomsInfos != null && chatRoomsInfosSnapshot.exists) {
+      ChatRoomsInfos newChatRoomsInfos = ChatRoomsInfos.fromMap(
+        chatRoomsInfosSnapshot.value as Map,
+        chatRoomUid: chatRoomUid,
+        seenByThisUser: prevChatRoomsInfos!.seenByThisUser,
+      );
+      listPreAddDuplicateRemoval(chatRoomUid);
+      _chatRoomsInfosList.add(newChatRoomsInfos);
+      _chatRoomsInfosList.sort((a, b) => b.lTime.compareTo(a.lTime));
+    }
+  }
+
+  void _handleStreamListener(DatabaseEvent event) async {
+    // _loadingMoreChats is evaltuated inside of [stream.addListener]
+    _loadingMoreChats = true;
+
+    if (event.snapshot.exists) {
+      final DataSnapshot newUsersChatRoomsSnapshot = event.snapshot;
+      print("!! Stream GOT (length) called: " + newUsersChatRoomsSnapshot.children.length.toString());
+      print("!! Stream GOT (first children value) called: " + newUsersChatRoomsSnapshot.children.first.value.toString());
+      print("!! Stream GOT (value) called: " + newUsersChatRoomsSnapshot.value.toString());
+
+      // Get this to verify if the childrens child has either [lTime] and [seen] or both
+      final DataSnapshot firstChildrenSnapshot = newUsersChatRoomsSnapshot.children.first;
+
+      if (firstChildrenSnapshot.hasChild("lTime") && firstChildrenSnapshot.hasChild("seen")) {
+        // Both lTime and seen are present in the [newUsersChatRoomsSnapshot]
+        print("!! Stream GOT INSIDE 1");
+
+        final usersChatRoomsList = UsersChatRooms.fromMap(newUsersChatRoomsSnapshot.value as Map);
+        await appendInfosFromUsersChatRoomsUids(usersChatRoomsList);
+      } else if (firstChildrenSnapshot.hasChild("lTime") && !firstChildrenSnapshot.hasChild("seen")) {
+        // Only lTime is present. So, retrive only the /chatRoomsInfos/ using [addNewChangedChatRoomsInfos]
+        print("!! Stream GOT INSIDE 2");
+
+        await addNewChangedChatRoomsInfos(firstChildrenSnapshot.key!);
+      } else if (firstChildrenSnapshot.hasChild("seen") && !firstChildrenSnapshot.hasChild("lTime")) {
+        // Only seen is present. So, update only the seen in for the specific [_chatRoomsInfosList] element
+        print("!! Stream GOT INSIDE 3");
+
+        newUsersChatRoomsSnapshot.children.forEach((usersChatRoomsSnapshot) {
+          _chatRoomsInfosList.forEach((element) {
+            if (element.chatRoomUid == usersChatRoomsSnapshot.key) {
+              element.seenByThisUser = (usersChatRoomsSnapshot.value as Map)["seen"];
+            }
+          });
+        });
+      }
+    } else {
+      // This will only when [_reachedEndOfResults] has been set to false after the very first run
+      if (!_loadingStream)
+        setState(() {
+          _reachedEndOfResults = true;
+        });
+    }
+    //
+    setState(() {
+      _loadingStream = false;
+      _loadingMoreChats = false;
+    });
+  }
+
+  Future appendInfosFromUsersChatRoomsUids(UsersChatRooms usersChatRoomList) async {
     List<Future<DataSnapshot>> chatRoomsInfosPromises = [];
 
     usersChatRoomList.usersChatRooms.forEach((UsersChatRoom usersChatRoom) {
-      chatRoomsInfosPromises.add(context.read<RealtimeDatabaseService>().getChatRoomsInfoPromise(chatRoomUid: usersChatRoom.chatRoomUid));
+      chatRoomsInfosPromises.add(context.read<RealtimeDatabaseService>().getChatRoomsInfo(chatRoomUid: usersChatRoom.chatRoomUid));
     });
 
     /// The order of entries in [newChatRoomsInfosList] matches the order of entries in [usersChatRoomList] which were given
     /// So, looping through will have both lists index match each other!
-    List<DataSnapshot> newChatRoomsInfosList = await Future.wait(chatRoomsInfosPromises);
+    List<DataSnapshot> newChatRoomsInfosSnapshots = await Future.wait(chatRoomsInfosPromises);
 
     /// Add the newest version of the entry and Also map [seenByThisUser]
     /// If [fromStream] is false this will append the new entries to the old ones in [_chatRoomsInfosList]
-    for (var i = 0; i < newChatRoomsInfosList.length; i++) {
-      final element = newChatRoomsInfosList[i];
+    for (var i = 0; i < newChatRoomsInfosSnapshots.length; i++) {
+      final element = newChatRoomsInfosSnapshots[i];
       if (element.exists) {
+        listPreAddDuplicateRemoval(element.key!);
         _chatRoomsInfosList.add(ChatRoomsInfos.fromMap(
           element.value as Map,
           chatRoomUid: element.key!,
@@ -81,52 +137,31 @@ class _RTDUsersChatsListState extends State<RTDUsersChatsList> {
       }
     }
 
-    /// Sort the new [_chatRoomsInfosList] from newest to the oldest
+    /// Sort the new [newChatRoomsInfosList] from newest to the oldest
     _chatRoomsInfosList.sort((a, b) => b.lTime.compareTo(a.lTime));
 
-    if (fromStream)
-      _chatRoomsInfosList.forEach((element) {
-        print('GOT: Stream ChatRoomInfos: ${element.chatRoomUid} (lTime): ${element.lTime}');
-      });
-
-    // Save the _lastUsersChatRoomsDataSnapshot for loading more chats onScroll
     _lastUsersChatRoomsLTime = _chatRoomsInfosList.last.lTime;
 
-    /// Use [setState] to update the UI
-
-    setState(() {
-      _loadingStream = false;
-    });
+    setState(() {});
   }
 
-  Future _loadMoreUsersChatRoomsOnScroll() async {
-    if (_loadingMoreChatsOnScroll || _lastUsersChatRoomsLTime == null) return;
-    _loadingMoreChatsOnScroll = true;
-
-    print("ON SCROLL GOT called");
-
-    try {
-      print("GOT: Loading more after: lTime: " + _lastUsersChatRoomsLTime!.toString());
-
-      // Don't know why :/ But when this is called (but probably data not fetched) the value that should have returned here
-      // gets returned in the stream. Meaning the endBefore value gets sent to the stream.
-      context.read<RealtimeDatabaseService>().getMoreUsersChatsOnScroll(
-            userUid: widget.currentUser.uid,
-            lastChatRoomLTime: _lastUsersChatRoomsLTime!,
-          );
-    } catch (e) {}
-    _loadingMoreChatsOnScroll = false;
+  Future _loadUsersChatRooms() async {
+    print("GOT: Loading more after: lTime: " + _lastUsersChatRoomsLTime!.toString());
+    context.read<RealtimeDatabaseService>().getMoreUsersChatsOnScroll(
+          userUid: widget.currentUser.uid,
+          lastChatRoomLTime: _lastUsersChatRoomsLTime!,
+        );
   }
 
   @override
   void initState() {
-    _initUsersChatRoomsStreamListener();
+    _streamSubscription = widget.stream.listen(_handleStreamListener);
 
     // Listen to the scroll to load more UsersChatRooms node when scroll reaches the end
     _scrollController!.addListener(() {
       if (_scrollController!.offset > _scrollController!.position.maxScrollExtent - 30 && !_scrollController!.position.outOfRange) {
         // Reached bottom
-        _loadMoreUsersChatRoomsOnScroll();
+        if (!_reachedEndOfResults && !_loadingMoreChats) _loadUsersChatRooms();
       }
     });
 
@@ -135,7 +170,7 @@ class _RTDUsersChatsListState extends State<RTDUsersChatsList> {
 
   @override
   void dispose() {
-    _streamSubscription.cancel();
+    if (_streamSubscription != null) _streamSubscription!.cancel();
     super.dispose();
   }
 
@@ -181,12 +216,14 @@ class _RTDUsersChatsListState extends State<RTDUsersChatsList> {
                       ),
                       SliverToBoxAdapter(
                         child: Padding(
-                          padding: const EdgeInsets.only(top: 5, bottom: 20.0),
+                          padding: const EdgeInsets.only(top: 5, bottom: 30.0),
                           child: Center(
-                              child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.yellow,
-                          )),
+                              child: !_reachedEndOfResults
+                                  ? CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.yellow,
+                                    )
+                                  : Text("reached the end")),
                         ),
                       )
                     ],

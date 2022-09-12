@@ -94,7 +94,7 @@ class _ChatMessageRoomState extends State<ChatMessageRoom> {
   /// When a [chatRoomUid] is found from either [findPrivateChatRoomsInFirestore] or the [setNewChatRoomUid] callback after creating a
   /// new request, use this method to fetch the new [ChatRoomsInfos] and set it in [ChatMessageRoom]
   Future getAndSetChatRoomsInfos(String chatRoomUid) async {
-    final rtdSnapshot = await context.read<RealtimeDatabaseService>().getChatRoomsInfoPromise(chatRoomUid: chatRoomUid);
+    final rtdSnapshot = await context.read<RealtimeDatabaseService>().getChatRoomsInfo(chatRoomUid: chatRoomUid);
 
     if (rtdSnapshot.exists) {
       widget.chatRoomsInfos = ChatRoomsInfos.fromMap(

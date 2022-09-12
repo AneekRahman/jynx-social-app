@@ -14,21 +14,34 @@ class RealtimeDatabaseService {
     return _firebaseDatabase.ref("usersChatRooms/$userUid/chatRooms").orderByChild("lTime").limitToLast(3).onValue;
   }
 
+  Future<DataSnapshot> getUsersChatRoom({required String userUid, required String chatRoomUid}) {
+    return _firebaseDatabase.ref("usersChatRooms/$userUid/chatRooms/$chatRoomUid").get();
+  }
+
   Future<DataSnapshot> getMoreUsersChatsOnScroll({required String userUid, required int lastChatRoomLTime}) {
-    // TODO Change from 3 to 10
-    return _firebaseDatabase
-        .ref("usersChatRooms/$userUid/chatRooms")
-        .orderByChild("lTime")
-        .limitToLast(3)
-        .endBefore(lastChatRoomLTime)
-        .get();
+    if (lastChatRoomLTime == 0) {
+      return _firebaseDatabase
+          .ref("usersChatRooms/$userUid/chatRooms")
+          .orderByChild("lTime")
+          // TODO Change from 3 to 10
+          .limitToLast(3)
+          .get();
+    } else {
+      return _firebaseDatabase
+          .ref("usersChatRooms/$userUid/chatRooms")
+          .orderByChild("lTime")
+          // TODO Change from 3 to 10
+          .limitToLast(3)
+          .endBefore(lastChatRoomLTime)
+          .get();
+    }
   }
 
   Stream<DatabaseEvent> getUsersRequestedChatsStream({required String userUid}) {
     return _firebaseDatabase.ref("requestedUsersChatRooms/$userUid/chatRooms").orderByChild("lTime").limitToLast(10).onValue;
   }
 
-  Future<DataSnapshot> getChatRoomsInfoPromise({required String chatRoomUid}) {
+  Future<DataSnapshot> getChatRoomsInfo({required String chatRoomUid}) {
     return _firebaseDatabase.ref("chatRoomsInfos/$chatRoomUid").get();
   }
 

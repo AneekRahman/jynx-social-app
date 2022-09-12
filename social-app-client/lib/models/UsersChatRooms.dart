@@ -10,6 +10,7 @@ class UsersChatRooms {
       usersChatRooms.add(UsersChatRoom.fromMap(usersChatRoomInfo, chatRoomUid: chatRoomUid));
     });
   }
+  UsersChatRooms.fromList(this.usersChatRooms);
 }
 
 class UsersChatRoom {
