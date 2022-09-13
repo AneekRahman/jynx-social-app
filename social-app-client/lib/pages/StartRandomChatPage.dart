@@ -102,6 +102,7 @@ class VideoBanner extends StatefulWidget {
 class _VideoBannerState extends State<VideoBanner> {
   late VideoPlayerController controller;
   bool paused = false;
+  double animationOpacity = 0;
 
   loadVideoPlayer() {
     controller = VideoPlayerController.asset('assets/banner-video1.mp4');
@@ -110,6 +111,7 @@ class _VideoBannerState extends State<VideoBanner> {
       if (mounted) setState(() {});
     });
     controller.initialize().then((value) {
+      animationOpacity = 1;
       controller.play();
     });
   }
@@ -130,9 +132,16 @@ class _VideoBannerState extends State<VideoBanner> {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        AspectRatio(
-          aspectRatio: controller.value.aspectRatio,
-          child: VideoPlayer(controller),
+        AnimatedOpacity(
+          opacity: animationOpacity,
+          duration: Duration(milliseconds: 400),
+          child: SizedBox(
+            height: (MediaQuery.of(context).size.width - 40) * .6025,
+            child: AspectRatio(
+              aspectRatio: controller.value.aspectRatio,
+              child: VideoPlayer(controller),
+            ),
+          ),
         ),
         Positioned.fill(
             child: Container(
