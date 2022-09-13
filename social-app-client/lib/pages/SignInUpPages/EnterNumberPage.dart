@@ -131,7 +131,6 @@ class _EnterNumberPageState extends State<EnterNumberPage> {
             child: Text(
               "Send code",
               style: TextStyle(color: Colors.black, fontFamily: HelveticaFont.Bold, fontSize: 15),
-              textAlign: TextAlign.center,
             ),
             onTap: _sendCode,
             loading: _loading,

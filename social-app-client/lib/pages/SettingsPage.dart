@@ -127,7 +127,6 @@ class _SettingsPageState extends State<SettingsPage> {
                       buildYellowButton(
                           child: Text(
                             "Logout",
-                            textAlign: TextAlign.center,
                             style: TextStyle(fontFamily: HelveticaFont.Bold, color: Colors.black),
                           ),
                           onTap: () {

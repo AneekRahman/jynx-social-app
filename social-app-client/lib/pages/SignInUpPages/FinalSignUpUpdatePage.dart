@@ -101,7 +101,6 @@ class _FinalSignUpUpdatePageState extends State<FinalSignUpUpdatePage> {
                   child: Text(
                     "Finish Account",
                     style: TextStyle(color: Colors.black, fontFamily: HelveticaFont.Bold, fontSize: 15),
-                    textAlign: TextAlign.center,
                   ),
                   onTap: () async {
                     _finishAccount(context);

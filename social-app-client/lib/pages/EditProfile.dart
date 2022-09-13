@@ -223,7 +223,6 @@ class _EditProfileFormState extends State<EditProfileForm> {
                 return buildYellowButton(
                   child: Text(
                     "Update",
-                    textAlign: TextAlign.center,
                     style: TextStyle(fontFamily: HelveticaFont.Bold, color: Colors.black),
                   ),
                   onTap: () {

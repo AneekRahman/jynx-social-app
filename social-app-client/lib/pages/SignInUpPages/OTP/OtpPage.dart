@@ -187,7 +187,6 @@ class _OtpPageState extends State<OtpPage> {
             child: Text(
               "Verify code",
               style: TextStyle(color: Colors.black, fontFamily: HelveticaFont.Bold, fontSize: 15),
-              textAlign: TextAlign.center,
             ),
             onTap: _phoneSignIn,
             loading: _loading,
