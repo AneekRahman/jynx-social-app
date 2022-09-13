@@ -80,19 +80,19 @@ class HelveticaFont {
 }
 
 Widget buildYellowButton({required Widget child, required Function() onTap, required bool loading, required BuildContext context}) {
-  return GestureDetector(
-    onTap: onTap,
+  return TextButton(
+    style: ButtonStyle(
+      backgroundColor: MaterialStateProperty.all(Colors.yellow),
+      shape: MaterialStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.circular(30.0))),
+    ),
+    onPressed: onTap,
     child: Container(
-      padding: EdgeInsets.all(14),
+      padding: EdgeInsets.all(8),
       width: MediaQuery.of(context).size.width,
-      decoration: BoxDecoration(
-        color: Colors.yellow,
-        borderRadius: BorderRadius.circular(1000),
-      ),
-      child: !loading
-          ? child
-          : Center(
-              child: SizedBox(
+      child: Center(
+        child: !loading
+            ? child
+            : SizedBox(
                 height: 20,
                 width: 20,
                 child: CircularProgressIndicator(
@@ -100,7 +100,7 @@ Widget buildYellowButton({required Widget child, required Function() onTap, requ
                   strokeWidth: 3,
                 ),
               ),
-            ),
+      ),
     ),
   );
 }
