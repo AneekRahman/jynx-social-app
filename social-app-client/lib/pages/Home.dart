@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -36,13 +38,23 @@ class _HomePageState extends State<HomePage> {
           systemNavigationBarIconBrightness: Brightness.dark),
       child: Scaffold(
         backgroundColor: Color(0xFF0a0a0a),
-        body: Column(
+        body: Stack(
           children: [
-            HomeAppBar(),
-            RTDUsersChatsList(
-              stream: context.read<RealtimeDatabaseService>().getUsersChatsStream(userUid: _currentUser!.uid),
-              currentUser: _currentUser!,
-              fromRequestList: false,
+            Column(
+              children: [
+                HomeAppBar(),
+                RTDUsersChatsList(
+                  stream: context.read<RealtimeDatabaseService>().getUsersChatsStream(userUid: _currentUser!.uid),
+                  currentUser: _currentUser!,
+                  fromRequestList: false,
+                ),
+              ],
+            ),
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: BottomNavBar(),
             ),
           ],
         ),
@@ -137,6 +149,52 @@ class SearchBox extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class BottomNavBar extends StatelessWidget {
+  const BottomNavBar({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Padding(
+          padding: EdgeInsets.only(bottom: 20),
+          child: ClipRRect(
+            borderRadius: BorderRadius.all(Radius.circular(100)),
+            child: BackdropFilter(
+              filter: new ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+              child: Container(
+                decoration: new BoxDecoration(
+                  color: Colors.white.withOpacity(0.1),
+                ),
+                width: MediaQuery.of(context).size.width * .7,
+                padding: EdgeInsets.fromLTRB(20, 6, 20, 6),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    IconButton(
+                      onPressed: () {},
+                      icon: Image.asset("assets/icons/People-icon.png"),
+                    ),
+                    IconButton(
+                      onPressed: () {},
+                      icon: Image.asset("assets/icons/Send-icon-white.png"),
+                    ),
+                    IconButton(
+                      onPressed: () {},
+                      icon: Image.asset("assets/icons/User-icon.png"),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

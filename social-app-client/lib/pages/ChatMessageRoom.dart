@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
@@ -16,6 +17,7 @@ import '../modules/LoadingBar.dart';
 import '../modules/MessageBubble.dart';
 import '../modules/constants.dart';
 import 'OthersProfilePage.dart';
+import 'VideoCallPage.dart';
 
 class ChatMessageRoom extends StatefulWidget {
   /// If [chatRoomsInfos] is null, then [otherUser] must be present
@@ -259,12 +261,7 @@ class ChatTopBar extends StatelessWidget {
         chatRoomsInfos != null
             ? IconButton(
                 onPressed: () {
-                  // if (chatRow.requestedByThisUser != null && !chatRow.requestedByThisUser! && !chatRow.blockedByThisUser!) {
-                  //   Navigator.push(context, CupertinoPageRoute(builder: (context) => VideoCallPage()));
-                  // } else {
-                  //   ScaffoldMessenger.of(context)
-                  //       .showSnackBar(SnackBar(content: Text("The other user must accept your request before you can start a call!")));
-                  // }
+                  // Navigator.push(context, CupertinoPageRoute(builder: (context) => VideoCallPage()));
                 },
                 icon: Image.asset("assets/icons/Call-icon.png", height: 24, width: 24),
               )
@@ -300,14 +297,14 @@ class ChatTopBar extends StatelessWidget {
           padding: EdgeInsets.all(0),
           onSelected: ((value) {
             if (value == 1) _showOtherUsersProfileModal(context);
-            if (value == 2) Clipboard.setData(ClipboardData(text: otherPrivateChatRoomUser.uName));
-            if (value == 3) blockUnblockUser();
+            if (value == 2) blockUnblockUser();
+            if (value == 3) Navigator.pop(context);
           }),
           itemBuilder: (ctx) => chatRoomsInfos != null
               ? [
-                  _buildPopupMenuItem(context, 'View profile', Icons.person_outline, 1),
-                  _buildPopupMenuItem(context, 'Copy username', Icons.copy, 2),
-                  _buildPopupMenuItem(context, otherUserBlockedInPrivateChat ? "Unblock user" : "Block user", Icons.person_off, 3),
+                  _buildPopupMenuItem(context, 'View user profile', Icons.person_outline, 1),
+                  _buildPopupMenuItem(context, otherUserBlockedInPrivateChat ? "Unblock user" : "Block user", Icons.person_off, 2),
+                  _buildPopupMenuItem(context, 'Back to chat list', Icons.line_weight_sharp, 3),
                 ]
               : [],
         ),
