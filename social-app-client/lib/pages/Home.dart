@@ -11,6 +11,7 @@ import 'package:social_app/pages/MyProfilePage.dart';
 import 'package:social_app/pages/RequestsPage.dart';
 import 'package:social_app/pages/SearchUsersPage.dart';
 import 'package:provider/provider.dart';
+import 'package:social_app/pages/StartRandomChatPage.dart';
 
 import '../services/rtd_service.dart';
 
@@ -22,6 +23,8 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   User? _currentUser;
+  // 0 = StartRandomChatPage | 1 = RTDUsersChatsList | 2 = MyProfilePage
+  int _pageNum = 1;
 
   @override
   void initState() {
@@ -43,18 +46,27 @@ class _HomePageState extends State<HomePage> {
             Column(
               children: [
                 HomeAppBar(),
-                RTDUsersChatsList(
-                  stream: context.read<RealtimeDatabaseService>().getUsersChatsStream(userUid: _currentUser!.uid),
-                  currentUser: _currentUser!,
-                  fromRequestList: false,
-                ),
+                _pageNum == 0 ? StartRandomChatPage() : SizedBox(),
+                _pageNum == 1
+                    ? RTDUsersChatsList(
+                        stream: context.read<RealtimeDatabaseService>().getUsersChatsStream(userUid: _currentUser!.uid),
+                        currentUser: _currentUser!,
+                        fromRequestList: false,
+                      )
+                    : SizedBox(),
               ],
             ),
             Positioned(
               bottom: 0,
               left: 0,
               right: 0,
-              child: BottomNavBar(),
+              child: BottomNavBar(
+                  pageNum: _pageNum,
+                  setPageNum: (pageNum) {
+                    setState(() {
+                      _pageNum = pageNum;
+                    });
+                  }),
             ),
           ],
         ),
@@ -154,7 +166,9 @@ class SearchBox extends StatelessWidget {
 }
 
 class BottomNavBar extends StatelessWidget {
-  const BottomNavBar({super.key});
+  final int pageNum;
+  final Function setPageNum;
+  const BottomNavBar({super.key, required this.pageNum, required this.setPageNum});
 
   @override
   Widget build(BuildContext context) {
@@ -177,16 +191,38 @@ class BottomNavBar extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     IconButton(
-                      onPressed: () {},
-                      icon: Image.asset("assets/icons/People-icon.png"),
+                      onPressed: () {
+                        setPageNum(0);
+                      },
+                      icon: Opacity(
+                        opacity: pageNum == 0 ? 1 : .35,
+                        child: Image.asset("assets/icons/People-icon.png"),
+                      ),
                     ),
                     IconButton(
-                      onPressed: () {},
-                      icon: Image.asset("assets/icons/Send-icon-white.png"),
+                      onPressed: () {
+                        setPageNum(1);
+                      },
+                      icon: Opacity(
+                        opacity: pageNum == 1 ? 1 : .35,
+                        child: Image.asset("assets/icons/Send-icon-white.png"),
+                      ),
                     ),
                     IconButton(
-                      onPressed: () {},
-                      icon: Image.asset("assets/icons/User-icon.png"),
+                      onPressed: () {
+                        showMaterialModalBottomSheet(
+                          backgroundColor: Colors.transparent,
+                          context: context,
+                          builder: (context) => Padding(
+                            padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
+                            child: MyProfilePage(),
+                          ),
+                        );
+                      },
+                      icon: Opacity(
+                        opacity: .35,
+                        child: Image.asset("assets/icons/User-icon.png"),
+                      ),
                     ),
                   ],
                 ),

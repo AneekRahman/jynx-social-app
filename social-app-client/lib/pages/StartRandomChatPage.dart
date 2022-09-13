@@ -1,6 +1,4 @@
-import 'package:flutter/src/widgets/basic.dart';
-import 'package:flutter/src/widgets/container.dart';
-import 'package:flutter/src/widgets/framework.dart';
+import 'package:flutter/material.dart';
 
 class StartRandomChatPage extends StatefulWidget {
   const StartRandomChatPage({super.key});
@@ -15,7 +13,9 @@ class _StartRandomChatPageState extends State<StartRandomChatPage> {
     return Expanded(
       child: Column(
         children: [
-          Container(),
+          Center(
+            child: Text("StartRandomChatPage"),
+          ),
         ],
       ),
     );
