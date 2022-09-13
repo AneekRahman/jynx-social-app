@@ -26,9 +26,9 @@ class RTDUsersChatsList extends StatefulWidget {
 class _RTDUsersChatsListState extends State<RTDUsersChatsList> {
   StreamSubscription<DatabaseEvent>? _streamSubscription;
   List<ChatRoomsInfos> _chatRoomsInfosList = [];
+  ScrollController? _scrollController = ScrollController();
   bool _loadingMoreChats = false;
   bool _reachedEndOfResults = false;
-  ScrollController? _scrollController = ScrollController();
   int? _lastUsersChatRoomsLTime = 0;
 
   void listPreAddDuplicateRemoval(String chatRoomUid) {
@@ -123,7 +123,7 @@ class _RTDUsersChatsListState extends State<RTDUsersChatsList> {
     }
   }
 
-  void initOrRefreshListener() {
+  void initChatListeners() {
     _streamSubscription = widget.stream.listen(_handleStreamListener, onError: (error) {
       throw error;
     });
@@ -131,8 +131,11 @@ class _RTDUsersChatsListState extends State<RTDUsersChatsList> {
 
   @override
   void initState() {
-    // Load user chats 2 times.
+    // Load the initial 10 entires in /usersChatRooms/ right after the first load
     _loadUsersChatRooms();
+
+    // Init the listeners
+    initChatListeners();
 
     // Listen to the scroll to load more UsersChatRooms node when scroll reaches the end
     _scrollController!.addListener(() {
@@ -143,7 +146,6 @@ class _RTDUsersChatsListState extends State<RTDUsersChatsList> {
       }
     });
 
-    initOrRefreshListener();
     super.initState();
   }
 
@@ -167,9 +169,9 @@ class _RTDUsersChatsListState extends State<RTDUsersChatsList> {
                 : RefreshIndicator(
                     color: Colors.yellow,
                     onRefresh: () {
-                      return Future.delayed(
-                        Duration(seconds: 1),
-                      );
+                      _lastUsersChatRoomsLTime = 0;
+                      _reachedEndOfResults = false;
+                      return _loadUsersChatRooms();
                     },
                     child: CustomScrollView(
                       controller: _scrollController,
