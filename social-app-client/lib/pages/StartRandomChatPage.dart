@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:social_app/modules/constants.dart';
+import 'package:video_player/video_player.dart';
 
 class StartRandomChatPage extends StatefulWidget {
   const StartRandomChatPage({super.key});
@@ -19,21 +20,18 @@ class _StartRandomChatPageState extends State<StartRandomChatPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                "Random video chatting",
+                "Random VidChatting",
                 style: TextStyle(fontSize: 18, fontFamily: HelveticaFont.Medium),
               ),
               SizedBox(height: 20),
               ClipRRect(
                 borderRadius: BorderRadius.all(Radius.circular(24)),
-                child: Image.asset(
-                  'assets/random-chat-banner1.jpg',
-                  width: double.infinity,
-                ),
+                child: VideoBanner(),
               ),
               SizedBox(height: 30),
               Text(
                 "How does this work?",
-                style: TextStyle(fontSize: 14, fontFamily: HelveticaFont.Medium, color: Colors.white70),
+                style: TextStyle(fontSize: 14, fontFamily: HelveticaFont.Medium),
               ),
               SizedBox(height: 10),
               Container(
@@ -56,17 +54,17 @@ class _StartRandomChatPageState extends State<StartRandomChatPage> {
                   children: [
                     Text(
                       "1. You will be matched with another person who is in the 'queue' in our servers.",
-                      style: TextStyle(fontSize: 15, fontFamily: HelveticaFont.Medium, color: Colors.white.withOpacity(.9)),
+                      style: TextStyle(fontSize: 15, fontFamily: HelveticaFont.Medium, color: Colors.white),
                     ),
                     SizedBox(height: 8),
                     Text(
                       "2. You can keep 'shuffling' through the queue to talk to different people.",
-                      style: TextStyle(fontSize: 15, fontFamily: HelveticaFont.Medium, color: Colors.white.withOpacity(.9)),
+                      style: TextStyle(fontSize: 15, fontFamily: HelveticaFont.Medium, color: Colors.white),
                     ),
                     SizedBox(height: 8),
                     Text(
                       "3. Your indentity will remain anonymous.",
-                      style: TextStyle(fontSize: 15, fontFamily: HelveticaFont.Medium, color: Colors.white.withOpacity(.9)),
+                      style: TextStyle(fontSize: 15, fontFamily: HelveticaFont.Medium, color: Colors.white),
                     ),
                   ],
                 ),
@@ -74,7 +72,7 @@ class _StartRandomChatPageState extends State<StartRandomChatPage> {
               SizedBox(height: 30),
               Text(
                 "By tapping the button below you agree to adhere to our rules while calling other people.",
-                style: TextStyle(fontSize: 12, fontFamily: HelveticaFont.Roman, color: Colors.white.withOpacity(.9)),
+                style: TextStyle(fontSize: 12, fontFamily: HelveticaFont.Roman, color: Colors.white.withOpacity(.6)),
               ),
               SizedBox(height: 20),
               buildYellowButton(
@@ -90,6 +88,91 @@ class _StartRandomChatPageState extends State<StartRandomChatPage> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class VideoBanner extends StatefulWidget {
+  const VideoBanner({super.key});
+
+  @override
+  State<VideoBanner> createState() => _VideoBannerState();
+}
+
+class _VideoBannerState extends State<VideoBanner> {
+  late VideoPlayerController controller;
+  bool paused = false;
+
+  loadVideoPlayer() {
+    controller = VideoPlayerController.asset('assets/banner-video1.mp4');
+    controller.setLooping(true);
+    controller.addListener(() {
+      if (mounted) setState(() {});
+    });
+    controller.initialize().then((value) {
+      controller.play();
+    });
+  }
+
+  @override
+  void initState() {
+    loadVideoPlayer();
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        AspectRatio(
+          aspectRatio: controller.value.aspectRatio,
+          child: VideoPlayer(controller),
+        ),
+        Positioned.fill(
+            child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Colors.black.withOpacity(.3),
+                Colors.transparent,
+              ],
+              begin: Alignment.bottomCenter,
+              end: Alignment.topCenter,
+            ),
+          ),
+        )),
+        Positioned(
+          top: 6,
+          right: 14,
+          child: IconButton(
+            onPressed: () {
+              if (paused) {
+                paused = !paused;
+                controller.play();
+              } else {
+                paused = !paused;
+                controller.pause();
+              }
+            },
+            icon: Icon(paused ? Icons.play_circle_rounded : Icons.pause_circle_rounded, size: 40),
+          ),
+        ),
+        Positioned(
+          bottom: 20,
+          left: 20,
+          right: 20,
+          child: Text(
+            "Video chat with people all around the world.",
+            style: TextStyle(fontFamily: HelveticaFont.Roman, fontSize: 24),
+          ),
+        )
+      ],
     );
   }
 }

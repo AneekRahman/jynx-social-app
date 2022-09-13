@@ -180,10 +180,10 @@ class BottomNavBar extends StatelessWidget {
           child: ClipRRect(
             borderRadius: BorderRadius.all(Radius.circular(100)),
             child: BackdropFilter(
-              filter: new ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+              filter: new ImageFilter.blur(sigmaX: 8.0, sigmaY: 8.0),
               child: Container(
                 decoration: new BoxDecoration(
-                  color: Colors.white.withOpacity(0.1),
+                  color: Colors.grey[800]!.withOpacity(0.2),
                 ),
                 width: MediaQuery.of(context).size.width * .7,
                 padding: EdgeInsets.fromLTRB(20, 6, 20, 6),
@@ -195,7 +195,7 @@ class BottomNavBar extends StatelessWidget {
                         setPageNum(0);
                       },
                       icon: Opacity(
-                        opacity: pageNum == 0 ? 1 : .35,
+                        opacity: pageNum == 0 ? 1 : .5,
                         child: Image.asset("assets/icons/People-icon.png"),
                       ),
                     ),
@@ -204,7 +204,7 @@ class BottomNavBar extends StatelessWidget {
                         setPageNum(1);
                       },
                       icon: Opacity(
-                        opacity: pageNum == 1 ? 1 : .35,
+                        opacity: pageNum == 1 ? 1 : .5,
                         child: Image.asset("assets/icons/Send-icon-white.png"),
                       ),
                     ),
@@ -220,7 +220,7 @@ class BottomNavBar extends StatelessWidget {
                         );
                       },
                       icon: Opacity(
-                        opacity: .35,
+                        opacity: .5,
                         child: Image.asset("assets/icons/User-icon.png"),
                       ),
                     ),

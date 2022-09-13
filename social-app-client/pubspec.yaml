@@ -41,6 +41,7 @@ dependencies:
   permission_handler: ^10.0.0
   sdp_transform: ^0.3.2 # For web rtc
   flutter_webrtc: ^0.9.5 # TODO This is a very large package, do something to make it smaller
+  video_player: ^2.4.7 # For video banner mainly
 
   flutter:
     sdk: flutter

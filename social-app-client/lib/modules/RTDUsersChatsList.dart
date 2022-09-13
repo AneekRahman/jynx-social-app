@@ -41,6 +41,7 @@ class _RTDUsersChatsListState extends State<RTDUsersChatsList> {
   }
 
   Future appendInfosFromUsersChatRoomsUids(UsersChatRooms usersChatRoomList) async {
+    if (!mounted) return;
     List<Future<DataSnapshot>> chatRoomsInfosPromises = [];
 
     usersChatRoomList.usersChatRooms.forEach((UsersChatRoom usersChatRoom) {
@@ -69,7 +70,7 @@ class _RTDUsersChatsListState extends State<RTDUsersChatsList> {
     _chatRoomsInfosList.sort((a, b) => b.lTime.compareTo(a.lTime));
     _lastUsersChatRoomsLTime = _chatRoomsInfosList.last.lTime;
 
-    setState(() {});
+    if (mounted) setState(() {});
   }
 
   Future _loadUsersChatRooms() async {
@@ -86,14 +87,15 @@ class _RTDUsersChatsListState extends State<RTDUsersChatsList> {
       final usersChatRoomsList = UsersChatRooms.fromMap(newUsersChatRoomsSnapshot.value as Map);
       await appendInfosFromUsersChatRoomsUids(usersChatRoomsList);
     } else {
-      setState(() {
-        _reachedEndOfResults = true;
-      });
+      if (mounted)
+        setState(() {
+          _reachedEndOfResults = true;
+        });
     }
-
-    setState(() {
-      _loadingMoreChats = false;
-    });
+    if (mounted)
+      setState(() {
+        _loadingMoreChats = false;
+      });
   }
 
   void _handleStreamListener(DatabaseEvent event) async {
