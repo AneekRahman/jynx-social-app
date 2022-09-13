@@ -53,19 +53,19 @@ class _StartRandomChatPageState extends State<StartRandomChatPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "1. You will be matched with another person who is in the 'queue' in our servers.",
+                      "1. You can video chat anonymously.",
                       style: TextStyle(fontSize: 15, fontFamily: HelveticaFont.Medium, color: Colors.white),
                     ),
                     SizedBox(height: 8),
                     Text(
-                      "2. You can keep 'shuffling' through the queue to talk to different people.",
+                      "2. You can keep shuffling through random people and talk to them.",
                       style: TextStyle(fontSize: 15, fontFamily: HelveticaFont.Medium, color: Colors.white),
                     ),
-                    SizedBox(height: 8),
-                    Text(
-                      "3. Your indentity will remain anonymous.",
-                      style: TextStyle(fontSize: 15, fontFamily: HelveticaFont.Medium, color: Colors.white),
-                    ),
+                    // SizedBox(height: 8),
+                    // Text(
+                    //   "3. Your indentity will remain anonymous.",
+                    //   style: TextStyle(fontSize: 15, fontFamily: HelveticaFont.Medium, color: Colors.white),
+                    // ),
                   ],
                 ),
               ),
@@ -137,6 +137,7 @@ class _VideoBannerState extends State<VideoBanner> {
           duration: Duration(milliseconds: 400),
           child: SizedBox(
             height: (MediaQuery.of(context).size.width - 40) * .6025,
+            width: MediaQuery.of(context).size.width - 40,
             child: AspectRatio(
               aspectRatio: controller.value.aspectRatio,
               child: VideoPlayer(controller),

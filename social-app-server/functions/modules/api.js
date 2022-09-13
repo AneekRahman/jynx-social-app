@@ -20,24 +20,12 @@ api.use(cors());
 /* ------------- EXPRESS API APP ------------- */
 
 api.get("/", (req, res) => {
-  // admin
-  //   .auth()
-  //   .updateUser("Agkq18lB7vb6LV9rENxCy0V9EzA3", { emailVerified: true });
-  // admin
-  //   .auth()
-  //   .generateEmailVerificationLink("hadouken6@gmail.com")
-  //   .then((verificationLink) => {
-  //     return res.send(verificationLink);
-  //   })
-  //   .catch((e) => {});
-  // admin.auth().setCustomUserClaims("fSJA0ll4mCRMbzBON4f6jfrtipJ3", {
-  //   userName: "baalish",
-  // });
-  // admin.auth().updateUser("VdAAKH1oYeUncT01yO6wn3gkEbF2", {
-  //   emailVerified: true,
-  // });
   return res.send("Good day to you! from baalish.com");
 });
+
+// api.get("/test", async (req, res) => {
+
+// });
 
 // FROM HERE ALL REQUESTS REQUIRE HAVING A FIREBASE JWT IDTOKEN
 
@@ -168,7 +156,7 @@ api.post(
                   website: "",
                   searchKeywords: [
                     ...createKeywords(userName.toLowerCase()),
-                    ...createKeywords(displayName.toLowerCase())
+                    ...createKeywords(displayName.toLowerCase()),
                   ],
                   meta: {
                     seenWelcomeMessage: false,
@@ -196,7 +184,6 @@ api.post(
     return Promise.resolve();
   }
 );
-
 
 api.post(
   "/update-username",
@@ -268,7 +255,8 @@ api.post(
                 // eslint-disable-next-line prefer-promise-reject-errors
                 return Promise.reject({
                   code: 400,
-                  message: "Username can only be updated once per day. The rest will be updated.",
+                  message:
+                    "Username can only be updated once per day. The rest will be updated.",
                 });
               }
               // If the userName being updated too fast, successfully proceed
@@ -349,22 +337,20 @@ api.post(
   }
 );
 
-
-
 // My Non API Functions -----------------------
 
 const createKeywords = (text) => {
-    let keywordsList = [];
-    // Split the text into words if there are spaces
-    text.split(" ").forEach((word) => {
-      let tempWord = "";
-      word.split("").forEach((letter) => {
-        tempWord += letter;
-        if (!keywordsList.includes(tempWord)) keywordsList.push(tempWord);
-      });
+  let keywordsList = [];
+  // Split the text into words if there are spaces
+  text.split(" ").forEach((word) => {
+    let tempWord = "";
+    word.split("").forEach((letter) => {
+      tempWord += letter;
+      if (!keywordsList.includes(tempWord)) keywordsList.push(tempWord);
     });
-    return keywordsList;
-  };
+  });
+  return keywordsList;
+};
 
 // Use Express middleware to intercept all requests
 exports.api = functions.https.onRequest(api);

@@ -16,3 +16,4 @@ exports.UserChatsInfoUpdateCron =
   require("./modules/triggers").UserChatsInfoUpdateCron;
 exports.onChatRoomsInfosCreated =
   require("./modules/triggers").onChatRoomsInfosCreated;
+exports.onMessageAdded = require("./modules/triggers").onMessageAdded;
