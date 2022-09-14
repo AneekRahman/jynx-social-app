@@ -22,7 +22,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  User? _currentUser;
+  late User _currentUser;
   // 0 = StartRandomChatPage | 1 = RTDUsersChatsList | 2 = MyProfilePage
   int _pageNum = 1;
 
@@ -46,11 +46,11 @@ class _HomePageState extends State<HomePage> {
             Column(
               children: [
                 HomeAppBar(),
-                _pageNum == 0 ? StartRandomChatPage() : SizedBox(),
+                _pageNum == 0 ? StartRandomChatPage(currentUser: _currentUser) : SizedBox(),
                 _pageNum == 1
                     ? RTDUsersChatsList(
-                        stream: context.read<RealtimeDatabaseService>().getUsersChatsStream(userUid: _currentUser!.uid),
-                        currentUser: _currentUser!,
+                        stream: context.read<RealtimeDatabaseService>().getUsersChatsStream(userUid: _currentUser.uid),
+                        currentUser: _currentUser,
                         fromRequestList: false,
                       )
                     : SizedBox(),

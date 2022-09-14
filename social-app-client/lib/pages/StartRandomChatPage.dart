@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:social_app/modules/constants.dart';
@@ -9,7 +10,8 @@ import 'VideoCallPage.dart';
 GlobalKey<_VideoBannerState> _videoBannerGlobalKey = GlobalKey<_VideoBannerState>();
 
 class StartRandomChatPage extends StatefulWidget {
-  const StartRandomChatPage({super.key});
+  final User currentUser;
+  const StartRandomChatPage({super.key, required this.currentUser});
 
   @override
   State<StartRandomChatPage> createState() => _StartRandomChatPageState();
@@ -91,7 +93,7 @@ class _StartRandomChatPageState extends State<StartRandomChatPage> {
                     _videoBannerGlobalKey.currentState!.paused = false;
                     _videoBannerGlobalKey.currentState!.controller.pause();
                   }
-                  Navigator.push(context, CupertinoPageRoute(builder: (context) => RandomVideoCallPage()));
+                  Navigator.push(context, CupertinoPageRoute(builder: (context) => RandomVideoCallPage(currentUser: widget.currentUser)));
                 },
                 loading: false,
                 context: context,

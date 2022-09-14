@@ -1,17 +1,139 @@
+import 'dart:async';
+import 'dart:math';
+
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:provider/provider.dart';
+import 'package:social_app/models/P2PCallQueue.dart';
 import 'package:social_app/modules/constants.dart';
+import 'package:social_app/services/rtd_service.dart';
 
 class RandomVideoCallPage extends StatefulWidget {
-  const RandomVideoCallPage({super.key});
+  final User currentUser;
+  const RandomVideoCallPage({super.key, required this.currentUser});
 
   @override
   State<RandomVideoCallPage> createState() => _RandomVideoCallPageState();
 }
 
 class _RandomVideoCallPageState extends State<RandomVideoCallPage> {
-  bool _initiatingCall = false;
-  bool _stoppedCall = true;
+  // When this user is waiting for someone to accept his [offer] then shouldCreateOfferFirst = true. Otherwise the user will actively
+  // keep fetching /p2pCallQueue/ for a user who is not occupied
+  bool shouldCreateOfferFirst = false;
+  // When user is not yet in a call and searching for a match this will be true. User can opt to stop searching for a match.
+  bool _searchingForMatch = false;
+  // When user is searching for a match, or has just stopped calling this will be true
+  bool _inACall = false;
+
+  // Should the user wait for someone to connect or connect himself
+  Timer? _retryTimer;
+  StreamSubscription<DatabaseEvent>? _ownP2PQueueListener;
+
+  Future<bool> _checkCamMicPermission() async {
+    final _camPermStatus = await Permission.camera.status;
+    final _micPermStatus = await Permission.microphone.status;
+    if (_camPermStatus.isGranted && _micPermStatus.isGranted) return true;
+
+    return false;
+  }
+
+  Future _createP2PQueue() async {
+    // 1. First create the node in /p2pCallQueue/[currentUserUid] and set the [offer] and listen in with a stream
+
+    // 2. Set the onDisconnect node to delete the created /p2pCallQueue/ node if currentUser leaves this page
+
+    // 3. Wait for 1.5 seconds to check if any otherUser tries to connect to currentUsers node in /p2pCallQueue/
+
+    // 4. If someone connects to currentUsers node in /p2pCallQueue/[currentUserUid] where currentUsers [offer] exists
+    //    and otherUser sets [occBy] = otherUsersUid, [occ] = true for currentUsers node as well as otherUsers own node,
+    //    then get otherUsers node from /p2pCallQueue/[otherUserUid]. Since, currentUsers [offer] was accepted by otherUser,
+    //    currentUser needs to wait for otherUsers [answer] in otherUsers node in /p2pCallQueue/[otherUserUid] to set it.
+
+    // 5. If no one tries to connect to our /p2pCallQueue/[currentUserUid], search for another user who isn't occupied to connect to theirs.
+    //    After finding an otherUser with [occ] = false, with a transaction first set [occBy] = currentUsersUid, [occ] = true in
+    //    otherUsers /p2pCallQueue/[otherUserUid]. Also, set [occBy] = otherUsersUid, [occ] = true in currentUsers /p2pCallQueue/[currentUserUid].
+    //    Since no one else can now connect to currentUsers or otherUsers node in /p2pCallQueue/ we can proceed to accept the [offer]
+    //    from otherUsers /p2pCallQueue/[otherUserUid]. After accepting the offer, generate an answer and set it in currentUsers
+    //    node in /p2pCallQueue/[currentUserUid]. The otherUser will listen to currentUsers node to accept the "answer" in currentUser node.
+
+    // First create the queue node in /p2pCallQueue/worldwide/[currentUserUid]
+  }
+
+  Future _initSearchingForAMatch() async {
+    final allPermGranted = await _checkCamMicPermission();
+
+    if (allPermGranted) {
+      // Randomly select if currentUser should be the first to create an [offer]
+      shouldCreateOfferFirst = new Random().nextInt(2) == 0;
+
+      if (shouldCreateOfferFirst) {
+        // Create a queue in /p2pCallQueue/[currentUserUid]
+        await context.read<RealtimeDatabaseService>().createOwnP2PQueueNode(userUid: widget.currentUser.uid);
+        // After creating own queue, listen to it
+        _listenOwnP2PQueueStream();
+      } else {
+        // For 5 seconds keep trying to get an [offer] from otherUsers /p2pCallQueue/[otherUserUid]
+        await context.read<RealtimeDatabaseService>().setP2PQueueStatus(currentUserUid: widget.currentUser.uid, available: false);
+        _initRetryTimer();
+      }
+
+      // We need to change from listening for an [answer] and seeking an [offer] to accept to increase the probability
+      _initOffererOrAnswererSwitcher();
+    }
+  }
+
+  /// Will only run when [shouldCreateOfferFirst] = true
+  void _listenOwnP2PQueueStream() {
+    // Listen for when an [answer] is added by otherUsers after they accept currentUsers [offer].
+    _ownP2PQueueListener =
+        context.read<RealtimeDatabaseService>().getOwnP2PQueueStream(userUid: widget.currentUser.uid).listen((DatabaseEvent event) {
+      if (!_inACall && shouldCreateOfferFirst && _searchingForMatch && event.snapshot.exists) {
+        // Check if [answer] is available for this DatabaseEvent
+        final P2PCallQueue p2pCallQueue = P2PCallQueue.fromMap(event.snapshot.value as Map, userUid: event.snapshot.key!);
+        if (p2pCallQueue.answer != null) {
+          // TODO Accept the [answer] here
+        }
+      }
+    });
+  }
+
+  /// Will only run when [shouldCreateOfferFirst] = false
+  void _initRetryTimer() {
+    _retryTimer = Timer.periodic(Duration(seconds: 2), (timer) async {
+      // When
+      if (!_inACall && !shouldCreateOfferFirst && _searchingForMatch) {
+        DataSnapshot randomQueueSnapshot = await context.read<RealtimeDatabaseService>().getRandomP2PQueue();
+        if (randomQueueSnapshot.exists) {
+          print("GOT randomQueueSnapshot: ${randomQueueSnapshot.value}");
+        }
+      }
+    });
+  }
+
+  /// Keeps changing the availability of [_listenOwnP2PQueueStream] and [_initRetryTimer], listener and loop
+  void _initOffererOrAnswererSwitcher() {
+    _retryTimer = Timer.periodic(Duration(seconds: 5), (timer) async {
+      // Switch from listening for an [answer] to actively searching for an [offer] to accept after 5 seconds, and vice-versa
+      if (!_inACall && _searchingForMatch) shouldCreateOfferFirst = !shouldCreateOfferFirst;
+    });
+  }
+
+  @override
+  void initState() {
+    // TODO Do this after the renderers are ready
+    _initSearchingForAMatch();
+
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    if (_retryTimer != null) _retryTimer!.cancel();
+    if (_ownP2PQueueListener != null) _ownP2PQueueListener!.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,17 +143,21 @@ class _RandomVideoCallPageState extends State<RandomVideoCallPage> {
           Expanded(
             child: Container(),
           ),
-          PermissionRequiredMsg(),
+          PermissionRequiredMsg(
+            onChange: () {
+              _initSearchingForAMatch();
+            },
+          ),
           Expanded(
             child: Column(
               children: [
                 WebRTCChatBox(),
                 ContolsBar(
-                    initiatingCall: _initiatingCall,
-                    stoppedCall: _stoppedCall,
+                    searchingForMatch: _searchingForMatch,
+                    inACall: _inACall,
                     onNextPressed: () {
                       setState(() {
-                        _initiatingCall = !_initiatingCall;
+                        _searchingForMatch = !_searchingForMatch;
                       });
                     }),
               ],
@@ -44,8 +170,10 @@ class _RandomVideoCallPageState extends State<RandomVideoCallPage> {
 }
 
 class PermissionRequiredMsg extends StatefulWidget {
+  final Function onChange;
   const PermissionRequiredMsg({
     Key? key,
+    required this.onChange,
   }) : super(key: key);
 
   @override
@@ -65,8 +193,6 @@ class _PermissionRequiredMsgState extends State<PermissionRequiredMsg> with Widg
     final _camPermStatus = await Permission.camera.status;
     final _micPermStatus = await Permission.microphone.status;
 
-    print("GOT: _camPermStatus: $_camPermStatus and _micPermStatus: $_micPermStatus");
-
     if (_camPermStatus.isGranted && _micPermStatus.isGranted) {
       _micAndCamPermStatus = PermissionStatus.granted;
     } else if (_camPermStatus.isDenied || _micPermStatus.isDenied) {
@@ -79,6 +205,7 @@ class _PermissionRequiredMsgState extends State<PermissionRequiredMsg> with Widg
       _micAndCamPermStatus = PermissionStatus.permanentlyDenied;
     }
     if (mounted) setState(() {});
+    widget.onChange();
   }
 
   @override
@@ -86,12 +213,6 @@ class _PermissionRequiredMsgState extends State<PermissionRequiredMsg> with Widg
     WidgetsBinding.instance.addObserver(this);
     getPermissionStatus(true);
     super.initState();
-  }
-
-  @override
-  void activate() {
-    print("GOT activate");
-    super.activate();
   }
 
   @override
@@ -221,10 +342,10 @@ class WebRTCChatBox extends StatelessWidget {
 }
 
 class ContolsBar extends StatelessWidget {
-  final bool initiatingCall;
-  final bool stoppedCall;
+  final bool searchingForMatch;
+  final bool inACall;
   final Function onNextPressed;
-  const ContolsBar({super.key, required this.initiatingCall, required this.stoppedCall, required this.onNextPressed});
+  const ContolsBar({super.key, required this.searchingForMatch, required this.inACall, required this.onNextPressed});
 
   @override
   Widget build(BuildContext context) {
@@ -241,16 +362,12 @@ class ContolsBar extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            initiatingCall
+            searchingForMatch
                 ? SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                : Icon(stoppedCall ? Icons.video_label_rounded : Icons.chevron_right_sharp, size: 24, color: Colors.white),
+                : Icon(inACall ? Icons.stop_circle_rounded : Icons.video_label_rounded, size: 24, color: Colors.white),
             SizedBox(width: 16),
             Text(
-              initiatingCall
-                  ? "Finding..."
-                  : stoppedCall
-                      ? "Start VidChatting"
-                      : "Shuffle to Next",
+              inACall ? "Stop Chatting" : "Start VidChatting",
               style: TextStyle(color: Colors.white, fontFamily: HelveticaFont.Medium, fontSize: 20),
             ),
           ],

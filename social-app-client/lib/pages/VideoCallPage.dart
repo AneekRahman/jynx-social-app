@@ -90,40 +90,54 @@ class _VideoCallPageState extends State<VideoCallPage> {
     return pc;
   }
 
+  // Step 1 (for User 1): Create an offer
+  // Create an offer. User 1 first creates this offer and send it to User 2 so that he can accept it
   void _createOffer() async {
     RTCSessionDescription description = await _peerConnection!.createOffer({'offerToReceiveVideo': 1});
+
     var session = parse(description.sdp.toString());
     print(json.encode(session));
+
+    // Set the current local description for this _peerConnection as an "offer"
     _offer = true;
-
     _peerConnection!.setLocalDescription(description);
   }
 
-  void _createAnswer() async {
-    RTCSessionDescription description = await _peerConnection!.createAnswer({'offerToReceiveVideo': 1});
-
-    var session = parse(description.sdp.toString());
-    print(json.encode(session));
-
-    _peerConnection!.setLocalDescription(description);
-  }
-
+  // Step 2 (for User 2): take the "offer" from User 1 and set it as the remote description
   void _setRemoteDescription() async {
     String jsonString = sdpController.text;
     dynamic session = await jsonDecode(jsonString);
 
     String sdp = write(session, null);
 
+    // If the local description for the currentUser is "offer", the remote description for the otherUser will be an "answer". And vice-versa
     RTCSessionDescription description = RTCSessionDescription(sdp, _offer ? 'answer' : 'offer');
     print(description.toMap());
 
+    // After getting either the "answer" or "offer" set it as the remote description for this _peerConnection
     await _peerConnection!.setRemoteDescription(description);
   }
 
-  void _addCandidate() async {
+  // Step 3 (for User 2): Create an answer
+  // Generates an answer after the [_setRemoteDescription] has set an "offer" from User 1.  and send it to User 1 so that he can accept it.
+  void _createAnswer() async {
+    RTCSessionDescription description = await _peerConnection!.createAnswer({'offerToReceiveVideo': 1});
+
+    var session = parse(description.sdp.toString());
+    print(json.encode(session));
+
+    // Set the current local description for this _peerConnection as an "answer"
+    _offer = false;
+    _peerConnection!.setLocalDescription(description);
+  }
+
+  // Step 4 (for User 1): take the "answer" from User 2 and set it as the candidate
+  void _setCandidate() async {
     String jsonString = sdpController.text;
     dynamic session = await jsonDecode(jsonString);
     print(session['candidate']);
+
+    // Set the candidate as User 2 since we already got the "answer" from him.
     dynamic candidate = RTCIceCandidate(session['candidate'], session['sdpMid'], session['sdpMlineIndex']);
     await _peerConnection!.addCandidate(candidate);
   }
@@ -225,7 +239,7 @@ class _VideoCallPageState extends State<VideoCallPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             IconButton(
-              onPressed: _createOffer,
+              onPressed: _createOffer, // Step 1
               icon: Icon(
                 Icons.call_end,
                 color: Colors.white,
@@ -234,16 +248,7 @@ class _VideoCallPageState extends State<VideoCallPage> {
             ),
             SizedBox(width: 50),
             IconButton(
-              onPressed: _createAnswer,
-              icon: Icon(
-                Icons.videocam_rounded,
-                color: Colors.white,
-                size: 30,
-              ),
-            ),
-            SizedBox(width: 50),
-            IconButton(
-              onPressed: _setRemoteDescription,
+              onPressed: _setRemoteDescription, // Step 2
               icon: Icon(
                 Icons.mic_rounded,
                 color: Colors.white,
@@ -252,7 +257,16 @@ class _VideoCallPageState extends State<VideoCallPage> {
             ),
             SizedBox(width: 50),
             IconButton(
-              onPressed: _addCandidate,
+              onPressed: _createAnswer, // Step 3
+              icon: Icon(
+                Icons.videocam_rounded,
+                color: Colors.white,
+                size: 30,
+              ),
+            ),
+            SizedBox(width: 50),
+            IconButton(
+              onPressed: _setCandidate, // Step 4
               icon: Icon(
                 Icons.volume_up,
                 color: Colors.white,

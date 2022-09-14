@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:social_app/models/ChatRoomsInfos.dart';
@@ -21,20 +23,20 @@ class RealtimeDatabaseService {
 
   /// Get [10] of the currentUsers /usersChatRooms/ or /requestedUsersChatRooms/ nodes depending on [fromRequestList]
   /// If [lastChatRoomLTime] is 0 then the newest entries will be fetched
-  Future<DataSnapshot> getMoreUsersChats({required String userUid, required int lastChatRoomLTime, required bool fromRequestList}) {
+  Future<DatabaseEvent> getMoreUsersChats({required String userUid, required int lastChatRoomLTime, required bool fromRequestList}) {
     if (lastChatRoomLTime == 0) {
       return _firebaseDatabase
           .ref("${fromRequestList ? 'requestedUsersChatRooms' : 'usersChatRooms'}/$userUid/chatRooms")
           .orderByChild("lTime")
           .limitToLast(10)
-          .get();
+          .once(DatabaseEventType.value);
     } else {
       return _firebaseDatabase
           .ref("${fromRequestList ? 'requestedUsersChatRooms' : 'usersChatRooms'}/$userUid/chatRooms")
           .orderByChild("lTime")
           .limitToLast(10)
           .endBefore(lastChatRoomLTime)
-          .get();
+          .once(DatabaseEventType.value);
     }
   }
 
@@ -193,5 +195,67 @@ class RealtimeDatabaseService {
     final Map<String, dynamic> updates = {};
     updates['chatRooms/$chatRoomUid/members/$blockedUserUid'] = true;
     await _firebaseDatabase.ref().update(updates);
+  }
+
+  Future createOwnP2PQueueNode({required String userUid}) async {
+    final Map<String, dynamic> updates = {};
+    updates['p2pCallQueue/worldwide/$userUid/'] = {
+      "occ": new DateTime.now().millisecondsSinceEpoch ~/ 1000,
+    };
+    await _firebaseDatabase.ref().update(updates);
+
+    // Make sure this queue is deleted when user disconnects (if user closes the app from the RandomVideoCallPage)
+    await _firebaseDatabase.ref("p2pCallQueue/worldwide/$userUid").onDisconnect().remove();
+  }
+
+  Stream<DatabaseEvent> getOwnP2PQueueStream({required String userUid}) {
+    return _firebaseDatabase.ref("p2pCallQueue/worldwide/$userUid").onChildChanged;
+  }
+
+  Future acceptOthersP2PQueueNode({required String currentUserUid, required String otherUserUid, required String answer}) async {
+    final Map<String, dynamic> updates = {};
+    updates['p2pCallQueue/worldwide/$currentUserUid/occ'] = -1;
+    updates['p2pCallQueue/worldwide/$currentUserUid/occBy'] = otherUserUid;
+    updates['p2pCallQueue/worldwide/$otherUserUid/occ'] = -1;
+    updates['p2pCallQueue/worldwide/$otherUserUid/occBy'] = currentUserUid;
+    await _firebaseDatabase.ref().update(updates);
+  }
+
+  Future setP2PQueueStatus({required String currentUserUid, required bool available}) async {
+    final Map<String, dynamic> updates = {};
+    updates['p2pCallQueue/worldwide/$currentUserUid/occ'] = available ? new DateTime.now().millisecondsSinceEpoch ~/ 1000 : -1;
+    await _firebaseDatabase.ref().update(updates);
+  }
+
+  Future<DataSnapshot> getRandomP2PQueue() async {
+    final int min = 1663150753; // Set as the smallest value in /p2pCallQueue/worldwide/
+    final int max = new DateTime.now().millisecondsSinceEpoch ~/ 1000; // In seconds
+    final int startAt = ((new Random().nextDouble() * (max - min)) + min).toInt();
+
+    // Randomly select limitToFirst or limitToLast
+    final bool shouldBeLimitToFirst = new Random().nextInt(2) == 0;
+
+    Future<DataSnapshot> queueQuery1 =
+        _firebaseDatabase.ref('p2pCallQueue/worldwide').orderByChild('occ').startAt(startAt).endAt(max).limitToFirst(1).get();
+    Future<DataSnapshot> queueQuery2 =
+        _firebaseDatabase.ref('p2pCallQueue/worldwide').orderByChild('occ').startAt(min).endAt(startAt).limitToLast(1).get();
+
+    if (shouldBeLimitToFirst) {
+      DataSnapshot queueSnapshot1 = await queueQuery1;
+      if (queueSnapshot1.exists) {
+        return queueSnapshot1;
+      } else {
+        // If no query exists for queueQuery1, try queueQuery2
+        return await queueQuery2;
+      }
+    } else {
+      DataSnapshot queueSnapshot2 = await queueQuery2;
+      if (queueSnapshot2.exists) {
+        return queueSnapshot2;
+      } else {
+        // If no query exists for queueQuery2, try queueQuery1
+        return await queueQuery1;
+      }
+    }
   }
 }

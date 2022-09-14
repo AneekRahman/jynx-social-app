@@ -79,12 +79,12 @@ class _RTDUsersChatsListState extends State<RTDUsersChatsList> {
       _loadingMoreChats = true;
     });
     // print("GOT: Loading more after: lTime: " + _lastUsersChatRoomsLTime!.toString());
-    DataSnapshot newUsersChatRoomsSnapshot = await context.read<RealtimeDatabaseService>().getMoreUsersChats(
+    DatabaseEvent newUsersChatRoomsSnapshot = await context.read<RealtimeDatabaseService>().getMoreUsersChats(
         userUid: widget.currentUser.uid, lastChatRoomLTime: _lastUsersChatRoomsLTime!, fromRequestList: widget.fromRequestList);
     // TODO Finish this
-    if (newUsersChatRoomsSnapshot.exists) {
+    if (newUsersChatRoomsSnapshot.snapshot.exists) {
       // print("GOT: newUsersChatRoomsSnapshot (value): " + newUsersChatRoomsSnapshot.value.toString());
-      final usersChatRoomsList = UsersChatRooms.fromMap(newUsersChatRoomsSnapshot.value as Map);
+      final usersChatRoomsList = UsersChatRooms.fromMap(newUsersChatRoomsSnapshot.snapshot.value as Map);
       await appendInfosFromUsersChatRoomsUids(usersChatRoomsList);
     } else {
       if (mounted)
