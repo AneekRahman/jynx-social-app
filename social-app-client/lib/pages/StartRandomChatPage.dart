@@ -1,6 +1,12 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:social_app/modules/constants.dart';
+import 'package:social_app/pages/RandomVideoCallPage.dart';
 import 'package:video_player/video_player.dart';
+
+import 'VideoCallPage.dart';
+
+GlobalKey<_VideoBannerState> _videoBannerGlobalKey = GlobalKey<_VideoBannerState>();
 
 class StartRandomChatPage extends StatefulWidget {
   const StartRandomChatPage({super.key});
@@ -26,7 +32,7 @@ class _StartRandomChatPageState extends State<StartRandomChatPage> {
               SizedBox(height: 20),
               ClipRRect(
                 borderRadius: BorderRadius.all(Radius.circular(24)),
-                child: VideoBanner(),
+                child: VideoBanner(key: _videoBannerGlobalKey),
               ),
               SizedBox(height: 30),
               Text(
@@ -80,7 +86,13 @@ class _StartRandomChatPageState extends State<StartRandomChatPage> {
                   "Start random video call",
                   style: TextStyle(fontSize: 15, fontFamily: HelveticaFont.Bold, color: Colors.black),
                 ),
-                onTap: () {},
+                onTap: () {
+                  if (!_videoBannerGlobalKey.currentState!.paused) {
+                    _videoBannerGlobalKey.currentState!.paused = false;
+                    _videoBannerGlobalKey.currentState!.controller.pause();
+                  }
+                  Navigator.push(context, CupertinoPageRoute(builder: (context) => RandomVideoCallPage()));
+                },
                 loading: false,
                 context: context,
               ),
