@@ -42,7 +42,7 @@ class UsersChatRoomsRow extends StatelessWidget {
     final fontFamily = chatRoomsInfos.seenByThisUser == 0 ? HelveticaFont.Heavy : HelveticaFont.Medium;
     final String chatRoomRowImageURL = isGroupChat ? chatRoomsInfos.groupChatImageURL! : otherPrivateChatRoomUser!.url;
 
-    final DateTime sentTime = new DateTime.fromMillisecondsSinceEpoch(chatRoomsInfos.lTime);
+    final DateTime sentTime = new DateTime.fromMillisecondsSinceEpoch(chatRoomsInfos.lTime!);
     final String sentTimeFormattedString = Constants.convertToTimeAgo(sentTime);
 
     return Container(

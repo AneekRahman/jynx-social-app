@@ -62,12 +62,13 @@ class _RTDUsersChatsListState extends State<RTDUsersChatsList> {
           element.value as Map,
           chatRoomUid: element.key!,
           seenByThisUser: usersChatRoomList.usersChatRooms[i].seen,
+          lTime: usersChatRoomList.usersChatRooms[i].lTime,
         ));
       }
     }
 
     /// Sort the new [newChatRoomsInfosList] from newest to the oldest
-    _chatRoomsInfosList.sort((a, b) => b.lTime.compareTo(a.lTime));
+    _chatRoomsInfosList.sort((a, b) => b.lTime!.compareTo(a.lTime!));
     _lastUsersChatRoomsLTime = _chatRoomsInfosList.last.lTime;
 
     if (mounted) setState(() {});

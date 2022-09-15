@@ -62,6 +62,8 @@ class RealtimeDatabaseService {
 
   /// Called when a new request is needed to be created because the [ChatRoomsInfos] object is null.
   Future createNewRequest({required User currentUser, required ChatRoomsInfosMem otherUser, required String msg}) async {
+    // TODO encrypt the lMsg only
+
     // Get [CustomClaims] for userName
     CustomClaims claims = await CustomClaims.getClaims(false);
     String? newChatRoomUid = FirebaseDatabase.instance.ref('chatRooms').push().key;
@@ -87,18 +89,19 @@ class RealtimeDatabaseService {
     // Save the information about this chatRoom in Realtime Database
     updates["chatRoomsInfos/$newChatRoomUid"] = {
       "grp": false,
-      "lMsg": msg.length > 40 ? msg.substring(0, 40) : msg.substring(0, msg.length),
-      "lTime": lTime,
+      "lMsg": msg,
       "mems": {
         currentUser.uid: {
           "name": currentUser.displayName,
           "uName": claims.userName,
           "url": currentUser.photoURL,
+          "acc": 1,
         },
         otherUser.userUid: {
           "name": otherUser.name,
           "uName": otherUser.uName,
           "url": otherUser.url,
+          "acc": 0,
         }
       }
     };
@@ -131,6 +134,7 @@ class RealtimeDatabaseService {
     required String msg,
     required String userUid,
   }) async {
+    // TODO encrypt the msg and the userUid before saving it to the server
     int lTime = new DateTime.now().millisecondsSinceEpoch;
     String? newMsgUid = FirebaseDatabase.instance.ref().child("chatRooms").push().key;
     Map<String, Object?> updates = {};
@@ -141,9 +145,8 @@ class RealtimeDatabaseService {
       "seen": 1,
     };
 
-    // Update the [lMsg] and [lTime] in the /chatRoomsInfos/ and let the trigger update the /userChatRooms/ or /requestedUsersChatRooms/
-    updates["chatRoomsInfos/$chatRoomUid/lMsg"] = msg.length > 40 ? msg.substring(0, 40) : msg.substring(0, msg.length);
-    updates["chatRoomsInfos/$chatRoomUid/lTime"] = lTime;
+    // Update the [lMsg] in the /chatRoomsInfos/ and let the trigger update the /userChatRooms/ or /requestedUsersChatRooms/
+    updates["chatRoomsInfos/$chatRoomUid/lMsg"] = msg;
 
     // Lastly, push a new message to the chatRooms
     updates["chatRooms/$chatRoomUid/messages/$newMsgUid"] = {
@@ -161,11 +164,18 @@ class RealtimeDatabaseService {
     required String currentUserUid,
     required String otherUserUid,
   }) async {
+    final Map<String, dynamic> updates = {};
+
     /// Remove from currentUsers /requestedUsersChatRooms/ list
-    await _firebaseDatabase.ref("requestedUsersChatRooms/$currentUserUid/chatRooms/$chatRoomUid").remove();
+    updates["requestedUsersChatRooms/$currentUserUid/chatRooms/$chatRoomUid"] = null;
 
     /// Create add to users /usersInfos/contacts/ list
-    await _firebaseDatabase.ref("usersInfos/$currentUserUid/contacts/$otherUserUid").set(chatRoomUid);
+    updates["usersInfos/$currentUserUid/contacts/$otherUserUid"] = chatRoomUid;
+
+    // Set the [acc] = 1 for /chatRoomsInfos/mems/[currentUserUid]/
+    updates["chatRoomsInfos/$chatRoomUid/mems/$currentUserUid/acc"] = 1;
+
+    await _firebaseDatabase.ref().update(updates);
   }
 
   /// When [seen] for a /userChatRooms/ or /requestedUsersChatRooms/ node is 0 (meaning false), call this method to set that

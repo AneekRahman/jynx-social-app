@@ -60,7 +60,7 @@ exports.onChatRoomsInfosCreated = functions.database
             `requestedUsersChatRooms/${_otherUsersUserUid}/chatRooms/${chatRoomUid}`
           )
           .set({
-            lTime: chatRoomsInfosData.lTime,
+            lTime: Date.now(),
             seen: 0,
           });
       }

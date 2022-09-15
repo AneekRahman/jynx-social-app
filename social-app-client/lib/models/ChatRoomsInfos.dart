@@ -4,7 +4,7 @@ class ChatRoomsInfos {
   late String chatRoomUid, lMsg;
   String? groupChatImageURL = "";
   late bool grp;
-  late int lTime;
+  int? lTime;
   int? seenByThisUser = 1;
   late List<ChatRoomsInfosMem> mems = [];
 
@@ -12,16 +12,15 @@ class ChatRoomsInfos {
     required this.chatRoomUid,
     required this.lMsg,
     this.groupChatImageURL,
-    required this.lTime,
+    this.lTime,
     required this.grp,
     this.seenByThisUser,
     required this.mems,
   });
 
-  ChatRoomsInfos.fromMap(Map map, {required this.chatRoomUid, this.seenByThisUser}) {
+  ChatRoomsInfos.fromMap(Map map, {required this.chatRoomUid, this.lTime, this.seenByThisUser}) {
     this.lMsg = map["lMsg"];
     this.groupChatImageURL = map["groupChatImageURL"];
-    this.lTime = map["lTime"];
     this.grp = map["grp"];
 
     Map memsMap = map["mems"];
@@ -31,15 +30,17 @@ class ChatRoomsInfos {
             name: memsUserInfo["name"],
             uName: memsUserInfo["uName"],
             url: memsUserInfo["url"] ?? "",
+            acc: memsUserInfo["acc"],
           ));
     });
   }
 }
 
 class ChatRoomsInfosMem {
-  /// [userUid], [name], [uName], [url] will always be present
+  /// [userUid], [name], [uName], [url], [acc] will always be present
   late String userUid, name, uName, url;
-  ChatRoomsInfosMem({required this.userUid, required this.name, required this.uName, required this.url});
+  late int acc;
+  ChatRoomsInfosMem({required this.userUid, required this.name, required this.uName, required this.url, required this.acc});
 
   ChatRoomsInfosMem.fromUserFirestore(UserFirestore userFirestore) {
     this.userUid = userFirestore.userUid;
