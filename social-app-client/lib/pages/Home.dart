@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -26,9 +27,17 @@ class _HomePageState extends State<HomePage> {
   // 0 = StartRandomChatPage | 1 = RTDUsersChatsList | 2 = MyProfilePage
   int _pageNum = 1;
 
+  Future _saveNewFCMToken(User user) async {
+    final fcmToken = await FirebaseMessaging.instance.getToken();
+    if (fcmToken != null) {
+      context.read<RealtimeDatabaseService>().setFCMToken(token: fcmToken, userUid: user.uid);
+    }
+  }
+
   @override
   void initState() {
     _currentUser = context.read<User>();
+    _saveNewFCMToken(_currentUser);
     super.initState();
   }
 

@@ -6,6 +6,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:sdp_transform/sdp_transform.dart';
 
+import '../modules/constants.dart';
+
 class VideoCallPage extends StatefulWidget {
   const VideoCallPage({super.key});
 
@@ -163,12 +165,17 @@ class _VideoCallPageState extends State<VideoCallPage> {
     //   _peerConnection = pc;
     // });
 
+    // String encrypted = MyEncryption.getEncryptedString(
+    //     mainString: "Hello ami aneek", password: MyEncryption.CHAT_ROOM_MESSAGES_PASSWORD, uid: "dawjdowjdoa");
+    // String decrypted =
+    //     MyEncryption.getDecryptedString(encryptedString: encrypted, password: MyEncryption.CHAT_ROOM_MESSAGES_PASSWORD, uid: "dawjdowjdoa");
+
     super.initState();
   }
 
   @override
   void dispose() {
-    _cleanSessions();
+    // _cleanSessions();
     super.dispose();
   }
 

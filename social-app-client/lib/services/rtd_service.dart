@@ -279,4 +279,11 @@ class RealtimeDatabaseService {
       return Transaction.success(p2pCallValue);
     });
   }
+
+  Future setFCMToken({required String token, required String userUid}) async {
+    await _firebaseDatabase.ref('usersInfos/$userUid/fcmToken').set({
+      "token": token,
+      "time": new DateTime.now().millisecondsSinceEpoch,
+    });
+  }
 }

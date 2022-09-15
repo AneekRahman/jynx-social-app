@@ -1,4 +1,6 @@
+import 'package:encrypt/encrypt.dart' as encrypt;
 import 'package:flutter/material.dart';
+import 'dart:math';
 
 class MyServer {
   static const String SERVER_API = "https://us-central1-jynx-chat.cloudfunctions.net/api";
@@ -77,6 +79,33 @@ class HelveticaFont {
   static const String Bold = "helvetica_bold";
   static const String Heavy = "helvetica_heavy";
   static const String Black = "helvetica_black";
+}
+
+class MyEncryption {
+  static const String MY_PADDING_IV_KEY = "ma13[;0-@#w.;987\$/.B8/./;[]6GV\$#AW]b)(&([;p%hJNF4*&(E8SVAmv)(^";
+  static const String CHAT_ROOM_MESSAGES_PASSWORD = "L4v3,./;'F5!\$W6#7fP\"uy(A97^bwxEG";
+
+  static String _getModifiedIvPasswordFrom(String initialIV) {
+    initialIV = initialIV.substring(0, min(10, initialIV.length));
+    var paddingNeeded = 16 - initialIV.length;
+    return initialIV + MY_PADDING_IV_KEY.substring(0, paddingNeeded);
+  }
+
+  static String getEncryptedString({required String mainString, required String password, required String uid}) {
+    final key = encrypt.Key.fromUtf8(password);
+    final iv = encrypt.IV.fromUtf8(_getModifiedIvPasswordFrom(uid));
+    final encrypter = encrypt.Encrypter(encrypt.AES(key, mode: encrypt.AESMode.cbc));
+
+    return encrypter.encrypt(mainString, iv: iv).base64;
+  }
+
+  static String getDecryptedString({required String encryptedString, required String password, required String uid}) {
+    final key = encrypt.Key.fromUtf8(password);
+    final iv = encrypt.IV.fromUtf8(_getModifiedIvPasswordFrom(uid));
+    final encrypter = encrypt.Encrypter(encrypt.AES(key, mode: encrypt.AESMode.cbc));
+
+    return encrypter.decrypt64(encryptedString, iv: iv);
+  }
 }
 
 Widget buildYellowButton({required Widget child, required Function() onTap, required bool loading, required BuildContext context}) {
