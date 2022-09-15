@@ -86,7 +86,9 @@ exports.onMessageAdded = functions.database
     // Check if the chatRoomsInfos exists
     if (chatRoomInfosMemsSnapshot.exists()) {
       const infosMemsData = chatRoomInfosMemsSnapshot.val();
-      const otherUsersUids = [];
+
+      // If the other user didn't accept the request this array will be empty and nothing will be updated
+      const toBeUpdatedPromises = [];
 
       // Loop through the chatRoomsInfosMems to get each users userUid
       for (const infoMemsUserUid in infosMemsData) {
@@ -95,26 +97,95 @@ exports.onMessageAdded = functions.database
         if (
           infoMemsUserUid !== context.auth.uid &&
           infosMemsData[infoMemsUserUid].acc === 1
-        )
-          otherUsersUids.push(infoMemsUserUid);
+        ) {
+          const updatePromise = admin
+            .database()
+            .ref(`usersChatRooms/${infoMemsUserUid}/chatRooms/${chatRoomUid}`)
+            .update({
+              lTime: msgData.sentTime,
+              seen: 0,
+            });
+          // To Update otherUsers /usersChatRooms/ node
+          toBeUpdatedPromises.push(updatePromise);
+          // To send the otherUser a push notification
+          toBeUpdatedPromises.push(
+            sendNewMsgNotification(
+              context.auth.uid,
+              infoMemsUserUid,
+              "New: " + msgData.msg.slice(0, 30)
+            )
+          );
+        }
       }
-
-      // If the other user didn't accept the request this array will be empty and nothing will be updated
-      const toBeUpdatedUsersChatRooms = [];
-      otherUsersUids.forEach((otherUserUid) => {
-        // Update their /usersChatRooms/ node
-        const updatePromise = admin
-          .database()
-          .ref(`usersChatRooms/${otherUserUid}/chatRooms/${chatRoomUid}`)
-          .update({
-            lTime: msgData.sentTime,
-            seen: 0,
-          });
-        toBeUpdatedUsersChatRooms.push(updatePromise);
-      });
 
       // If the /usersChatRooms/ node don't exist, this will be empty
       return Promise.all(toBeUpdatedUsersChatRooms);
+    }
+  });
+
+const sendNewMsgNotification = async (currentUserUid, otherUserUid, body) => {
+  // Get currentUser for displayName
+  const currentUser = await admin.auth().getUser(currentUserUid);
+
+  // Get the fcmToken for this user
+  const otherUsersInfoSnapshot = await admin
+    .database()
+    .ref(`usersInfos/${otherUserUid}/fcmToken/token`)
+    .get();
+
+  if (otherUsersInfoSnapshot.exists() && currentUser.displayName) {
+    const message = {
+      token: otherUsersInfoSnapshot.val(),
+      notification: {
+        title: currentUser.displayName,
+        body,
+      },
+      android: {
+        priority: "high",
+      },
+    };
+
+    await admin
+      .messaging()
+      .send(message)
+      .catch((error) => {
+        console.log("Error sending FCM message:", error);
+      });
+  } else {
+    return Promise.resolve();
+  }
+};
+
+exports.onCallIncoming = functions.database
+  .ref("/chatRoomsInfos/{chatRoomUid}/incomingCall")
+  .onCreate(async (snapshot, context) => {
+    const chatRoomUid = context.params.chatRoomUid;
+    const incomingCallData = snapshot.val();
+
+    const chatRoomInfosSnapshot = await admin
+      .database()
+      .ref(`chatRoomsInfos/${chatRoomUid}`)
+      .get();
+
+    // Calls only work if this is a Private chat
+    if (
+      chatRoomInfosSnapshot.exists() &&
+      chatRoomInfosSnapshot.val()["grp"] === false
+    ) {
+      const chatRoomInfosData = chatRoomInfosSnapshot.val();
+
+      // Look into chatRoomInfoMems for otherUser of this Private chat
+      if (chatRoomInfosData.mems !== null) {
+        let otherUserUid;
+        for (const infoMemsUserUid in infosMemsData) {
+          // Calls can only go through when the user has accepted the request meaning [acc] = 1
+          if (
+            infoMemsUserUid !== context.auth.uid &&
+            infosMemsData[infoMemsUserUid].acc === 1
+          )
+            otherUserUid = infoMemsUserUid;
+        }
+      }
     }
   });
 
