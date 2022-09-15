@@ -171,6 +171,7 @@ class _ChatMessageRoomState extends State<ChatMessageRoom> {
                     ? MessagesStreamBuilder(
                         chatRoomUid: widget.chatRoomsInfos!.chatRoomUid,
                         currentUser: widget.currentUser,
+                        otherPrivateChatRoomUser: otherPrivateChatRoomUser!,
                       )
                     : noChatRoomFound
                         ? Center(
@@ -261,7 +262,8 @@ class ChatTopBar extends StatelessWidget {
         chatRoomsInfos != null
             ? IconButton(
                 onPressed: () {
-                  // Navigator.push(context, CupertinoPageRoute(builder: (context) => VideoCallPage()));
+                  // TODO make sure the other side accepted the chat request first
+                  Navigator.push(context, CupertinoPageRoute(builder: (context) => VideoCallPage()));
                 },
                 icon: Image.asset("assets/icons/Call-icon.png", height: 24, width: 24),
               )
@@ -377,7 +379,8 @@ class MessagesStreamBuilder extends StatefulWidget {
   /// [chatRoomUid] will not be null.
   final String chatRoomUid;
   final User currentUser;
-  const MessagesStreamBuilder({super.key, required this.chatRoomUid, required this.currentUser});
+  final ChatRoomsInfosMem otherPrivateChatRoomUser;
+  const MessagesStreamBuilder({super.key, required this.chatRoomUid, required this.currentUser, required this.otherPrivateChatRoomUser});
 
   @override
   State<MessagesStreamBuilder> createState() => _MessagesStreamBuilderState();
@@ -431,12 +434,14 @@ class _MessagesStreamBuilderState extends State<MessagesStreamBuilder> {
 
                     // Check if previous message was also from the same user
                     bool nextMsgSameUser = true;
-                    if (index == 0 || _msgRows.elementAt(index - 1).userUid != msgRow.userUid) {
+                    if (index == 0 || _msgRows.elementAt(index - 1).userUid != msgRow.userUid || _msgRows.elementAt(index - 1).type != 0) {
                       nextMsgSameUser = false;
                     }
                     // Check if next post message is also from the same user
                     bool prevMsgSameUser = true;
-                    if (_msgRows.length - 1 == index || _msgRows.elementAt(index + 1).userUid != msgRow.userUid) {
+                    if (_msgRows.length - 1 == index ||
+                        _msgRows.elementAt(index + 1).userUid != msgRow.userUid ||
+                        _msgRows.elementAt(index + 1).type != 0) {
                       prevMsgSameUser = false;
                     }
 
@@ -445,6 +450,7 @@ class _MessagesStreamBuilderState extends State<MessagesStreamBuilder> {
                       isUsersMsg: msgRow.userUid == widget.currentUser.uid,
                       prevMsgSameUser: prevMsgSameUser,
                       nextMsgSameUser: nextMsgSameUser,
+                      otherUser: widget.otherPrivateChatRoomUser,
                     );
                   },
                   childCount: _msgRows.length,

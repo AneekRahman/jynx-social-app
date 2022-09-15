@@ -335,12 +335,12 @@ class _OldChatRoomPageState extends State<OldChatRoomPage> {
                         prevMsgSameUser = false;
                       }
 
-                      return MessageBubble(
-                        msgRow: msgRow,
-                        isUsersMsg: msgRow.userUid == _currentUser.uid,
-                        prevMsgSameUser: prevMsgSameUser,
-                        nextMsgSameUser: nextMsgSameUser,
-                      );
+                      // return MessageBubble(
+                      //   msgRow: msgRow,
+                      //   isUsersMsg: msgRow.userUid == _currentUser.uid,
+                      //   prevMsgSameUser: prevMsgSameUser,
+                      //   nextMsgSameUser: nextMsgSameUser,
+                      // );
                     },
                     childCount: _msgRows.length,
                   ),

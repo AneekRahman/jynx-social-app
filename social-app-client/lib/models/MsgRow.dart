@@ -3,6 +3,7 @@ class MsgRow {
   String? msg;
   String? userUid;
   int? sentTime;
+  int? type; // 0 = normal msg, 1 = info msg from server
 
   MsgRow({
     this.msg,
@@ -15,6 +16,7 @@ class MsgRow {
     msg = json['msg'];
     userUid = json['userUid'];
     sentTime = json['sentTime'];
+    type = json['type'] ?? 0;
   }
 
   Map<String, dynamic> toJson() {
@@ -23,6 +25,7 @@ class MsgRow {
     data['msg'] = this.msg;
     data['userUid'] = this.userUid;
     data['sentTime'] = this.sentTime;
+    data['type'] = this.type ?? 0;
     return data;
   }
 }

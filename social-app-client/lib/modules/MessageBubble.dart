@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:social_app/models/ChatRoomsInfos.dart';
 
 import '../models/MsgRow.dart';
 import 'constants.dart';
@@ -8,12 +9,39 @@ class MessageBubble extends StatelessWidget {
   final bool prevMsgSameUser;
   final bool nextMsgSameUser;
   final bool isUsersMsg;
-  MessageBubble({required this.msgRow, required this.prevMsgSameUser, required this.isUsersMsg, required this.nextMsgSameUser});
+  final ChatRoomsInfosMem otherUser;
+  MessageBubble(
+      {required this.msgRow,
+      required this.prevMsgSameUser,
+      required this.isUsersMsg,
+      required this.nextMsgSameUser,
+      required this.otherUser});
 
   @override
   Widget build(BuildContext context) {
     DateTime sentTime = new DateTime.fromMillisecondsSinceEpoch(msgRow.sentTime!);
     String sentTimeFormattedString = Constants.convertToTimeAgo(sentTime);
+
+    // If this is a info msg from server
+    if (msgRow.type != 0) {
+      // 1 = Received call info msg
+      if (msgRow.type == 1)
+        return Center(
+          child: Container(
+            padding: EdgeInsets.fromLTRB(14, 6, 14, 6),
+            margin: EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(.02),
+              border: Border.all(color: Colors.black.withOpacity(.1), width: 1),
+              borderRadius: BorderRadius.all(Radius.circular(100)),
+            ),
+            child: Text(
+              isUsersMsg ? "You called ${otherUser.name}." : "${otherUser.name} called you.",
+              style: TextStyle(fontFamily: HelveticaFont.Roman, fontSize: 13),
+            ),
+          ),
+        );
+    }
 
     return Column(
       crossAxisAlignment: isUsersMsg ? CrossAxisAlignment.end : CrossAxisAlignment.start,
@@ -27,8 +55,8 @@ class MessageBubble extends StatelessWidget {
               child: Container(
                 margin: EdgeInsets.only(
                   top: !prevMsgSameUser ? 20 : 4,
-                  right: isUsersMsg ? 14 : 0,
-                  left: !isUsersMsg ? 14 : 0,
+                  right: isUsersMsg ? 14 : 90,
+                  left: !isUsersMsg ? 14 : 90,
                 ),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.only(

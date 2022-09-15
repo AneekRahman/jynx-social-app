@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -158,9 +159,9 @@ class _VideoCallPageState extends State<VideoCallPage> {
 
   @override
   void initState() {
-    _createPeerConnecion().then((pc) {
-      _peerConnection = pc;
-    });
+    // _createPeerConnecion().then((pc) {
+    //   _peerConnection = pc;
+    // });
 
     super.initState();
   }
@@ -180,44 +181,42 @@ class _VideoCallPageState extends State<VideoCallPage> {
         systemNavigationBarIconBrightness: Brightness.dark,
       ),
       child: Scaffold(
-        backgroundColor: Colors.black,
+        backgroundColor: Color(0xFF0a0a0a),
         body: SafeArea(
-          child: Column(
+          child: Stack(
             children: [
-              Expanded(
-                child: Stack(
-                  children: [
-                    SizedBox(
-                      height: MediaQuery.of(context).size.height - 90,
-                      width: MediaQuery.of(context).size.width,
-                      child: RTCVideoView(
-                        _remoteVideoRenderer,
-                        objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
-                      ),
-                    ),
-                    Positioned(
-                      bottom: 30,
-                      left: 30,
-                      height: 160,
-                      width: 100,
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.all(Radius.circular(10)),
-                        child: RTCVideoView(
-                          _localVideoRenderer,
-                          objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
-                        ),
-                      ),
-                    ),
-                  ],
+              SizedBox(
+                width: MediaQuery.of(context).size.width,
+                child: Container(
+                  color: Colors.yellow,
+                  child: RTCVideoView(
+                    _remoteVideoRenderer,
+                    objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
+                  ),
                 ),
               ),
-              TextField(
-                controller: sdpController,
-                keyboardType: TextInputType.multiline,
-                maxLines: 2,
-                maxLength: TextField.noMaxLength,
+              Positioned(
+                bottom: 90 + 30,
+                left: 30,
+                height: 160,
+                width: 100,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.all(Radius.circular(10)),
+                  child: Container(
+                    color: Colors.black26,
+                    child: RTCVideoView(
+                      _localVideoRenderer,
+                      objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
+                    ),
+                  ),
+                ),
               ),
-              _buildBottomActionsBar(context)
+              Positioned(
+                bottom: 20,
+                left: 20,
+                right: 20,
+                child: _buildBottomActionsBar(context),
+              )
             ],
           ),
         ),
@@ -227,53 +226,54 @@ class _VideoCallPageState extends State<VideoCallPage> {
 
   Container _buildBottomActionsBar(BuildContext context) {
     return Container(
-      height: 90,
+      height: 70,
       width: MediaQuery.of(context).size.width,
-      padding: EdgeInsets.all(10),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.all(Radius.circular(10)),
-          color: Colors.white10,
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            IconButton(
-              onPressed: _createOffer, // Step 1
-              icon: Icon(
-                Icons.call_end,
-                color: Colors.white,
-                size: 30,
-              ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.all(Radius.circular(100)),
+        child: BackdropFilter(
+          filter: new ImageFilter.blur(sigmaX: 8.0, sigmaY: 8.0),
+          child: Container(
+            decoration: new BoxDecoration(
+              color: Colors.grey[800]!.withOpacity(0.3),
             ),
-            SizedBox(width: 50),
-            IconButton(
-              onPressed: _setRemoteDescription, // Step 2
-              icon: Icon(
-                Icons.mic_rounded,
-                color: Colors.white,
-                size: 30,
-              ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                IconButton(
+                  onPressed: _createOffer, // Step 1
+                  icon: Icon(
+                    Icons.call_end,
+                    color: Colors.white,
+                    size: 30,
+                  ),
+                ),
+                IconButton(
+                  onPressed: _setRemoteDescription, // Step 2
+                  icon: Icon(
+                    Icons.mic_rounded,
+                    color: Colors.white,
+                    size: 30,
+                  ),
+                ),
+                IconButton(
+                  onPressed: _createAnswer, // Step 3
+                  icon: Icon(
+                    Icons.videocam_rounded,
+                    color: Colors.white,
+                    size: 30,
+                  ),
+                ),
+                IconButton(
+                  onPressed: _setCandidate, // Step 4
+                  icon: Icon(
+                    Icons.volume_up,
+                    color: Colors.white,
+                    size: 30,
+                  ),
+                ),
+              ],
             ),
-            SizedBox(width: 50),
-            IconButton(
-              onPressed: _createAnswer, // Step 3
-              icon: Icon(
-                Icons.videocam_rounded,
-                color: Colors.white,
-                size: 30,
-              ),
-            ),
-            SizedBox(width: 50),
-            IconButton(
-              onPressed: _setCandidate, // Step 4
-              icon: Icon(
-                Icons.volume_up,
-                color: Colors.white,
-                size: 30,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
