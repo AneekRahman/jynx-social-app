@@ -221,10 +221,8 @@ class RealtimeDatabaseService {
     await _firebaseDatabase.ref().update(updates);
   }
 
-  Future setP2PQueueStatus({required String currentUserUid, required bool available}) async {
-    final Map<String, dynamic> updates = {};
-    updates['p2pCallQueue/worldwide/$currentUserUid/occ'] = available ? new DateTime.now().millisecondsSinceEpoch ~/ 1000 : -1;
-    await _firebaseDatabase.ref().update(updates);
+  Future deleteP2PQueue({required String currentUserUid}) async {
+    await _firebaseDatabase.ref('p2pCallQueue/worldwide/$currentUserUid').remove();
   }
 
   Future<DataSnapshot> getRandomP2PQueue() async {
@@ -257,5 +255,28 @@ class RealtimeDatabaseService {
         return await queueQuery1;
       }
     }
+  }
+
+  Future transactionP2PAnswer({required DataSnapshot randomQueueSnapshot, required String currentUserUid}) async {
+    return randomQueueSnapshot.ref.runTransaction((Object? value) {
+      // Ensure a call at the ref exists.
+      if (value == null) return Transaction.abort();
+
+      Map<String, dynamic> p2pCallValue = Map<String, dynamic>.from(value as Map);
+
+      // Ensure this call was not already occupied
+      if (p2pCallValue["occ"] == -1) {
+        // -1 means this call is already occupied by someone else
+        return Transaction.abort();
+      }
+
+      // Set the new values to occupy this call
+      p2pCallValue["occ"] = -1;
+      p2pCallValue["occBy"] = currentUserUid;
+      p2pCallValue["answer"] = "Answer here from: " + currentUserUid;
+
+      // Return the new data to set it!
+      return Transaction.success(p2pCallValue);
+    });
   }
 }

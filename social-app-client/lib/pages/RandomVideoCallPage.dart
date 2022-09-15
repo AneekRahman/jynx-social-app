@@ -68,24 +68,29 @@ class _RandomVideoCallPageState extends State<RandomVideoCallPage> {
       // Randomly select if currentUser should be the first to create an [offer]
       shouldCreateOfferFirst = new Random().nextInt(2) == 0;
 
+      // TODO use shouldCreateOfferFirst to only select either the role of offerer or answerer for this user.
+      // TODO remove the swtitching between [_initRetryTimer] and [_listenOwnP2PQueueStream]
+
       if (shouldCreateOfferFirst) {
         // Create a queue in /p2pCallQueue/[currentUserUid]
+        // TODO Remember to delete this if switching to actively looking for a queue
         await context.read<RealtimeDatabaseService>().createOwnP2PQueueNode(userUid: widget.currentUser.uid);
         // After creating own queue, listen to it
         _listenOwnP2PQueueStream();
       } else {
-        // For 5 seconds keep trying to get an [offer] from otherUsers /p2pCallQueue/[otherUserUid]
-        await context.read<RealtimeDatabaseService>().setP2PQueueStatus(currentUserUid: widget.currentUser.uid, available: false);
-        _initRetryTimer();
+        // For 4 seconds keep trying to get an [offer] from otherUsers /p2pCallQueue/[otherUserUid]
+        await context.read<RealtimeDatabaseService>().deleteP2PQueue(currentUserUid: widget.currentUser.uid);
+        // Due to the -1 second delay, the searching of [_initRetryTimer] will be behind the switch [_initOffererOrAnswererSwitcher]
+        Future.delayed(Duration(milliseconds: 10)).then((a) {
+          _initRetryTimer();
+        });
       }
-
-      // We need to change from listening for an [answer] and seeking an [offer] to accept to increase the probability
-      _initOffererOrAnswererSwitcher();
     }
   }
 
   /// Will only run when [shouldCreateOfferFirst] = true
   void _listenOwnP2PQueueStream() {
+    // TODO try to remove this. Only keep either listening or requesting.
     // Listen for when an [answer] is added by otherUsers after they accept currentUsers [offer].
     _ownP2PQueueListener =
         context.read<RealtimeDatabaseService>().getOwnP2PQueueStream(userUid: widget.currentUser.uid).listen((DatabaseEvent event) {
@@ -93,6 +98,8 @@ class _RandomVideoCallPageState extends State<RandomVideoCallPage> {
         // Check if [answer] is available for this DatabaseEvent
         final P2PCallQueue p2pCallQueue = P2PCallQueue.fromMap(event.snapshot.value as Map, userUid: event.snapshot.key!);
         if (p2pCallQueue.answer != null) {
+          _inACall = true;
+          _searchingForMatch = false;
           // TODO Accept the [answer] here
         }
       }
@@ -101,23 +108,34 @@ class _RandomVideoCallPageState extends State<RandomVideoCallPage> {
 
   /// Will only run when [shouldCreateOfferFirst] = false
   void _initRetryTimer() {
-    _retryTimer = Timer.periodic(Duration(seconds: 2), (timer) async {
+    _retryTimer = Timer.periodic(Duration(seconds: 3), (timer) async {
       // When
       if (!_inACall && !shouldCreateOfferFirst && _searchingForMatch) {
-        DataSnapshot randomQueueSnapshot = await context.read<RealtimeDatabaseService>().getRandomP2PQueue();
-        if (randomQueueSnapshot.exists) {
-          print("GOT randomQueueSnapshot: ${randomQueueSnapshot.value}");
-        }
+        print("GOT: _initRetryTimer after 3 seconds");
       }
     });
   }
 
-  /// Keeps changing the availability of [_listenOwnP2PQueueStream] and [_initRetryTimer], listener and loop
-  void _initOffererOrAnswererSwitcher() {
-    _retryTimer = Timer.periodic(Duration(seconds: 5), (timer) async {
-      // Switch from listening for an [answer] to actively searching for an [offer] to accept after 5 seconds, and vice-versa
-      if (!_inACall && _searchingForMatch) shouldCreateOfferFirst = !shouldCreateOfferFirst;
-    });
+  Future _tryAnswerOthersOffer() async {
+    try {
+      // First get a random and not occupied queue call sapshot
+      DataSnapshot randomQueueSnapshot = await context.read<RealtimeDatabaseService>().getRandomP2PQueue();
+
+      // TODO First create the answer and then try to set the transaction
+      // Then try to accept that call with a transaction
+      TransactionResult transactionResult = await context
+          .read<RealtimeDatabaseService>()
+          .transactionP2PAnswer(randomQueueSnapshot: randomQueueSnapshot, currentUserUid: widget.currentUser.uid);
+
+      if (transactionResult.committed) {
+        _inACall = true;
+        _searchingForMatch = false;
+
+        // TODO
+      }
+    } catch (e) {
+      print(e);
+    }
   }
 
   @override
