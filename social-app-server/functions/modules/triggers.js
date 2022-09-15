@@ -86,39 +86,31 @@ exports.onMessageAdded = functions.database
     // Check if the chatRoomsInfos exists
     if (chatRoomInfosMemsSnapshot.exists()) {
       const infosMemsData = chatRoomInfosMemsSnapshot.val();
-      const otherUsersChatRooms = [];
+      const otherUsersUids = [];
 
       // Loop through the chatRoomsInfosMems to get each users userUid
       for (const infoMemsUserUid in infosMemsData) {
-        // When this is not the currentUsers userUid, then update these users /usersChatRooms/ node
-        if (infoMemsUserUid !== context.auth.uid) {
-          // Push to this array to first check if these chatRooms were accepted by these users and they exist in /usersChatRooms/
-          otherUsersChatRooms.push(
-            admin
-              .database()
-              .ref(`usersChatRooms/${infoMemsUserUid}/chatRooms/${chatRoomUid}`)
-              .get()
-          );
-        }
+        // When this is not the currentUsers userUid, and otherUser has accepted the request [acc] = 1
+        // then we have to update these users / usersChatRooms / node
+        if (
+          infoMemsUserUid !== context.auth.uid &&
+          infosMemsData[infoMemsUserUid].acc === 1
+        )
+          otherUsersUids.push(infoMemsUserUid);
       }
 
+      // If the other user didn't accept the request this array will be empty and nothing will be updated
       const toBeUpdatedUsersChatRooms = [];
-      // After the previous for loop ends, get the snapshots from all the promises in the array
-      const otherUsersChatRoomsSnapshots = await Promise.all(
-        otherUsersChatRooms
-      );
-      // Loop through each snapshot to check if they exist. If they don't exist then the user probably didn't accept the request.
-      // If the other user didn't accept the request don't update anything
-      otherUsersChatRoomsSnapshots.forEach((snapshot) => {
-        if (snapshot.exists()) {
-          // Since the snapshot exists, the other user accepted the chatRoom request. So update their /usersChatRooms/ node
-          // with the messages sentTime. Since this is a newly created message, the seen will be 0 (meaning false)
-          const updatePromise = snapshot.ref.update({
+      otherUsersUids.forEach((otherUserUid) => {
+        // Update their /usersChatRooms/ node
+        const updatePromise = admin
+          .database()
+          .ref(`usersChatRooms/${otherUserUid}/chatRooms/${chatRoomUid}`)
+          .update({
             lTime: msgData.sentTime,
             seen: 0,
           });
-          toBeUpdatedUsersChatRooms.push(updatePromise);
-        }
+        toBeUpdatedUsersChatRooms.push(updatePromise);
       });
 
       // If the /usersChatRooms/ node don't exist, this will be empty
