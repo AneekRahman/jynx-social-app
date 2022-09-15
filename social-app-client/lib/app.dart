@@ -1,10 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:social_app/pages/SignInUpPages/FinalSignUpUpdatePage.dart';
 import 'package:social_app/pages/SignInUpPages/PhoneSignInPage.dart';
+import 'package:social_app/services/analytics_service.dart';
 import 'package:social_app/services/auth_service.dart';
 import 'package:social_app/services/firestore_service.dart';
 import 'package:social_app/services/rtd_service.dart';
@@ -28,6 +30,9 @@ class MyApp extends StatelessWidget {
         ),
         Provider<FirestoreService>(
           create: (_) => FirestoreService(FirebaseFirestore.instance),
+        ),
+        Provider<AnalyticsService>(
+          create: (_) => AnalyticsService(FirebaseAnalytics.instance),
         ),
         StreamProvider<User?>(
           create: (context) => context.read<AuthenticationService>().authStateChanges,

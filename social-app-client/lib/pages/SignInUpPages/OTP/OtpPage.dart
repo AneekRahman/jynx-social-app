@@ -3,6 +3,7 @@ import 'package:social_app/modules/constants.dart';
 import 'package:provider/provider.dart';
 import 'package:social_app/services/auth_service.dart';
 
+import '../../../services/analytics_service.dart';
 import 'OtpForm.dart';
 
 class OtpPage extends StatefulWidget {
@@ -67,10 +68,11 @@ class _OtpPageState extends State<OtpPage> {
         .phoneSignIn(
           smsCode: _smsCode,
         )
-        .then((response) {
+        .then((response) async {
       if (response == "success") {
         // Wait for the User provider to update to HomePage
         // Navigator.pushNamed(context, HomePage.routeName);
+        await context.read<AnalyticsService>().logSignIn();
 
         // Stop loading animation
         if (this.mounted)

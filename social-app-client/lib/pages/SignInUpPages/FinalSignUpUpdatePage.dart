@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:social_app/modules/constants.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
+import 'package:social_app/services/analytics_service.dart';
 import 'dart:convert';
 
 import '../../services/auth_service.dart';
@@ -40,6 +41,7 @@ class _FinalSignUpUpdatePageState extends State<FinalSignUpUpdatePage> {
           }),
         );
         if (response.statusCode == 200) {
+          await context.read<AnalyticsService>().logSignUp();
           ScaffoldMessenger.of(_context).showSnackBar(SnackBar(
             backgroundColor: Colors.blue,
             content: Text(
