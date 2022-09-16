@@ -2,6 +2,8 @@ import 'package:encrypt/encrypt.dart' as encrypt;
 import 'package:flutter/material.dart';
 import 'dart:math';
 
+import 'package:permission_handler/permission_handler.dart';
+
 class MyServer {
   static const String SERVER_API = "https://us-central1-jynx-chat.cloudfunctions.net/api";
   // static const String SERVER_API = "http://192.168.0.100:5000/jynx-chat/us-central1/api";
@@ -68,6 +70,14 @@ class Constants {
     });
     return keywordsList;
   }
+
+  static Future<bool> checkCamMicPermission() async {
+    final _camPermStatus = await Permission.camera.status;
+    final _micPermStatus = await Permission.microphone.status;
+    if (_camPermStatus.isGranted && _micPermStatus.isGranted) return true;
+
+    return false;
+  }
 }
 
 class HelveticaFont {
@@ -79,6 +89,14 @@ class HelveticaFont {
   static const String Bold = "helvetica_bold";
   static const String Heavy = "helvetica_heavy";
   static const String Black = "helvetica_black";
+}
+
+/// Global variables
+/// * [GlobalKey<NavigatorState>]
+class GlobalVariable {
+  /// This global key is used in material app for navigation through firebase notifications.
+  /// [navState] usage can be found in [notification_notifier.dart] file.
+  static final GlobalKey<NavigatorState> navState = GlobalKey<NavigatorState>();
 }
 
 class MyEncryption {

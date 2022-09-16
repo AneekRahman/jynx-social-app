@@ -10,11 +10,17 @@ import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:provider/provider.dart';
 import 'package:sdp_transform/sdp_transform.dart';
 import 'package:social_app/models/ChatRoomsInfos.dart';
+import 'package:social_app/models/IncomingCall.dart';
 import 'package:social_app/services/rtd_service.dart';
 
+import '../modules/PermissionRequiredMsg.dart';
+import '../modules/constants.dart';
+
 class VideoCallPage extends StatefulWidget {
-  final ChatRoomsInfos chatRoomsInfos;
-  const VideoCallPage({super.key, required this.chatRoomsInfos});
+  ChatRoomsInfos? chatRoomsInfos;
+  String? notificationChatRoomUid;
+  final bool shouldCreateOffer;
+  VideoCallPage({super.key, this.chatRoomsInfos, this.notificationChatRoomUid, required this.shouldCreateOffer});
 
   @override
   State<VideoCallPage> createState() => _VideoCallPageState();
@@ -55,7 +61,7 @@ class _VideoCallPageState extends State<VideoCallPage> {
     return stream;
   }
 
-  Future _createPeerConnecion() async {
+  Future<RTCPeerConnection> _createPeerConnecion() async {
     await initRenderers();
 
     Map<String, dynamic> configuration = {
@@ -167,14 +173,45 @@ class _VideoCallPageState extends State<VideoCallPage> {
     }
     await _peerConnection?.close();
   }
+  ////////////////////////////////////////////////////////////////////////////////////////////////
+
+  Future<String> createAndSetOfferFromPeerConnection() async {
+    // Create the offer from [_peerConnection]
+    RTCSessionDescription description = await _peerConnection!.createOffer({'offerToReceiveVideo': 1});
+    // Set the current local description for this _peerConnection as an [offer]
+    _peerConnection!.setLocalDescription(description);
+
+    var session = parse(description.sdp.toString());
+    return json.encode(session);
+  }
+
+  void setRemoteDescription(String answer, bool isOffer) async {
+    dynamic session = await jsonDecode(answer);
+    String sdp = write(session, null);
+
+    RTCSessionDescription description = RTCSessionDescription(sdp, isOffer ? 'answer' : 'offer');
+
+    await _peerConnection!.setRemoteDescription(description);
+  }
+
+  Future<String> createAndSetAnswerFromPeerConnection() async {
+    RTCSessionDescription description = await _peerConnection!.createAnswer({'offerToReceiveVideo': 1});
+    // Set the current local description for this _peerConnection as an [answer]
+    _peerConnection!.setLocalDescription(description);
+
+    var session = parse(description.sdp.toString());
+    return json.encode(session);
+  }
 
   /// When [_currentUser] creates the call first.
-  void startCall(String offer) async {
+  void createCall() async {
     _thisIsOffer = true;
+    // First create and set the offer from [_peerConnection] as localDescription. Then get it.
+    String offer = await createAndSetOfferFromPeerConnection();
     // First create the /incomingCall/ node
     await context
         .read<RealtimeDatabaseService>()
-        .setChatRoomsInfosIncomingCall(chatRoomUid: widget.chatRoomsInfos.chatRoomUid, callerUid: _currentUser.uid, offer: offer);
+        .setChatRoomsInfosIncomingCall(chatRoomUid: widget.chatRoomsInfos!.chatRoomUid, callerUid: _currentUser.uid, offer: offer);
 
     // Then listen to the /incomingCall/ node for the [answer] of the other party
     initIncomingCallListener();
@@ -183,27 +220,61 @@ class _VideoCallPageState extends State<VideoCallPage> {
   /// If the [_currentUser] created the call, then an [answer] needs to be received for [_setCandidate]
   void initIncomingCallListener() {
     _incomingCallListener =
-        context.read<RealtimeDatabaseService>().getIncomingCallStream(chatRoomUid: widget.chatRoomsInfos.chatRoomUid).listen((event) {
+        context.read<RealtimeDatabaseService>().getIncomingCallStream(chatRoomUid: widget.chatRoomsInfos!.chatRoomUid).listen((event) {
       if (event.snapshot.exists) {
-        if (_thisIsOffer) {
-          // If this is an [offer], then listen for the [answer] from the other party
+        // If currentUser created the [offer], then he must accept the answer
+        if (widget.shouldCreateOffer) {
+          final answer = (event.snapshot.value as Map)["answer"];
+          if (answer != null) setRemoteDescription(answer, true);
         }
       }
     });
   }
 
   /// This is called after [_setRemoteDescription] is set with the [offer] gotten from /incomingCall/ node and then the [answer] created.
-  void setAnswerCall(String answer) async {
+  void answerCall(String notificationChatRoomUid) async {
     _thisIsOffer = false;
-    await context.read<RealtimeDatabaseService>().setIncomingCallAnswer(chatRoomUid: widget.chatRoomsInfos.chatRoomUid, answer: answer);
+    final DataSnapshot incomingCallSnapshot =
+        await context.read<RealtimeDatabaseService>().getIncomingCallSnaphsot(chatRoomUid: notificationChatRoomUid);
+
+    if (incomingCallSnapshot.exists) {
+      IncomingCall incomingCall = IncomingCall.fromMap(map: incomingCallSnapshot.value as Map, chatRoomUid: notificationChatRoomUid);
+      // First set the candidate using the [offer]
+      await setCandidateFromAnswer(incomingCall.answer!);
+      // Next, create an answer and set it in /incomingCall/
+      final String answer = await createAndSetAnswerFromPeerConnection();
+      await context.read<RealtimeDatabaseService>().setIncomingCallAnswer(chatRoomUid: notificationChatRoomUid, answer: answer);
+    }
+  }
+
+  Future setCandidateFromAnswer(String answer) async {
+    dynamic session = await jsonDecode(answer);
+    dynamic candidate = RTCIceCandidate(session['candidate'], session['sdpMid'], session['sdpMlineIndex']);
+    await _peerConnection!.addCandidate(candidate);
+  }
+
+  void _initCallPage() async {
+    final allPermGranted = await Constants.checkCamMicPermission();
+
+    if (allPermGranted) {
+      // First create the peerConnection
+      final RTCPeerConnection connection = await _createPeerConnecion();
+      _peerConnection = connection;
+
+      if (widget.shouldCreateOffer) {
+        createCall();
+      } else {
+        if (widget.notificationChatRoomUid != null) {
+          answerCall(widget.notificationChatRoomUid!);
+        }
+      }
+    }
   }
 
   @override
   void initState() {
     _currentUser = context.read<User>();
-    // _createPeerConnecion().then((pc) {
-    //   _peerConnection = pc;
-    // });
+    // First create the /incomingCall/ node
 
     // String encrypted = MyEncryption.getEncryptedString(
     //     mainString: "Hello ami aneek", password: MyEncryption.CHAT_ROOM_MESSAGES_PASSWORD, uid: "dawjdowjdoa");
@@ -215,7 +286,7 @@ class _VideoCallPageState extends State<VideoCallPage> {
 
   @override
   void dispose() {
-    // _cleanSessions();
+    _cleanSessions();
     if (_incomingCallListener != null) _incomingCallListener!.cancel();
     super.dispose();
   }
@@ -241,6 +312,18 @@ class _VideoCallPageState extends State<VideoCallPage> {
                     _remoteVideoRenderer,
                     objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
                   ),
+                ),
+              ),
+              Positioned(
+                top: 0,
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: PermissionRequiredMsg(
+                  onChange: () {
+                    // This will be called right after permission for camera and microphone is granted
+                    _initCallPage();
+                  },
                 ),
               ),
               Positioned(

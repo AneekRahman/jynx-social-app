@@ -45,7 +45,7 @@ dependencies:
   video_player: ^2.4.7 # For video banner mainly
   firebase_messaging: ^13.0.1
   encrypt: ^5.0.1
-  flutter_local_notifications: ^9.9.1
+  awesome_notifications: ^0.6.21
 
   flutter:
     sdk: flutter

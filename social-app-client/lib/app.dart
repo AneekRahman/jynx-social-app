@@ -10,6 +10,7 @@ import 'package:social_app/services/analytics_service.dart';
 import 'package:social_app/services/auth_service.dart';
 import 'package:social_app/services/firestore_service.dart';
 import 'package:social_app/services/rtd_service.dart';
+import 'modules/constants.dart';
 import 'pages/Home.dart';
 
 class MyApp extends StatelessWidget {
@@ -40,6 +41,7 @@ class MyApp extends StatelessWidget {
         ),
       ],
       child: MaterialApp(
+        navigatorKey: GlobalVariable.navState,
         debugShowCheckedModeBanner: false,
         theme: ThemeData.dark(),
         routes: {

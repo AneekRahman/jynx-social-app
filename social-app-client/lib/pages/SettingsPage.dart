@@ -1,8 +1,10 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:social_app/modules/constants.dart';
 import 'package:social_app/pages/Home.dart';
 import 'package:social_app/services/auth_service.dart';
 import 'package:provider/provider.dart';
+import 'package:social_app/services/rtd_service.dart';
 
 class SettingsPage extends StatefulWidget {
   @override
@@ -11,6 +13,7 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   bool _recieveNotifications = false;
+  late User _currentUser;
 
   TextStyle _normalTextStyle = TextStyle(
     color: Colors.white,
@@ -84,6 +87,12 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   @override
+  void initState() {
+    _currentUser = context.watch<User>();
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Color(0xFF0a0a0a),
@@ -129,8 +138,9 @@ class _SettingsPageState extends State<SettingsPage> {
                             "Logout",
                             style: TextStyle(fontFamily: HelveticaFont.Bold, color: Colors.black),
                           ),
-                          onTap: () {
-                            context.read<AuthenticationService>().signOut();
+                          onTap: () async {
+                            await context.read<RealtimeDatabaseService>().deleteFCMToken(userUid: _currentUser.uid);
+                            await context.read<AuthenticationService>().signOut();
                             Navigator.popUntil(context, (route) => route.isFirst);
                           },
                           context: context,

@@ -297,19 +297,33 @@ class RealtimeDatabaseService {
     });
   }
 
+  Future deleteFCMToken({required String userUid}) async {
+    await _firebaseDatabase.ref('usersInfos/$userUid/fcmToken').remove();
+  }
+
   Stream<DatabaseEvent> getIncomingCallStream({required String chatRoomUid}) {
-    return _firebaseDatabase.ref("chatRoomsInfos/$chatRoomUid/incomingCall").onChildChanged;
+    return _firebaseDatabase.ref("chatRoomsInfos/$chatRoomUid/incomingCall").onValue;
+  }
+
+  Future<DataSnapshot> getIncomingCallSnaphsot({required String chatRoomUid}) {
+    return _firebaseDatabase.ref("chatRoomsInfos/$chatRoomUid/incomingCall").get();
   }
 
   Future setChatRoomsInfosIncomingCall({required String chatRoomUid, required String callerUid, required String offer}) async {
-    await _firebaseDatabase.ref('chatRoomsInfos/$chatRoomUid/incomingCall').set({
+    final incomingCallRef = _firebaseDatabase.ref('chatRoomsInfos/$chatRoomUid/incomingCall');
+    // Delete this ref if currentUsers connection is lost.
+    await incomingCallRef.onDisconnect().remove();
+    await incomingCallRef.set({
       "offer": offer,
       "callerUid": callerUid,
     });
   }
 
   Future setIncomingCallAnswer({required String chatRoomUid, required String answer}) async {
-    await _firebaseDatabase.ref('chatRoomsInfos/$chatRoomUid/incomingCall').update({
+    final incomingCallRef = _firebaseDatabase.ref('chatRoomsInfos/$chatRoomUid/incomingCall');
+    // Delete this ref if currentUsers connection is lost.
+    await incomingCallRef.onDisconnect().remove();
+    await incomingCallRef.update({
       "answer": answer,
     });
   }

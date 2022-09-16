@@ -140,6 +140,9 @@ const sendNewMsgNotification = async (currentUserUid, otherUserUid, body) => {
         title: currentUser.displayName,
         body,
       },
+      data: {
+        notiType: "MESSAGE_ADDED",
+      },
       android: {
         priority: "high",
       },
@@ -149,7 +152,7 @@ const sendNewMsgNotification = async (currentUserUid, otherUserUid, body) => {
       .messaging()
       .send(message)
       .catch((error) => {
-        console.log("Error sending FCM message:", error);
+        console.log("Error sending FCM message for onMessageAdded:", error);
       });
   } else {
     return Promise.resolve();
@@ -176,18 +179,61 @@ exports.onCallIncoming = functions.database
 
       // Look into chatRoomInfoMems for otherUser of this Private chat
       if (chatRoomInfosData.mems !== null) {
-        for (const infoMemsUserUid in infosMemsData) {
+        for (const infoMemsUserUid in chatRoomInfosData.mems) {
           // Calls can only go through when the user has accepted the request meaning [acc] = 1
           if (
             infoMemsUserUid !== context.auth.uid &&
-            infosMemsData[infoMemsUserUid].acc === 1
+            chatRoomInfosData.mems[infoMemsUserUid].acc === 1
           ) {
-            // TODO Send the call fcm data payload notifcaiton
+            return sendIncomingCallNotification(
+              context.auth.uid,
+              infoMemsUserUid,
+              chatRoomUid
+            );
           }
         }
       }
     }
   });
+
+const sendIncomingCallNotification = async (
+  currentUserUid,
+  otherUserUid,
+  chatRoomUid
+) => {
+  // Get currentUser for displayName
+  const currentUser = await admin.auth().getUser(currentUserUid);
+
+  // Get the fcmToken for this user
+  const otherUsersInfoTokenSnapshot = await admin
+    .database()
+    .ref(`usersInfos/${otherUserUid}/fcmToken/token`)
+    .get();
+
+  if (otherUsersInfoTokenSnapshot.exists()) {
+    const message = {
+      token: otherUsersInfoTokenSnapshot.val(),
+      data: {
+        notiType: "INCOMING_CALL",
+        callerName: currentUser.displayName,
+        callerPhotoURL: currentUser.photoURL ? currentUser.photoURL : "",
+        chatRoomUid,
+      },
+      android: {
+        priority: "high",
+      },
+    };
+
+    await admin
+      .messaging()
+      .send(message)
+      .catch((error) => {
+        console.log("Error sending FCM message for onCallIncoming: ", error);
+      });
+  } else {
+    return Promise.resolve();
+  }
+};
 
 /* ------------ FIRESTORE TRIGGERS (END) ------------ */
 

@@ -5,8 +5,6 @@ import 'package:social_app/modules/constants.dart';
 import 'package:social_app/pages/RandomVideoCallPage.dart';
 import 'package:video_player/video_player.dart';
 
-import 'VideoCallPage.dart';
-
 GlobalKey<_VideoBannerState> _videoBannerGlobalKey = GlobalKey<_VideoBannerState>();
 
 class StartRandomChatPage extends StatefulWidget {
