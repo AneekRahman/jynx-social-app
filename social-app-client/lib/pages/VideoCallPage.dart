@@ -185,11 +185,12 @@ class _VideoCallPageState extends State<VideoCallPage> {
     return json.encode(session);
   }
 
-  void setRemoteDescription(String answer, bool isOffer) async {
-    dynamic session = await jsonDecode(answer);
+  Future setRemoteDescription(String offer, bool isOffer) async {
+    dynamic session = await jsonDecode(offer);
     String sdp = write(session, null);
 
-    RTCSessionDescription description = RTCSessionDescription(sdp, isOffer ? 'answer' : 'offer');
+    // TODO check if its !isOffer or just isOffer
+    RTCSessionDescription description = RTCSessionDescription(sdp, isOffer ? 'offer' : "answer");
 
     await _peerConnection!.setRemoteDescription(description);
   }
@@ -217,15 +218,21 @@ class _VideoCallPageState extends State<VideoCallPage> {
     initIncomingCallListener();
   }
 
-  /// If the [_currentUser] created the call, then an [answer] needs to be received for [_setCandidate]
+  /// If the [_currentUser] created the call [offer], then an [answer] needs to be received for [_setCandidate]
   void initIncomingCallListener() {
-    _incomingCallListener =
-        context.read<RealtimeDatabaseService>().getIncomingCallStream(chatRoomUid: widget.chatRoomsInfos!.chatRoomUid).listen((event) {
+    _incomingCallListener = context
+        .read<RealtimeDatabaseService>()
+        .getIncomingCallStream(chatRoomUid: widget.chatRoomsInfos!.chatRoomUid)
+        .listen((event) async {
       if (event.snapshot.exists) {
         // If currentUser created the [offer], then he must accept the answer
         if (widget.shouldCreateOffer) {
           final answer = (event.snapshot.value as Map)["answer"];
-          if (answer != null) setRemoteDescription(answer, true);
+          if (answer != null) {
+            await setRemoteDescription(answer, false);
+            // await setCandidateFromAnswer(answer);
+            setState(() {});
+          }
         }
       }
     });
@@ -240,7 +247,7 @@ class _VideoCallPageState extends State<VideoCallPage> {
     if (incomingCallSnapshot.exists) {
       IncomingCall incomingCall = IncomingCall.fromMap(map: incomingCallSnapshot.value as Map, chatRoomUid: notificationChatRoomUid);
       // First set the candidate using the [offer]
-      await setCandidateFromAnswer(incomingCall.answer!);
+      await setRemoteDescription(incomingCall.offer!, true);
       // Next, create an answer and set it in /incomingCall/
       final String answer = await createAndSetAnswerFromPeerConnection();
       await context.read<RealtimeDatabaseService>().setIncomingCallAnswer(chatRoomUid: notificationChatRoomUid, answer: answer);

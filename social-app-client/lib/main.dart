@@ -7,7 +7,6 @@ import 'package:social_app/pages/ChatMessageRoom.dart';
 import 'package:social_app/pages/VideoCallPage.dart';
 import 'app.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
-import 'dart:math' as Math;
 
 import 'models/FCMNotification.dart';
 import 'modules/constants.dart';
@@ -44,7 +43,7 @@ void _showIncomingCallNotification(FCMNotifcation fcmNotifcation) async {
         "chatRoomUid": fcmNotifcation.chatRoomUid!,
       },
       largeIcon: fcmNotifcation.usersPhotoURL,
-      roundedBigPicture: true,
+      roundedLargeIcon: true,
       notificationLayout: NotificationLayout.Default,
     ),
   );
@@ -62,7 +61,7 @@ void _showMessageAddedNotification(FCMNotifcation fcmNotifcation) async {
       payload: {
         "chatRoomUid": fcmNotifcation.chatRoomUid!,
       },
-      largeIcon: "https://rubygarage.s3.amazonaws.com/uploads/article_image/file/2903/custom-design-1x.png",
+      largeIcon: fcmNotifcation.usersPhotoURL,
       roundedLargeIcon: true,
       summary: 'New messages',
       notificationLayout: NotificationLayout.Messaging,
