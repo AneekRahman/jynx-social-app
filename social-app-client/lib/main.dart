@@ -36,7 +36,7 @@ void _showIncomingCallNotification(FCMNotifcation fcmNotifcation) async {
   // Create the notification
   await AwesomeNotifications().createNotification(
     content: NotificationContent(
-      id: Math.Random().nextInt(9999),
+      id: fcmNotifcation.hashCode,
       channelKey: 'incoming_call_channel',
       title: 'Incoming call...',
       body: fcmNotifcation.usersName! + " is calling you.",
@@ -54,16 +54,18 @@ void _showMessageAddedNotification(FCMNotifcation fcmNotifcation) async {
   // Create the notification
   await AwesomeNotifications().createNotification(
     content: NotificationContent(
-      id: Math.Random().nextInt(9999),
+      id: fcmNotifcation.hashCode,
+      groupKey: fcmNotifcation.chatRoomUid,
       channelKey: 'new_messages_channel',
       title: fcmNotifcation.usersName,
       body: fcmNotifcation.msg,
       payload: {
         "chatRoomUid": fcmNotifcation.chatRoomUid!,
       },
-      largeIcon: fcmNotifcation.usersPhotoURL,
-      roundedBigPicture: true,
-      notificationLayout: NotificationLayout.Default,
+      largeIcon: "https://rubygarage.s3.amazonaws.com/uploads/article_image/file/2903/custom-design-1x.png",
+      roundedLargeIcon: true,
+      summary: 'New messages',
+      notificationLayout: NotificationLayout.Messaging,
     ),
   );
 }
@@ -134,4 +136,11 @@ Future<void> main() async {
   await FirebaseAppCheck.instance.activate();
 
   runApp(MyApp());
+
+  // Request notification permission if not already
+  AwesomeNotifications().isNotificationAllowed().then((isAllowed) {
+    if (!isAllowed) {
+      AwesomeNotifications().requestPermissionToSendNotifications();
+    }
+  });
 }

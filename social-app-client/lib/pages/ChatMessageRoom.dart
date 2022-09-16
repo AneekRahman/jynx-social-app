@@ -134,6 +134,7 @@ class _ChatMessageRoomState extends State<ChatMessageRoom> {
 
     if (chatRoomsInfosSnapshot.exists) {
       widget.chatRoomsInfos = ChatRoomsInfos.fromMap(chatRoomsInfosSnapshot.value as Map, chatRoomUid: chatRoomsInfosSnapshot.key!);
+      widget.chatRoomsInfos!.seenByThisUser = 0;
       // Finally initialize the chatRoom
       _initChatRoomWithInfos();
     }
