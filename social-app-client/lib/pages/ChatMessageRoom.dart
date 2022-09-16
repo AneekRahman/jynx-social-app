@@ -262,8 +262,17 @@ class ChatTopBar extends StatelessWidget {
         chatRoomsInfos != null
             ? IconButton(
                 onPressed: () {
-                  // TODO make sure the other side accepted the chat request first
-                  Navigator.push(context, CupertinoPageRoute(builder: (context) => VideoCallPage()));
+                  if (otherPrivateChatRoomUser.acc == 1) {
+                    Navigator.push(
+                        context,
+                        CupertinoPageRoute(
+                            builder: (context) => VideoCallPage(
+                                  chatRoomsInfos: chatRoomsInfos,
+                                )));
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(otherPrivateChatRoomUser.name + " hasn't accepted your request. Please try again later.")));
+                  }
                 },
                 icon: Image.asset("assets/icons/Call-icon.png", height: 24, width: 24),
               )

@@ -1,26 +1,35 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:ui';
 
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
+import 'package:provider/provider.dart';
 import 'package:sdp_transform/sdp_transform.dart';
-
-import '../modules/constants.dart';
+import 'package:social_app/models/ChatRoomsInfos.dart';
+import 'package:social_app/services/rtd_service.dart';
 
 class VideoCallPage extends StatefulWidget {
-  const VideoCallPage({super.key});
+  final ChatRoomsInfos chatRoomsInfos;
+  const VideoCallPage({super.key, required this.chatRoomsInfos});
 
   @override
   State<VideoCallPage> createState() => _VideoCallPageState();
 }
 
 class _VideoCallPageState extends State<VideoCallPage> {
+  late final _currentUser;
+  StreamSubscription<DatabaseEvent>? _incomingCallListener;
+
+  // The states below are for WebRTC
   final _localVideoRenderer = RTCVideoRenderer();
   final _remoteVideoRenderer = RTCVideoRenderer();
   final sdpController = TextEditingController();
 
-  bool _offer = false;
+  bool _thisIsOffer = false;
 
   RTCPeerConnection? _peerConnection;
   MediaStream? _localStream;
@@ -102,7 +111,7 @@ class _VideoCallPageState extends State<VideoCallPage> {
     print(json.encode(session));
 
     // Set the current local description for this _peerConnection as an "offer"
-    _offer = true;
+    _thisIsOffer = true;
     _peerConnection!.setLocalDescription(description);
   }
 
@@ -114,7 +123,7 @@ class _VideoCallPageState extends State<VideoCallPage> {
     String sdp = write(session, null);
 
     // If the local description for the currentUser is "offer", the remote description for the otherUser will be an "answer". And vice-versa
-    RTCSessionDescription description = RTCSessionDescription(sdp, _offer ? 'answer' : 'offer');
+    RTCSessionDescription description = RTCSessionDescription(sdp, _thisIsOffer ? 'answer' : 'offer');
     print(description.toMap());
 
     // After getting either the "answer" or "offer" set it as the remote description for this _peerConnection
@@ -130,7 +139,7 @@ class _VideoCallPageState extends State<VideoCallPage> {
     print(json.encode(session));
 
     // Set the current local description for this _peerConnection as an "answer"
-    _offer = false;
+    _thisIsOffer = false;
     _peerConnection!.setLocalDescription(description);
   }
 
@@ -159,8 +168,39 @@ class _VideoCallPageState extends State<VideoCallPage> {
     await _peerConnection?.close();
   }
 
+  /// When [_currentUser] creates the call first.
+  void startCall(String offer) async {
+    _thisIsOffer = true;
+    // First create the /incomingCall/ node
+    await context
+        .read<RealtimeDatabaseService>()
+        .setChatRoomsInfosIncomingCall(chatRoomUid: widget.chatRoomsInfos.chatRoomUid, callerUid: _currentUser.uid, offer: offer);
+
+    // Then listen to the /incomingCall/ node for the [answer] of the other party
+    initIncomingCallListener();
+  }
+
+  /// If the [_currentUser] created the call, then an [answer] needs to be received for [_setCandidate]
+  void initIncomingCallListener() {
+    _incomingCallListener =
+        context.read<RealtimeDatabaseService>().getIncomingCallStream(chatRoomUid: widget.chatRoomsInfos.chatRoomUid).listen((event) {
+      if (event.snapshot.exists) {
+        if (_thisIsOffer) {
+          // If this is an [offer], then listen for the [answer] from the other party
+        }
+      }
+    });
+  }
+
+  /// This is called after [_setRemoteDescription] is set with the [offer] gotten from /incomingCall/ node and then the [answer] created.
+  void setAnswerCall(String answer) async {
+    _thisIsOffer = false;
+    await context.read<RealtimeDatabaseService>().setIncomingCallAnswer(chatRoomUid: widget.chatRoomsInfos.chatRoomUid, answer: answer);
+  }
+
   @override
   void initState() {
+    _currentUser = context.read<User>();
     // _createPeerConnecion().then((pc) {
     //   _peerConnection = pc;
     // });
@@ -176,6 +216,7 @@ class _VideoCallPageState extends State<VideoCallPage> {
   @override
   void dispose() {
     // _cleanSessions();
+    if (_incomingCallListener != null) _incomingCallListener!.cancel();
     super.dispose();
   }
 

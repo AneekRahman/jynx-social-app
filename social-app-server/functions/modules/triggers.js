@@ -176,14 +176,14 @@ exports.onCallIncoming = functions.database
 
       // Look into chatRoomInfoMems for otherUser of this Private chat
       if (chatRoomInfosData.mems !== null) {
-        let otherUserUid;
         for (const infoMemsUserUid in infosMemsData) {
           // Calls can only go through when the user has accepted the request meaning [acc] = 1
           if (
             infoMemsUserUid !== context.auth.uid &&
             infosMemsData[infoMemsUserUid].acc === 1
-          )
-            otherUserUid = infoMemsUserUid;
+          ) {
+            // TODO Send the call fcm data payload notifcaiton
+          }
         }
       }
     }

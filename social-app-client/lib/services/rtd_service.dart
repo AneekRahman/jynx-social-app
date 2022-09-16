@@ -296,4 +296,21 @@ class RealtimeDatabaseService {
       "time": new DateTime.now().millisecondsSinceEpoch,
     });
   }
+
+  Stream<DatabaseEvent> getIncomingCallStream({required String chatRoomUid}) {
+    return _firebaseDatabase.ref("chatRoomsInfos/$chatRoomUid/incomingCall").onChildChanged;
+  }
+
+  Future setChatRoomsInfosIncomingCall({required String chatRoomUid, required String callerUid, required String offer}) async {
+    await _firebaseDatabase.ref('chatRoomsInfos/$chatRoomUid/incomingCall').set({
+      "offer": offer,
+      "callerUid": callerUid,
+    });
+  }
+
+  Future setIncomingCallAnswer({required String chatRoomUid, required String answer}) async {
+    await _firebaseDatabase.ref('chatRoomsInfos/$chatRoomUid/incomingCall').update({
+      "answer": answer,
+    });
+  }
 }
