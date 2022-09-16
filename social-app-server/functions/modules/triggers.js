@@ -110,9 +110,11 @@ exports.onMessageAdded = functions.database
           // To send the otherUser a push notification
           toBeUpdatedPromises.push(
             sendNewMsgNotification(
+              chatRoomUid,
               context.auth.uid,
               infoMemsUserUid,
-              "New: " + msgData.msg.slice(0, 30)
+              snapshot.key,
+              msgData.msg
             )
           );
         }
@@ -123,7 +125,13 @@ exports.onMessageAdded = functions.database
     }
   });
 
-const sendNewMsgNotification = async (currentUserUid, otherUserUid, body) => {
+const sendNewMsgNotification = async (
+  chatRoomUid,
+  currentUserUid,
+  otherUserUid,
+  msgUid,
+  msg
+) => {
   // Get currentUser for displayName
   const currentUser = await admin.auth().getUser(currentUserUid);
 
@@ -136,12 +144,13 @@ const sendNewMsgNotification = async (currentUserUid, otherUserUid, body) => {
   if (otherUsersInfoSnapshot.exists() && currentUser.displayName) {
     const message = {
       token: otherUsersInfoSnapshot.val(),
-      notification: {
-        title: currentUser.displayName,
-        body,
-      },
       data: {
         notiType: "MESSAGE_ADDED",
+        msgUid,
+        msg,
+        usersName: currentUser.displayName,
+        usersPhotoURL: currentUser.photoURL ? currentUser.photoURL : "",
+        chatRoomUid,
       },
       android: {
         priority: "high",
@@ -215,8 +224,8 @@ const sendIncomingCallNotification = async (
       token: otherUsersInfoTokenSnapshot.val(),
       data: {
         notiType: "INCOMING_CALL",
-        callerName: currentUser.displayName,
-        callerPhotoURL: currentUser.photoURL ? currentUser.photoURL : "",
+        usersName: currentUser.displayName,
+        usersPhotoURL: currentUser.photoURL ? currentUser.photoURL : "",
         chatRoomUid,
       },
       android: {

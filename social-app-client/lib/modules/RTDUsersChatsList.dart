@@ -191,7 +191,6 @@ class _RTDUsersChatsListState extends State<RTDUsersChatsList> {
                                           builder: (context) => ChatMessageRoom(
                                                 fromRequestList: widget.fromRequestList,
                                                 chatRoomsInfos: chatRoomsInfos,
-                                                currentUser: widget.currentUser,
                                               )),
                                     );
                                   },

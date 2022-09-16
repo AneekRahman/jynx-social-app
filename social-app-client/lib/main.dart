@@ -3,12 +3,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:social_app/pages/ChatMessageRoom.dart';
 import 'package:social_app/pages/VideoCallPage.dart';
 import 'app.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'dart:math' as Math;
 
-import 'models/IncomingCall.dart';
+import 'models/FCMNotification.dart';
 import 'modules/constants.dart';
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -16,36 +17,59 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   User? currentUser = FirebaseAuth.instance.currentUser;
 
   if (currentUser != null) {
-    _showIncomingCallNotification(message);
     print("Handling a background message: ${message.toMap()} for ${currentUser.displayName}");
+    // Initialize showing notifications
+    await _initializeNotifications();
+    final FCMNotifcation fcmNotifcation = FCMNotifcation.fromJson(message.data);
+
+    if (fcmNotifcation.notiType == NotificationType.INCOMING_CALL) {
+      // If this is an /incomingCall/ notification
+      _showIncomingCallNotification(fcmNotifcation);
+    } else if (fcmNotifcation.notiType == NotificationType.MESSAGE_ADDED) {
+      // If this is an /messages/ notification
+      _showMessageAddedNotification(fcmNotifcation);
+    }
   }
 }
 
-void _showIncomingCallNotification(RemoteMessage message) async {
-  final FCMNotifcation fcmNotifcation = FCMNotifcation.fromJson(message.data);
+void _showIncomingCallNotification(FCMNotifcation fcmNotifcation) async {
+  // Create the notification
+  await AwesomeNotifications().createNotification(
+    content: NotificationContent(
+      id: Math.Random().nextInt(9999),
+      channelKey: 'incoming_call_channel',
+      title: 'Incoming call...',
+      body: fcmNotifcation.usersName! + " is calling you.",
+      payload: {
+        "chatRoomUid": fcmNotifcation.chatRoomUid!,
+      },
+      largeIcon: fcmNotifcation.usersPhotoURL,
+      roundedBigPicture: true,
+      notificationLayout: NotificationLayout.Default,
+    ),
+  );
+}
 
-  // If this is an /incomingCall/ notification
-  if (fcmNotifcation.notiType == NotificationType.INCOMING_CALL) {
-    // Initialize showing notifications
-    await _initializeNotifications();
-    await AwesomeNotifications().createNotification(
-      content: NotificationContent(
-        id: Math.Random().nextInt(9999),
-        channelKey: 'incoming_call_channel',
-        title: 'Incoming call...',
-        body: fcmNotifcation.callerName! + " is calling you.",
-        payload: {
-          "chatRoomUid": fcmNotifcation.chatRoomUid!,
-        },
-        largeIcon: fcmNotifcation.callerPhotoURL,
-        roundedBigPicture: true,
-        notificationLayout: NotificationLayout.Default,
-      ),
-    );
-  }
+void _showMessageAddedNotification(FCMNotifcation fcmNotifcation) async {
+  // Create the notification
+  await AwesomeNotifications().createNotification(
+    content: NotificationContent(
+      id: Math.Random().nextInt(9999),
+      channelKey: 'new_messages_channel',
+      title: fcmNotifcation.usersName,
+      body: fcmNotifcation.msg,
+      payload: {
+        "chatRoomUid": fcmNotifcation.chatRoomUid!,
+      },
+      largeIcon: fcmNotifcation.usersPhotoURL,
+      roundedBigPicture: true,
+      notificationLayout: NotificationLayout.Default,
+    ),
+  );
 }
 
 Future _initializeNotifications() async {
+  // Initialize the notification channels
   await AwesomeNotifications().initialize(
     null,
     [
@@ -56,12 +80,31 @@ Future _initializeNotifications() async {
         importance: NotificationImportance.High,
         channelShowBadge: true,
       ),
+      NotificationChannel(
+        channelKey: 'new_messages_channel',
+        channelName: 'New Messages Notifications',
+        channelDescription: "",
+        importance: NotificationImportance.High,
+        channelShowBadge: true,
+      ),
     ],
   );
+}
 
-  // Listen to taps for [onMessageAdded] or [onIncomingCall]
+void _listenToAwesomeNotiTaps() {
   AwesomeNotifications().actionStream.listen((notification) {
     print("Handling AwesomeNotifications:actionStream: ${notification.toMap()}");
+    // When the notification is for a new message
+    if (notification.channelKey == "new_messages_channel") {
+      Navigator.of(GlobalVariable.navState.currentContext!).push(
+        CupertinoPageRoute(
+            builder: (context) => ChatMessageRoom(
+                  fromRequestList: false,
+                  chatRoomsUid: notification.payload!["chatRoomUid"],
+                )),
+      );
+    }
+    // When the notification is for an incoming call
     if (notification.channelKey == "incoming_call_channel") {
       Navigator.of(GlobalVariable.navState.currentContext!).push(
         CupertinoPageRoute(
@@ -77,11 +120,12 @@ Future _initializeNotifications() async {
 Future<void> main() async {
   // First bind flutter
   WidgetsFlutterBinding.ensureInitialized();
+  // Initialize the AwesomeNotification for listening [actionStream] tap listener
+  await _initializeNotifications();
+  _listenToAwesomeNotiTaps();
 
   // Create the background listener for notification (when app is in the background or terminated)
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-  // Initialize the AwesomeNotification for listening [actionStream] tap listener
-  await _initializeNotifications();
 
   // FirebaseMessaging.onMessage.listen((event) {});
 

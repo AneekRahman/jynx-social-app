@@ -77,7 +77,6 @@ class _OthersProfilePageState extends State<OthersProfilePage> {
                               context,
                               CupertinoPageRoute(
                                 builder: (context) => ChatMessageRoom(
-                                  currentUser: _currentUser!,
                                   otherUser: widget.otherUsersProfileObject,
                                   fromRequestList: false,
                                 ),

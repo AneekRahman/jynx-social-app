@@ -20,18 +20,18 @@ import 'OthersProfilePage.dart';
 import 'VideoCallPage.dart';
 
 class ChatMessageRoom extends StatefulWidget {
-  /// If [chatRoomsInfos] is null, then [otherUser] must be present
+  /// If [chatRoomsInfos] is null, then either [otherUser] or [chatRoomsInfosUid] must be present
   /// If [otherUser] is null, then [chatRoomsInfos] must be present
   ChatRoomsInfos? chatRoomsInfos;
+  String? chatRoomsUid;
   UserFirestore? otherUser;
-  final User currentUser;
   final bool fromRequestList;
 
   ChatMessageRoom({
     super.key,
-    required this.currentUser,
     required this.fromRequestList,
     this.chatRoomsInfos,
+    this.chatRoomsUid,
     this.otherUser,
   });
 
@@ -44,6 +44,7 @@ class _ChatMessageRoomState extends State<ChatMessageRoom> {
   bool isGroupChat = false;
   bool otherUserBlockedInPrivateChat = false;
   StreamSubscription<DatabaseEvent>? _chatRoomsMembersListener;
+  late final User currentUser;
 
   /// In order to make sure there is always an other user, when [isGroupChat] is false, this [otherPrivateChatRoomUser] is
   /// initialized inside [initState] once if [widget.chatRoomsInfos] is not null. If [widget.chatRoomsInfos] is null then
@@ -70,7 +71,7 @@ class _ChatMessageRoomState extends State<ChatMessageRoom> {
     if (!widget.chatRoomsInfos!.grp) {
       // This means that this is a private chat, so save the other user as a state
       widget.chatRoomsInfos!.mems.forEach((element) {
-        if (widget.currentUser.uid != element.userUid) {
+        if (currentUser.uid != element.userUid) {
           otherPrivateChatRoomUser = element;
         }
       });
@@ -87,7 +88,7 @@ class _ChatMessageRoomState extends State<ChatMessageRoom> {
     if (widget.chatRoomsInfos!.seenByThisUser == 0) {
       await context.read<RealtimeDatabaseService>().setMessageAsSeen(
             chatRoomUid: widget.chatRoomsInfos!.chatRoomUid,
-            userUid: widget.currentUser.uid,
+            userUid: currentUser.uid,
             fromRequestList: widget.fromRequestList,
           );
     }
@@ -114,7 +115,7 @@ class _ChatMessageRoomState extends State<ChatMessageRoom> {
   /// If none is found, set [noChatRoomFound] to true since both [widget.chatRoomsInfos] and [otherPrivateChatRoomUser] is null
   Future findPrivateChatRoomsInFirestore() async {
     final firestoreChatRecord = await context.read<FirestoreService>().findPrivateChatWithUser(
-          widget.currentUser.uid,
+          currentUser.uid,
           otherPrivateChatRoomUser!.userUid,
         );
 
@@ -128,16 +129,34 @@ class _ChatMessageRoomState extends State<ChatMessageRoom> {
     }
   }
 
+  Future getChatRoomsInfosWithUid(String chatRoomsUid) async {
+    final DataSnapshot chatRoomsInfosSnapshot = await context.read<RealtimeDatabaseService>().getChatRoomsInfo(chatRoomUid: chatRoomsUid);
+
+    if (chatRoomsInfosSnapshot.exists) {
+      widget.chatRoomsInfos = ChatRoomsInfos.fromMap(chatRoomsInfosSnapshot.value as Map, chatRoomUid: chatRoomsInfosSnapshot.key!);
+      // Finally initialize the chatRoom
+      _initChatRoomWithInfos();
+    }
+  }
+
   /// Depending on [widget.chatRoomsInfos] being null or not. If [widget.chatRoomsInfos] is not null, the chatRoom can be
   /// either a group of not. [_initChatRoomWithInfos] is called to designate this [ChatMessageRoom] as [isGroupChat] or not
   /// [widget.chatRoomsInfos] is null. Then check to see if this chatRoom was searched and there is already a Private
   /// chatRoom for the [widget.otherUser]
   @override
   void initState() {
+    currentUser = context.read<User>();
     if (widget.chatRoomsInfos == null) {
-      otherPrivateChatRoomUser = ChatRoomsInfosMem.fromUserFirestore(widget.otherUser!);
-      findPrivateChatRoomsInFirestore();
+      // If [chatRoomsInfos] is null but [chatRoomsUid] is available
+      if (widget.chatRoomsUid != null) {
+        getChatRoomsInfosWithUid(widget.chatRoomsUid!);
+      } else {
+        // If neither [chatRoomsInfos] nor [chatRoomsUid] is available
+        otherPrivateChatRoomUser = ChatRoomsInfosMem.fromUserFirestore(widget.otherUser!);
+        findPrivateChatRoomsInFirestore();
+      }
     } else {
+      // If [chatRoomsInfos] available
       _initChatRoomWithInfos();
     }
 
@@ -159,18 +178,20 @@ class _ChatMessageRoomState extends State<ChatMessageRoom> {
         child: Scaffold(
           body: Column(
             children: [
-              ChatTopBar(
-                chatRoomsInfos: widget.chatRoomsInfos,
-                otherPrivateChatRoomUser: otherPrivateChatRoomUser!,
-                otherUserBlockedInPrivateChat: otherUserBlockedInPrivateChat,
-                rootContext: context,
-              ),
+              otherPrivateChatRoomUser != null
+                  ? ChatTopBar(
+                      chatRoomsInfos: widget.chatRoomsInfos,
+                      otherPrivateChatRoomUser: otherPrivateChatRoomUser!,
+                      otherUserBlockedInPrivateChat: otherUserBlockedInPrivateChat,
+                      rootContext: context,
+                    )
+                  : SizedBox(),
               // The mesasges list
               Expanded(
                 child: widget.chatRoomsInfos != null
                     ? MessagesStreamBuilder(
                         chatRoomUid: widget.chatRoomsInfos!.chatRoomUid,
-                        currentUser: widget.currentUser,
+                        currentUser: currentUser,
                         otherPrivateChatRoomUser: otherPrivateChatRoomUser!,
                       )
                     : noChatRoomFound
@@ -181,15 +202,17 @@ class _ChatMessageRoomState extends State<ChatMessageRoom> {
                             child: Text("preparing..."),
                           ),
               ),
-              ChatBottomBar(
-                currentUser: widget.currentUser,
-                fromRequestList: widget.fromRequestList,
-                chatRoomsInfos: widget.chatRoomsInfos,
-                otherUser: otherPrivateChatRoomUser!,
-                setNewChatRoomUid: (newChatRoomUid) {
-                  getAndSetChatRoomsInfos(newChatRoomUid);
-                },
-              ),
+              otherPrivateChatRoomUser != null
+                  ? ChatBottomBar(
+                      currentUser: currentUser,
+                      fromRequestList: widget.fromRequestList,
+                      chatRoomsInfos: widget.chatRoomsInfos,
+                      otherUser: otherPrivateChatRoomUser!,
+                      setNewChatRoomUid: (newChatRoomUid) {
+                        getAndSetChatRoomsInfos(newChatRoomUid);
+                      },
+                    )
+                  : SizedBox(),
             ],
           ),
         ),

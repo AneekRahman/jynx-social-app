@@ -14,22 +14,3 @@ class IncomingCall {
     this.answer = map['answer'];
   }
 }
-
-class FCMNotifcation {
-  String? notiType, chatRoomUid, callerName, callerPhotoURL;
-  FCMNotifcation({
-    this.chatRoomUid,
-  });
-
-  FCMNotifcation.fromJson(Map<dynamic, dynamic> json) {
-    this.notiType = json['notiType'];
-    this.callerName = json['callerName'];
-    this.callerPhotoURL = json['callerPhotoURL'];
-    this.chatRoomUid = json['chatRoomUid'];
-  }
-}
-
-class NotificationType {
-  static const String INCOMING_CALL = "INCOMING_CALL";
-  static const String MESSAGE_ADDED = "MESSAGE_ADDED";
-}
