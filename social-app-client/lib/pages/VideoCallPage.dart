@@ -41,6 +41,8 @@ class _VideoCallPageState extends State<VideoCallPage> {
   late String _chatRoomUid;
   bool? _createdIncomingNode;
   bool _startedOrAccepted = false;
+
+  // For UX updates
   bool _callEnded = false;
 
   // The states below are for WebRTC
@@ -82,11 +84,11 @@ class _VideoCallPageState extends State<VideoCallPage> {
       currentUser: _currentUser,
     );
 
-    // TODO try this and try to get when other user disconnects
     // Listen to webRTC peerConnection state changes
     webRTCSignaling.onPeerConnectionStateCallback = ((RTCPeerConnectionState state) {
-      print("GOT: new change in peer connection: ${state}");
-      if (state == RTCIceConnectionState.RTCIceConnectionStateDisconnected) {
+      print("GOT: new change in peer connection: $state");
+      if (state == RTCPeerConnectionState.RTCPeerConnectionStateDisconnected) {
+        webRTCSignaling.hangUp(_localVideoRenderer);
         setState(() {
           _callEnded = true;
         });
@@ -149,7 +151,7 @@ class _VideoCallPageState extends State<VideoCallPage> {
                     )
                   : SizedBox(),
               // currentUsers video
-              _startedOrAccepted
+              !_callEnded && _startedOrAccepted
                   ? Positioned(
                       top: 16,
                       right: 16,
@@ -201,16 +203,36 @@ class _VideoCallPageState extends State<VideoCallPage> {
   }
 
   Widget _buildCallEndedBox() {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            "Call ended...",
-            style: TextStyle(fontFamily: HelveticaFont.Roman, fontSize: 20),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Expanded(
+          child: Center(
+            child: Text(
+              "Call ended...",
+              style: TextStyle(fontFamily: HelveticaFont.Roman, fontSize: 20),
+            ),
           ),
-        ],
-      ),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: TextButton(
+            style: ButtonStyle(
+              shape: MaterialStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(100)))),
+              backgroundColor: MaterialStateProperty.all(Colors.yellow),
+              padding: MaterialStateProperty.all(EdgeInsets.all(14)),
+            ),
+            onPressed: () async {
+              await context.read<RealtimeDatabaseService>().deleteIncomingCallNode(chatRoomUid: _chatRoomUid);
+              Navigator.pop(context);
+            },
+            child: Text(
+              "Go back",
+              style: TextStyle(color: Colors.black, fontFamily: HelveticaFont.Roman, fontSize: 18),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -316,6 +338,7 @@ class _VideoCallPageState extends State<VideoCallPage> {
   }
 
   Widget _buildInCallActionsBar(BuildContext context) {
+    // _connectionState == 2 means RTCPeerConnectionState.RTCPeerConnectionStateDisconnected
     if (_callEnded) return SizedBox();
 
     return Column(

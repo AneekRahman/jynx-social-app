@@ -98,7 +98,7 @@ class WebRTCSignaling {
         print("GOT: a new getIncomingCallStream event: ${incomingCall.calleeAnswer}");
 
         // When an [answer] is available, set the remoteDescription
-        if (peerConnection?.getRemoteDescription() != null && incomingCall.calleeAnswer != null && !_alreadyAddedAnswer) {
+        if (incomingCall.calleeAnswer != null && !_alreadyAddedAnswer) {
           _alreadyAddedAnswer = true;
           print("GOT: adding calleeAnswer!");
           var answer = RTCSessionDescription(
