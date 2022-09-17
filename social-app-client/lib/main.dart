@@ -50,6 +50,7 @@ void _showIncomingCallNotification(FCMNotifcation fcmNotifcation) async {
       notificationLayout: NotificationLayout.Default,
       category: NotificationCategory.Call,
       criticalAlert: true,
+      autoDismissible: true,
     ),
   );
 

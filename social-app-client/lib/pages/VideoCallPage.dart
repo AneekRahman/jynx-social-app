@@ -110,14 +110,21 @@ class _VideoCallPageState extends State<VideoCallPage> {
       }
     });
 
-    // Listen to /incomingCall/ node
+    // Listen to /incomingCall/ changes node
     _incomingCallListener = context.read<RealtimeDatabaseService>().getIncomingCallStream(chatRoomUid: _chatRoomUid).listen((event) {
       if (event.snapshot.exists) {
         _createdIncomingNode = true;
       } else {
         _createdIncomingNode = false;
-        // If already in a call, but the room gets deleted. Then stop.
-        if (_startedOrAccepted) webRTCSignaling.hangUp(_localVideoRenderer);
+
+        // If currentUser already created the call, and the otherUser hung up before connecting. This will run
+        if (_startedOrAccepted && !_callEnded) {
+          webRTCSignaling.hangUp(_localVideoRenderer);
+          setState(() {
+            _callMsg = "Call hung up...";
+            _callEnded = true;
+          });
+        }
       }
       setState(() {});
     });
@@ -320,7 +327,7 @@ class _VideoCallPageState extends State<VideoCallPage> {
                 padding: MaterialStateProperty.all(EdgeInsets.all(14)),
               ),
               onPressed: () async {
-                await context.read<RealtimeDatabaseService>().deleteIncomingCallNode(chatRoomUid: _chatRoomUid);
+                await webRTCSignaling.hangUp(_localVideoRenderer);
                 Navigator.pop(context);
               },
               child: Text(
