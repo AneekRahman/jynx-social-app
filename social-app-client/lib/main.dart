@@ -32,10 +32,11 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 }
 
 void _showIncomingCallNotification(FCMNotifcation fcmNotifcation) async {
-  // Create the notification
+  final int id = fcmNotifcation.hashCode;
+  // Create the incoming call notification
   await AwesomeNotifications().createNotification(
     content: NotificationContent(
-      id: fcmNotifcation.hashCode,
+      id: id,
       channelKey: 'incoming_call_channel',
       title: 'Incoming call...',
       body: fcmNotifcation.usersName! + " is calling you.",
@@ -45,8 +46,13 @@ void _showIncomingCallNotification(FCMNotifcation fcmNotifcation) async {
       largeIcon: fcmNotifcation.usersPhotoURL,
       roundedLargeIcon: true,
       notificationLayout: NotificationLayout.Default,
+      category: NotificationCategory.Call,
     ),
   );
+
+  // Remove the incoming call notification since it cant be removed by the user
+  await Future.delayed(Duration(seconds: 15));
+  await AwesomeNotifications().cancel(id);
 }
 
 void _showMessageAddedNotification(FCMNotifcation fcmNotifcation) async {
@@ -63,8 +69,9 @@ void _showMessageAddedNotification(FCMNotifcation fcmNotifcation) async {
       },
       largeIcon: fcmNotifcation.usersPhotoURL,
       roundedLargeIcon: true,
-      summary: 'New messages',
+      summary: 'Messages',
       notificationLayout: NotificationLayout.Messaging,
+      category: NotificationCategory.Message,
     ),
   );
 }
@@ -94,7 +101,9 @@ Future _initializeNotifications() async {
 
 void _listenToAwesomeNotiTaps() {
   AwesomeNotifications().actionStream.listen((notification) {
+    if (notification.payload!["chatRoomUid"] == null) return;
     print("Handling AwesomeNotifications:actionStream: ${notification.toMap()}");
+
     // When the notification is for a new message
     if (notification.channelKey == "new_messages_channel") {
       Navigator.of(GlobalVariable.navState.currentContext!).push(

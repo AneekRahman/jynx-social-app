@@ -309,22 +309,32 @@ class RealtimeDatabaseService {
     return _firebaseDatabase.ref("chatRoomsInfos/$chatRoomUid/incomingCall").get();
   }
 
-  Future setChatRoomsInfosIncomingCall({required String chatRoomUid, required String callerUid, required String offer}) async {
+  Future createIncomingCallNode({required String chatRoomUid, required String callerUid, required String offer}) async {
     final incomingCallRef = _firebaseDatabase.ref('chatRoomsInfos/$chatRoomUid/incomingCall');
     // Delete this ref if currentUsers connection is lost.
     await incomingCallRef.onDisconnect().remove();
     await incomingCallRef.set({
-      "offer": offer,
-      "callerUid": callerUid,
+      "caller": {
+        "offer": offer,
+        "userUid": callerUid,
+      },
     });
   }
 
-  Future setIncomingCallAnswer({required String chatRoomUid, required String answer}) async {
+  Future answerIncomingCallNode({required String chatRoomUid, required String calleeUid, required String answer}) async {
     final incomingCallRef = _firebaseDatabase.ref('chatRoomsInfos/$chatRoomUid/incomingCall');
     // Delete this ref if currentUsers connection is lost.
     await incomingCallRef.onDisconnect().remove();
     await incomingCallRef.update({
-      "answer": answer,
+      "callee": {
+        "answer": answer,
+        "userUid": calleeUid,
+      },
     });
+  }
+
+  Future pushIncomingCallNodeICECandidates({required String chatRoomUid, required String iceCandidate, required bool isFromCaller}) async {
+    final String keyName = isFromCaller ? "caller" : "callee";
+    await _firebaseDatabase.ref('chatRoomsInfos/$chatRoomUid/incomingCall/$keyName/iceCandidates').push().set(iceCandidate);
   }
 }
