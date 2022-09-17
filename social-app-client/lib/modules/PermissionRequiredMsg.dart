@@ -5,7 +5,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:social_app/modules/constants.dart';
 
 class PermissionRequiredMsg extends StatefulWidget {
-  final Function onChange;
+  final Function(bool) onChange;
   const PermissionRequiredMsg({
     Key? key,
     required this.onChange,
@@ -30,6 +30,9 @@ class _PermissionRequiredMsgState extends State<PermissionRequiredMsg> with Widg
 
     if (_camPermStatus.isGranted && _micPermStatus.isGranted) {
       _micAndCamPermStatus = PermissionStatus.granted;
+      widget.onChange(true);
+      if (mounted) setState(() {});
+      return;
     } else if (_camPermStatus.isDenied || _micPermStatus.isDenied) {
       // We didn't ask for permission yet or the permission has been denied before but not permanently.
       _permissionStatusMsg = "Permission for camera or audio was denied. These are required if you want to video chat with others.";
@@ -40,7 +43,7 @@ class _PermissionRequiredMsgState extends State<PermissionRequiredMsg> with Widg
       _micAndCamPermStatus = PermissionStatus.permanentlyDenied;
     }
     if (mounted) setState(() {});
-    widget.onChange();
+    widget.onChange(false);
   }
 
   @override
@@ -65,6 +68,7 @@ class _PermissionRequiredMsgState extends State<PermissionRequiredMsg> with Widg
         ? Container(
             padding: EdgeInsets.all(20),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   "Permission required:",

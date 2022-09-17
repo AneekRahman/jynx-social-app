@@ -42,6 +42,8 @@ void _showIncomingCallNotification(FCMNotifcation fcmNotifcation) async {
       body: fcmNotifcation.usersName! + " is calling you.",
       payload: {
         "chatRoomUid": fcmNotifcation.chatRoomUid!,
+        "usersName": fcmNotifcation.usersName!,
+        "usersPhotoURL": fcmNotifcation.usersPhotoURL!,
       },
       largeIcon: fcmNotifcation.usersPhotoURL,
       roundedLargeIcon: true,
@@ -116,11 +118,16 @@ void _listenToAwesomeNotiTaps() {
     }
     // When the notification is for an incoming call
     if (notification.channelKey == "incoming_call_channel") {
+      FCMNotifcation fcmNotifcation = FCMNotifcation(
+        chatRoomUid: notification.payload!["chatRoomUid"],
+        usersName: notification.payload!["usersName"],
+        usersPhotoURL: notification.payload!["usersPhotoURL"],
+      );
       Navigator.of(GlobalVariable.navState.currentContext!).push(
         CupertinoPageRoute(
             builder: (context) => VideoCallPage(
-                  shouldCreateOffer: false,
-                  notificationChatRoomUid: notification.payload!["chatRoomUid"],
+                  recievedACall: true,
+                  fcmNotifcation: fcmNotifcation,
                 )),
       );
     }

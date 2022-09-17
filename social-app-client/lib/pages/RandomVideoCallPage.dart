@@ -156,7 +156,7 @@ class _RandomVideoCallPageState extends State<RandomVideoCallPage> {
             child: Container(),
           ),
           PermissionRequiredMsg(
-            onChange: () {
+            onChange: (allowed) {
               _initSearchingForAMatch();
             },
           ),

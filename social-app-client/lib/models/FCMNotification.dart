@@ -4,6 +4,8 @@ class FCMNotifcation {
   String? msg, msgUid;
   FCMNotifcation({
     this.chatRoomUid,
+    this.usersName,
+    this.usersPhotoURL,
   });
 
   FCMNotifcation.fromJson(Map<dynamic, dynamic> json) {

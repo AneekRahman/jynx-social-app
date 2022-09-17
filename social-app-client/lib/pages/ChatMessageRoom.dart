@@ -292,7 +292,7 @@ class ChatTopBar extends StatelessWidget {
                         CupertinoPageRoute(
                             builder: (context) => VideoCallPage(
                                   chatRoomsInfos: chatRoomsInfos,
-                                  shouldCreateOffer: true,
+                                  recievedACall: false,
                                 )));
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
