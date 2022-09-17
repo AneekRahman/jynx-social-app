@@ -126,7 +126,7 @@ void _listenToAwesomeNotiTaps() {
       Navigator.of(GlobalVariable.navState.currentContext!).push(
         CupertinoPageRoute(
             builder: (context) => VideoCallPage(
-                  recievedACall: true,
+                  shouldCreateOffer: false,
                   fcmNotifcation: fcmNotifcation,
                 )),
       );

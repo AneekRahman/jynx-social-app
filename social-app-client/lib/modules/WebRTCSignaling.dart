@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
@@ -10,7 +11,6 @@ import 'package:social_app/models/IncomingCall.dart';
 import 'package:social_app/services/rtd_service.dart';
 
 typedef void StreamStateCallback(MediaStream stream);
-typedef void IncomingCallNodeStreamCallback(IncomingCall incomingCall);
 
 class WebRTCSignaling {
   Map<String, dynamic> configuration = {
@@ -21,98 +21,24 @@ class WebRTCSignaling {
     ]
   };
 
-  final Map<String, dynamic> offerSdpConstraints = {
-    "mandatory": {
-      "OfferToReceiveAudio": true,
-      "OfferToReceiveVideo": true,
-    },
-    "optional": [],
-  };
-
-  // States from VideoCallPage
   final BuildContext rootContext;
   String? chatRoomUid;
   final User currentUser;
-  StreamSubscription<DatabaseEvent>? _incomingCallListener;
 
-  // WebRTC states
   RTCPeerConnection? peerConnection;
   MediaStream? localStream;
   MediaStream? remoteStream;
   StreamStateCallback? onAddRemoteStream;
-  IncomingCallNodeStreamCallback? onIncomingCallNodeStream;
 
-  // Variables
   bool _alreadyAddedAnswer = false;
-  bool _startedTheCall = false;
 
   WebRTCSignaling({this.chatRoomUid, required this.rootContext, required this.currentUser});
 
-  void listenToIncomingCallNode(bool isFromCaller) {
-    // Listening for [answer] remote session description and added new [calleeIceCandidates]
-    _incomingCallListener =
-        rootContext.read<RealtimeDatabaseService>().getIncomingCallStream(chatRoomUid: chatRoomUid!).listen((event) async {
-      if (event.snapshot.exists) {
-        IncomingCall incomingCall = IncomingCall.fromMap(map: event.snapshot.value as Map, chatRoomUid: chatRoomUid!);
-        // Call the callback for VideoCallPage
-        onIncomingCallNodeStream?.call(incomingCall);
-
-        // If the call hasn't started yet, then no need to go further
-        if (!_startedTheCall) return;
-
-        if (isFromCaller) {
-          // WE NEED TO LISTEN TO CALLEEs ANSWER & ICE CANDIDATEs SINCE CURRENT USER IS A CALLER
-          // When an [answer] is available, set the remoteDescription
-          if (peerConnection?.getRemoteDescription() != null && incomingCall.calleeAnswer != null && !_alreadyAddedAnswer) {
-            _alreadyAddedAnswer = true;
-            print("GOT: adding calleeAnswer!");
-            var answer = RTCSessionDescription(
-              incomingCall.calleeAnswer!.sdp,
-              incomingCall.calleeAnswer!.type,
-            );
-            await peerConnection?.setRemoteDescription(answer);
-          }
-
-          // When new calleeIceCandidates are added on /incomingCall/callee/{iceCandidateUid}, add them
-          if (incomingCall.calleeIceCandidates != null) {
-            incomingCall.calleeIceCandidates!.iceCandidates.forEach((iceCandidate) {
-              print("GOT: adding calleeIceCandidates!");
-              peerConnection!.addCandidate(
-                RTCIceCandidate(
-                  iceCandidate.candidate,
-                  iceCandidate.sdpMid,
-                  iceCandidate.sdpMLineIndex,
-                ),
-              );
-            });
-          }
-        } else {
-          // WE NEED TO LISTEN TO CALLERs ICE CANDIDATEs SINCE CURRENT USER IS A CALLEE
-          // When new callerIceCandidates are added on /incomingCall/caller/{iceCandidateUid}, add them
-          if (incomingCall.callerIceCandidates != null) {
-            // Listening for added new [callerIceCandidates] of caller
-            incomingCall.callerIceCandidates!.iceCandidates.forEach((iceCandidate) {
-              peerConnection!.addCandidate(
-                RTCIceCandidate(
-                  iceCandidate.candidate,
-                  iceCandidate.sdpMid,
-                  iceCandidate.sdpMLineIndex,
-                ),
-              );
-            });
-          }
-        }
-      }
-    });
-  }
-
   Future createRoom(RTCVideoRenderer remoteRenderer) async {
-    if (chatRoomUid == null || _startedTheCall) return;
-    // Set the call as started
-    _startedTheCall = true;
+    if (chatRoomUid == null) return;
 
     print('Create PeerConnection with configuration: $configuration');
-    peerConnection = await createPeerConnection(configuration, offerSdpConstraints);
+    peerConnection = await createPeerConnection(configuration);
     registerPeerConnectionListeners();
 
     // The localStream returns the video and audio of currentUser
@@ -155,12 +81,9 @@ class WebRTCSignaling {
     };
 
     // Listening for [answer] remote session description and added new [calleeIceCandidates]
-    _incomingCallListener =
-        rootContext.read<RealtimeDatabaseService>().getIncomingCallStream(chatRoomUid: chatRoomUid!).listen((event) async {
+    rootContext.read<RealtimeDatabaseService>().getIncomingCallStream(chatRoomUid: chatRoomUid!).listen((event) async {
       if (event.snapshot.exists) {
         IncomingCall incomingCall = IncomingCall.fromMap(map: event.snapshot.value as Map, chatRoomUid: chatRoomUid!);
-        // Call the callback for VideoCallPage
-        onIncomingCallNodeStream?.call(incomingCall);
         print("GOT: a new getIncomingCallStream event: ${incomingCall.calleeAnswer}");
 
         // When an [answer] is available, set the remoteDescription
@@ -174,6 +97,7 @@ class WebRTCSignaling {
           await peerConnection?.setRemoteDescription(answer);
         }
 
+        // TODO make sure event.type == DocumentChangeType.added works
         // When new calleeIceCandidates are added on /incomingCall/callee/{iceCandidateUid}, add them
         if (incomingCall.calleeIceCandidates != null) {
           incomingCall.calleeIceCandidates!.iceCandidates.forEach((iceCandidate) {
@@ -192,14 +116,11 @@ class WebRTCSignaling {
   }
 
   Future<void> joinRoom(RTCVideoRenderer remoteVideo) async {
-    if (_startedTheCall) return;
-    // Set the call as started
-    _startedTheCall = true;
-
     final roomSnapshot = await rootContext.read<RealtimeDatabaseService>().getIncomingCallSnaphsot(chatRoomUid: chatRoomUid!);
+
     if (roomSnapshot.exists) {
       print('Create PeerConnection with configuration: $configuration');
-      peerConnection = await createPeerConnection(configuration, offerSdpConstraints);
+      peerConnection = await createPeerConnection(configuration);
       registerPeerConnectionListeners();
 
       // The localStream returns the video and audio of currentUser
@@ -248,6 +169,26 @@ class WebRTCSignaling {
             remoteStream?.addTrack(track);
           });
         };
+
+        // Listening for added new [callerIceCandidates] of caller
+        rootContext.read<RealtimeDatabaseService>().getIncomingCallStream(chatRoomUid: chatRoomUid!).listen((event) async {
+          if (event.snapshot.exists) {
+            IncomingCall incomingCall = IncomingCall.fromMap(map: event.snapshot.value as Map, chatRoomUid: chatRoomUid!);
+
+            // When new callerIceCandidates are added on /incomingCall/caller/{iceCandidateUid}, add them
+            if (event.type == DocumentChangeType.added && incomingCall.callerIceCandidates != null) {
+              incomingCall.callerIceCandidates!.iceCandidates.forEach((iceCandidate) {
+                peerConnection!.addCandidate(
+                  RTCIceCandidate(
+                    iceCandidate.candidate,
+                    iceCandidate.sdpMid,
+                    iceCandidate.sdpMLineIndex,
+                  ),
+                );
+              });
+            }
+          }
+        });
       }
     }
   }
@@ -265,14 +206,14 @@ class WebRTCSignaling {
   }
 
   Future<void> hangUp(RTCVideoRenderer localVideo) async {
-    if (localVideo.srcObject == null) return;
     List<MediaStreamTrack> tracks = localVideo.srcObject!.getTracks();
     tracks.forEach((track) {
       track.stop();
     });
 
-    if (_incomingCallListener != null) _incomingCallListener!.cancel();
-    if (remoteStream != null) remoteStream!.getTracks().forEach((track) => track.stop());
+    if (remoteStream != null) {
+      remoteStream!.getTracks().forEach((track) => track.stop());
+    }
     if (peerConnection != null) peerConnection!.close();
 
     await rootContext.read<RealtimeDatabaseService>().deleteIncomingCallNode(chatRoomUid: chatRoomUid!);
