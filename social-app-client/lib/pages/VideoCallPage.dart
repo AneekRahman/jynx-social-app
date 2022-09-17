@@ -338,7 +338,6 @@ class _VideoCallPageState extends State<VideoCallPage> {
   }
 
   Widget _buildInCallActionsBar(BuildContext context) {
-    // _connectionState == 2 means RTCPeerConnectionState.RTCPeerConnectionStateDisconnected
     if (_callEnded) return SizedBox();
 
     return Column(
@@ -368,32 +367,32 @@ class _VideoCallPageState extends State<VideoCallPage> {
                         size: 30,
                       ),
                     ),
-                    IconButton(
-                      onPressed: () async {
-                        await webRTCSignaling.joinRoom(_remoteVideoRenderer);
-                        setState(() {
-                          _startedOrAccepted = true;
-                        });
-                      },
-                      icon: Icon(
-                        Icons.check,
-                        color: Colors.white,
-                        size: 30,
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () async {
-                        await webRTCSignaling.createRoom(_remoteVideoRenderer);
-                        setState(() {
-                          _startedOrAccepted = true;
-                        });
-                      },
-                      icon: Icon(
-                        Icons.add,
-                        color: Colors.white,
-                        size: 30,
-                      ),
-                    ),
+                    // IconButton(
+                    //   onPressed: () async {
+                    //     await webRTCSignaling.joinRoom(_remoteVideoRenderer);
+                    //     setState(() {
+                    //       _startedOrAccepted = true;
+                    //     });
+                    //   },
+                    //   icon: Icon(
+                    //     Icons.check,
+                    //     color: Colors.white,
+                    //     size: 30,
+                    //   ),
+                    // ),
+                    // IconButton(
+                    //   onPressed: () async {
+                    //     await webRTCSignaling.createRoom(_remoteVideoRenderer);
+                    //     setState(() {
+                    //       _startedOrAccepted = true;
+                    //     });
+                    //   },
+                    //   icon: Icon(
+                    //     Icons.add,
+                    //     color: Colors.white,
+                    //     size: 30,
+                    //   ),
+                    // ),
                     // IconButton(
                     //   onPressed: _setCandidate, // Step 4
                     //   icon: Icon(

@@ -36,8 +36,11 @@ class WebRTCSignaling {
   RTCPeerConnection? peerConnection;
   MediaStream? localStream;
   MediaStream? remoteStream;
+
   StreamStateCallback? onAddRemoteStream;
   OnPeerConnectionStateCallback? onPeerConnectionStateCallback;
+
+  StreamSubscription<DatabaseEvent>? _incomingCallListener;
 
   bool _alreadyAddedAnswer = false;
   bool _startedOrAccepted = false;
@@ -92,7 +95,8 @@ class WebRTCSignaling {
     };
 
     // Listening for [answer] remote session description and added new [calleeIceCandidates]
-    rootContext.read<RealtimeDatabaseService>().getIncomingCallStream(chatRoomUid: chatRoomUid!).listen((event) async {
+    _incomingCallListener =
+        rootContext.read<RealtimeDatabaseService>().getIncomingCallStream(chatRoomUid: chatRoomUid!).listen((event) async {
       if (event.snapshot.exists) {
         IncomingCall incomingCall = IncomingCall.fromMap(map: event.snapshot.value as Map, chatRoomUid: chatRoomUid!);
         print("GOT: a new getIncomingCallStream event: ${incomingCall.calleeAnswer}");
@@ -183,7 +187,8 @@ class WebRTCSignaling {
         };
 
         // Listening for added new [callerIceCandidates] of caller
-        rootContext.read<RealtimeDatabaseService>().getIncomingCallStream(chatRoomUid: chatRoomUid!).listen((event) async {
+        _incomingCallListener =
+            rootContext.read<RealtimeDatabaseService>().getIncomingCallStream(chatRoomUid: chatRoomUid!).listen((event) async {
           if (event.snapshot.exists) {
             IncomingCall incomingCall = IncomingCall.fromMap(map: event.snapshot.value as Map, chatRoomUid: chatRoomUid!);
 
@@ -220,22 +225,28 @@ class WebRTCSignaling {
   Future<void> hangUp(RTCVideoRenderer localVideo) async {
     if (!_startedOrAccepted) return;
 
-    localStream!.getTracks().forEach((track) => track.stop());
-
-    if (remoteStream != null) {
-      remoteStream!.getTracks().forEach((track) => track.stop());
-    }
-
+    // Dispose the peer connections
     if (peerConnection != null) {
+      peerConnection!.getLocalStreams().forEach((element) {
+        element!.dispose();
+      });
+      peerConnection!.getRemoteStreams().forEach((element) {
+        element!.dispose();
+      });
       peerConnection!.close();
       peerConnection!.dispose();
     }
 
+    // Make sure to delete the /incomingCall/ node in RTD
     RealtimeDatabaseService(FirebaseDatabase.instance).deleteIncomingCallNode(chatRoomUid: chatRoomUid!);
 
+    if (_incomingCallListener != null) _incomingCallListener!.cancel();
+
+    // Dispose the local and remote video/audio streams
     localStream!.dispose();
     remoteStream?.dispose();
 
+    // Set the variable to false
     _startedOrAccepted = false;
   }
 
