@@ -177,6 +177,7 @@ class _VideoCallPageState extends State<VideoCallPage> {
   void dispose() {
     Wakelock.disable();
     disposeRenderers();
+    // webRTCSignaling.hangUp(_localVideoRenderer);
     if (_incomingCallListener != null) _incomingCallListener!.cancel();
     super.dispose();
   }
@@ -218,6 +219,7 @@ class _VideoCallPageState extends State<VideoCallPage> {
                       setState(() {});
                     });
                     await webRTCSignaling.openUserMedia(_localVideoRenderer, _remoteVideoRenderer);
+                    setState(() {});
                   },
                 ),
               ),
@@ -270,7 +272,8 @@ class _VideoCallPageState extends State<VideoCallPage> {
                   children: [
                     IconButton(
                       onPressed: () async {
-                        webRTCSignaling.hangUp(_localVideoRenderer);
+                        await webRTCSignaling.hangUp(_localVideoRenderer);
+                        setState(() {});
                       },
                       icon: Icon(
                         Icons.call_end,
@@ -280,7 +283,8 @@ class _VideoCallPageState extends State<VideoCallPage> {
                     ),
                     IconButton(
                       onPressed: () async {
-                        webRTCSignaling.joinRoom(_remoteVideoRenderer);
+                        await webRTCSignaling.joinRoom(_remoteVideoRenderer);
+                        setState(() {});
                       },
                       icon: Icon(
                         Icons.check,
@@ -291,6 +295,7 @@ class _VideoCallPageState extends State<VideoCallPage> {
                     IconButton(
                       onPressed: () async {
                         await webRTCSignaling.createRoom(_remoteVideoRenderer);
+                        setState(() {});
                       },
                       icon: Icon(
                         Icons.add,

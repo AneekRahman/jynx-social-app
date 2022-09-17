@@ -310,31 +310,31 @@ class RealtimeDatabaseService {
   }
 
   Future createIncomingCallNode({required String chatRoomUid, required String callerUid, required String offer}) async {
-    final incomingCallRef = _firebaseDatabase.ref('chatRoomsInfos/$chatRoomUid/incomingCall');
+    final Map<String, dynamic> updates = {};
+    updates['chatRoomsInfos/$chatRoomUid/incomingCall/caller/offer'] = offer;
+    updates['chatRoomsInfos/$chatRoomUid/incomingCall/caller/userUid'] = callerUid;
+    await _firebaseDatabase.ref().update(updates);
+
     // Delete this ref if currentUsers connection is lost.
-    await incomingCallRef.onDisconnect().remove();
-    await incomingCallRef.set({
-      "caller": {
-        "offer": offer,
-        "userUid": callerUid,
-      },
-    });
+    await _firebaseDatabase.ref('chatRoomsInfos/$chatRoomUid/incomingCall').onDisconnect().remove();
   }
 
   Future answerIncomingCallNode({required String chatRoomUid, required String calleeUid, required String answer}) async {
-    final incomingCallRef = _firebaseDatabase.ref('chatRoomsInfos/$chatRoomUid/incomingCall');
+    final Map<String, dynamic> updates = {};
+    updates['chatRoomsInfos/$chatRoomUid/incomingCall/callee/answer'] = answer;
+    updates['chatRoomsInfos/$chatRoomUid/incomingCall/callee/userUid'] = calleeUid;
+    await _firebaseDatabase.ref().update(updates);
+
     // Delete this ref if currentUsers connection is lost.
-    await incomingCallRef.onDisconnect().remove();
-    await incomingCallRef.update({
-      "callee": {
-        "answer": answer,
-        "userUid": calleeUid,
-      },
-    });
+    await _firebaseDatabase.ref('chatRoomsInfos/$chatRoomUid/incomingCall').onDisconnect().remove();
   }
 
   Future pushIncomingCallNodeICECandidates({required String chatRoomUid, required String iceCandidate, required bool isFromCaller}) async {
     final String keyName = isFromCaller ? "caller" : "callee";
     await _firebaseDatabase.ref('chatRoomsInfos/$chatRoomUid/incomingCall/$keyName/iceCandidates').push().set(iceCandidate);
+  }
+
+  Future deleteIncomingCallNode({required String chatRoomUid}) async {
+    await _firebaseDatabase.ref('chatRoomsInfos/$chatRoomUid/incomingCall').remove();
   }
 }

@@ -51,7 +51,7 @@ void _showIncomingCallNotification(FCMNotifcation fcmNotifcation) async {
   );
 
   // Remove the incoming call notification since it cant be removed by the user
-  await Future.delayed(Duration(seconds: 15));
+  await Future.delayed(Duration(seconds: 20));
   await AwesomeNotifications().cancel(id);
 }
 
@@ -85,7 +85,7 @@ Future _initializeNotifications() async {
         channelKey: 'incoming_call_channel',
         channelName: 'Incoming Call Notifications',
         channelDescription: "",
-        importance: NotificationImportance.High,
+        importance: NotificationImportance.Max,
         channelShowBadge: true,
       ),
       NotificationChannel(

@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:provider/provider.dart';
@@ -29,6 +30,8 @@ class WebRTCSignaling {
   MediaStream? remoteStream;
   StreamStateCallback? onAddRemoteStream;
 
+  bool _alreadyAddedAnswer = false;
+
   WebRTCSignaling({this.chatRoomUid, required this.rootContext, required this.currentUser});
 
   Future createRoom(RTCVideoRenderer remoteRenderer) async {
@@ -42,6 +45,16 @@ class WebRTCSignaling {
     localStream?.getTracks().forEach((track) {
       peerConnection?.addTrack(track, localStream!);
     });
+
+    // After the [peerConnection] get currentUsers Ice Candidates, save them in RTD as /caller/
+    peerConnection?.onIceCandidate = (RTCIceCandidate candidate) async {
+      // JsonEncode the iceCandidate and save it in RTD under /caller/
+      await rootContext.read<RealtimeDatabaseService>().pushIncomingCallNodeICECandidates(
+            chatRoomUid: chatRoomUid!,
+            iceCandidate: jsonEncode(candidate.toMap()),
+            isFromCaller: true,
+          );
+    };
 
     // Create an [offer] and save it in RTD as /caller/
     RTCSessionDescription offer = await peerConnection!.createOffer();
@@ -58,17 +71,6 @@ class WebRTCSignaling {
           offer: jsonEncode(offerMapForRTD),
         );
 
-    // After the [peerConnection] get currentUsers Ice Candidates, save them in RTD as /caller/
-    peerConnection?.onIceCandidate = (RTCIceCandidate candidate) async {
-      print('Got candidate: ${candidate.toMap()}');
-      // JsonEncode the iceCandidate and save it in RTD under /caller/
-      await rootContext.read<RealtimeDatabaseService>().pushIncomingCallNodeICECandidates(
-            chatRoomUid: chatRoomUid!,
-            iceCandidate: jsonEncode(candidate.toMap()),
-            isFromCaller: true,
-          );
-    };
-
     // When a track comes from remote connection add it in [remoteStream]
     peerConnection?.onTrack = (RTCTrackEvent event) {
       print('Got remote track: ${event.streams[0]}');
@@ -82,21 +84,24 @@ class WebRTCSignaling {
     rootContext.read<RealtimeDatabaseService>().getIncomingCallStream(chatRoomUid: chatRoomUid!).listen((event) async {
       if (event.snapshot.exists) {
         IncomingCall incomingCall = IncomingCall.fromMap(map: event.snapshot.value as Map, chatRoomUid: chatRoomUid!);
+        print("GOT: a new getIncomingCallStream event: ${incomingCall.calleeAnswer}");
 
         // When an [answer] is available, set the remoteDescription
-        if (peerConnection?.getRemoteDescription() == null && incomingCall.calleeAnswer != null) {
+        if (peerConnection?.getRemoteDescription() != null && incomingCall.calleeAnswer != null && !_alreadyAddedAnswer) {
+          _alreadyAddedAnswer = true;
+          print("GOT: adding calleeAnswer!");
           var answer = RTCSessionDescription(
             incomingCall.calleeAnswer!.sdp,
             incomingCall.calleeAnswer!.type,
           );
-
-          print("Someone tried to connect");
           await peerConnection?.setRemoteDescription(answer);
         }
 
+        // TODO make sure event.type == DocumentChangeType.added works
         // When new calleeIceCandidates are added on /incomingCall/callee/{iceCandidateUid}, add them
-        if (event.type == DocumentChangeType.added && incomingCall.calleeIceCandidates != null) {
+        if (incomingCall.calleeIceCandidates != null) {
           incomingCall.calleeIceCandidates!.iceCandidates.forEach((iceCandidate) {
+            print("GOT: adding calleeIceCandidates!");
             peerConnection!.addCandidate(
               RTCIceCandidate(
                 iceCandidate.candidate,
@@ -127,9 +132,21 @@ class WebRTCSignaling {
       final IncomingCall incomingCall = IncomingCall.fromMap(map: roomSnapshot.value as Map, chatRoomUid: chatRoomUid!);
 
       if (incomingCall.callerOffer != null) {
+        // First set the remote description as the callers [offer]
         await peerConnection?.setRemoteDescription(
           RTCSessionDescription(incomingCall.callerOffer!.sdp, incomingCall.callerOffer!.type),
         );
+
+        // After the [peerConnection] gets currentUsers Ice Candidates, save them in RTD as /callee/
+        peerConnection?.onIceCandidate = (RTCIceCandidate candidate) async {
+          // JsonEncode the iceCandidate and save it in RTD under /caller/
+          await rootContext.read<RealtimeDatabaseService>().pushIncomingCallNodeICECandidates(
+                chatRoomUid: chatRoomUid!,
+                iceCandidate: jsonEncode(candidate.toMap()),
+                isFromCaller: false,
+              );
+        };
+
         final answer = await peerConnection!.createAnswer();
         await peerConnection!.setLocalDescription(answer);
         print('Created Answer $answer');
@@ -143,17 +160,6 @@ class WebRTCSignaling {
               calleeUid: currentUser.uid,
               answer: jsonEncode(answerMapForRTD),
             );
-
-        // After the [peerConnection] gets currentUsers Ice Candidates, save them in RTD as /callee/
-        peerConnection?.onIceCandidate = (RTCIceCandidate candidate) async {
-          print('Got candidate: ${candidate.toMap()}');
-          // JsonEncode the iceCandidate and save it in RTD under /callere/
-          await rootContext.read<RealtimeDatabaseService>().pushIncomingCallNodeICECandidates(
-                chatRoomUid: chatRoomUid!,
-                iceCandidate: jsonEncode(candidate.toMap()),
-                isFromCaller: false,
-              );
-        };
 
         // When a track comes from remote connection add it in [remoteStream]
         peerConnection?.onTrack = (RTCTrackEvent event) {
@@ -210,18 +216,7 @@ class WebRTCSignaling {
     }
     if (peerConnection != null) peerConnection!.close();
 
-    if (chatRoomUid != null) {
-      // TODO user Realtime Database for this
-      var db = FirebaseFirestore.instance;
-      var roomRef = db.collection('webRTCRooms').doc(chatRoomUid);
-      var calleeCandidates = await roomRef.collection('calleeCandidates').get();
-      calleeCandidates.docs.forEach((document) => document.reference.delete());
-
-      var callerCandidates = await roomRef.collection('callerCandidates').get();
-      callerCandidates.docs.forEach((document) => document.reference.delete());
-
-      await roomRef.delete();
-    }
+    await rootContext.read<RealtimeDatabaseService>().deleteIncomingCallNode(chatRoomUid: chatRoomUid!);
 
     localStream!.dispose();
     remoteStream?.dispose();
@@ -250,6 +245,4 @@ class WebRTCSignaling {
       remoteStream = stream;
     };
   }
-
-  void onDisposeCalled() {}
 }

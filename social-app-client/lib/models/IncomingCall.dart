@@ -9,12 +9,14 @@ class IncomingCall {
   IncomingCall.fromMap({required Map<dynamic, dynamic> map, required String this.chatRoomUid}) {
     // [caller] will always have an [offer] and [callee] will have the [answer]
     if (map["caller"] != null) {
-      this.callerOffer = IncomingCallOffer.fromEncodedString(encodedString: map["caller"]['offer']);
-      this.callerIceCandidates = IncomingCallIceCandidates.fromMap(map: map["caller"]['iceCandidates']);
+      if (map["caller"]['offer'] != null) this.callerOffer = IncomingCallOffer.fromEncodedString(encodedString: map["caller"]['offer']);
+      if (map["caller"]['iceCandidates'] != null)
+        this.callerIceCandidates = IncomingCallIceCandidates.fromMap(map: map["caller"]['iceCandidates']);
     }
     if (map["callee"] != null) {
-      this.calleeAnswer = IncomingCallAnswer.fromEncodedString(encodedString: map["callee"]['answer']);
-      this.calleeIceCandidates = IncomingCallIceCandidates.fromMap(map: map["callee"]['iceCandidates']);
+      if (map["callee"]['answer'] != null) this.calleeAnswer = IncomingCallAnswer.fromEncodedString(encodedString: map["callee"]['answer']);
+      if (map["callee"]['iceCandidates'] != null)
+        this.calleeIceCandidates = IncomingCallIceCandidates.fromMap(map: map["callee"]['iceCandidates']);
     }
   }
 }
@@ -42,7 +44,7 @@ class IncomingCallAnswer {
 class IncomingCallIceCandidates {
   List<IncomingCallIceCandidate> iceCandidates = [];
 
-  IncomingCallIceCandidates.fromMap({required Map<String, dynamic> map}) {
+  IncomingCallIceCandidates.fromMap({required Map map}) {
     map.forEach((key, value) {
       iceCandidates.add(IncomingCallIceCandidate.fromEncodedString(encodedString: value));
     });
