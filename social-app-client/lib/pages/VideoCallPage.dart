@@ -37,8 +37,11 @@ class _VideoCallPageState extends State<VideoCallPage> {
   late final _currentUser;
   late final FCMNotifcation _otherUser;
   StreamSubscription<DatabaseEvent>? _incomingCallListener;
+
+  late String _chatRoomUid;
   bool? _createdIncomingNode;
   bool _startedOrAccepted = false;
+  bool _callEnded = false;
 
   // The states below are for WebRTC
   final _localVideoRenderer = RTCVideoRenderer();
@@ -58,7 +61,7 @@ class _VideoCallPageState extends State<VideoCallPage> {
     // Keep screen awake while on VideoCallPage
     Wakelock.enable();
 
-    final String? chatRoomUid = widget.chatRoomsInfos != null ? widget.chatRoomsInfos!.chatRoomUid : widget.fcmNotifcation!.chatRoomUid;
+    _chatRoomUid = widget.chatRoomsInfos != null ? widget.chatRoomsInfos!.chatRoomUid : widget.fcmNotifcation!.chatRoomUid!;
 
     // If [fcmNotifcation] is null, get the otherUsers info from [chatRoomsInfos] to display it
     if (widget.fcmNotifcation == null && widget.chatRoomsInfos != null) {
@@ -75,17 +78,29 @@ class _VideoCallPageState extends State<VideoCallPage> {
     // Either [chatRoomsInfos] or [notificationChatRoomUid] will always be present
     webRTCSignaling = WebRTCSignaling(
       rootContext: context,
-      chatRoomUid: chatRoomUid,
+      chatRoomUid: _chatRoomUid,
       currentUser: _currentUser,
     );
 
+    // TODO try this and try to get when other user disconnects
+    // Listen to webRTC peerConnection state changes
+    webRTCSignaling.onPeerConnectionStateCallback = ((RTCPeerConnectionState state) {
+      print("GOT: new change in peer connection: ${state}");
+      if (state == RTCIceConnectionState.RTCIceConnectionStateDisconnected) {
+        setState(() {
+          _callEnded = true;
+        });
+      }
+    });
+
     // Listen to /incomingCall/ node
-    context.read<RealtimeDatabaseService>().getIncomingCallStream(chatRoomUid: chatRoomUid!).listen((event) {
+    _incomingCallListener = context.read<RealtimeDatabaseService>().getIncomingCallStream(chatRoomUid: _chatRoomUid).listen((event) {
       if (event.snapshot.exists) {
         _createdIncomingNode = true;
       } else {
         _createdIncomingNode = false;
       }
+      setState(() {});
     });
   }
 
@@ -105,7 +120,7 @@ class _VideoCallPageState extends State<VideoCallPage> {
   void dispose() {
     Wakelock.disable();
     disposeRenderers();
-    // webRTCSignaling.hangUp(_localVideoRenderer);
+    webRTCSignaling.hangUp(_localVideoRenderer);
     if (_incomingCallListener != null) _incomingCallListener!.cancel();
     super.dispose();
   }
@@ -153,6 +168,9 @@ class _VideoCallPageState extends State<VideoCallPage> {
                       ),
                     )
                   : SizedBox(),
+              // Other users info
+              !_startedOrAccepted ? _buildOtherUsersInfo() : SizedBox(),
+              _callEnded ? _buildCallEndedBox() : SizedBox(),
               // Permission messages
               Center(
                 child: PermissionRequiredMsg(
@@ -182,6 +200,43 @@ class _VideoCallPageState extends State<VideoCallPage> {
     );
   }
 
+  Widget _buildCallEndedBox() {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            "Call ended...",
+            style: TextStyle(fontFamily: HelveticaFont.Roman, fontSize: 20),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOtherUsersInfo() {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _otherUser.usersPhotoURL != null && _otherUser.usersPhotoURL!.isNotEmpty
+              ? Image.network(_otherUser.usersPhotoURL!, width: double.infinity)
+              : Image.asset(
+                  "assets/user.png",
+                  height: 120,
+                  width: 120,
+                ),
+          SizedBox(height: 20),
+          Text(
+            _otherUser.usersName!,
+            style: TextStyle(fontFamily: HelveticaFont.Bold, fontSize: 20),
+          ),
+          SizedBox(height: 50),
+        ],
+      ),
+    );
+  }
+
   Widget _buildBottomButtons() {
     if (_createdIncomingNode == null) return SizedBox();
     if (_createdIncomingNode!) {
@@ -197,9 +252,14 @@ class _VideoCallPageState extends State<VideoCallPage> {
               onPressed: () async {
                 if (!await Constants.checkCamMicPermission()) return;
 
-                await webRTCSignaling.joinRoom(_remoteVideoRenderer);
                 setState(() {
                   _startedOrAccepted = true;
+                });
+                webRTCSignaling.joinRoom(_remoteVideoRenderer).catchError((e) {
+                  // On error
+                  setState(() {
+                    _startedOrAccepted = false;
+                  });
                 });
               },
               child: Text(
@@ -217,13 +277,8 @@ class _VideoCallPageState extends State<VideoCallPage> {
                 padding: MaterialStateProperty.all(EdgeInsets.all(14)),
               ),
               onPressed: () async {
-                if (!_startedOrAccepted) return;
-
-                webRTCSignaling.hangUp(_localVideoRenderer);
-                setState(() {
-                  _startedOrAccepted = false;
-                  _createdIncomingNode = false;
-                });
+                await context.read<RealtimeDatabaseService>().deleteIncomingCallNode(chatRoomUid: _chatRoomUid);
+                Navigator.pop(context);
               },
               child: Text(
                 "Hang up",
@@ -242,10 +297,14 @@ class _VideoCallPageState extends State<VideoCallPage> {
         ),
         onPressed: () async {
           if (!await Constants.checkCamMicPermission()) return;
-
-          await webRTCSignaling.createRoom(_remoteVideoRenderer);
           setState(() {
             _startedOrAccepted = true;
+          });
+          await webRTCSignaling.createRoom(_remoteVideoRenderer).catchError((e) {
+            // On error
+            setState(() {
+              _startedOrAccepted = false;
+            });
           });
         },
         child: Text(
@@ -257,6 +316,8 @@ class _VideoCallPageState extends State<VideoCallPage> {
   }
 
   Widget _buildInCallActionsBar(BuildContext context) {
+    if (_callEnded) return SizedBox();
+
     return Column(
       children: [
         Container(
@@ -276,10 +337,7 @@ class _VideoCallPageState extends State<VideoCallPage> {
                     IconButton(
                       onPressed: () async {
                         await webRTCSignaling.hangUp(_localVideoRenderer);
-                        setState(() {
-                          _startedOrAccepted = false;
-                          _createdIncomingNode = false;
-                        });
+                        Navigator.pop(context);
                       },
                       icon: Icon(
                         Icons.call_end,

@@ -11,6 +11,7 @@ import 'package:social_app/models/IncomingCall.dart';
 import 'package:social_app/services/rtd_service.dart';
 
 typedef void StreamStateCallback(MediaStream stream);
+typedef void OnPeerConnectionStateCallback(RTCPeerConnectionState state);
 
 class WebRTCSignaling {
   Map<String, dynamic> configuration = {
@@ -36,6 +37,7 @@ class WebRTCSignaling {
   MediaStream? localStream;
   MediaStream? remoteStream;
   StreamStateCallback? onAddRemoteStream;
+  OnPeerConnectionStateCallback? onPeerConnectionStateCallback;
 
   bool _alreadyAddedAnswer = false;
   bool _startedOrAccepted = false;
@@ -207,7 +209,7 @@ class WebRTCSignaling {
     RTCVideoRenderer localVideo,
     RTCVideoRenderer remoteVideo,
   ) async {
-    var stream = await navigator.mediaDevices.getUserMedia({'video': true, 'audio': false});
+    var stream = await navigator.mediaDevices.getUserMedia({'video': true, 'audio': true});
 
     localVideo.srcObject = stream;
     localStream = stream;
@@ -218,17 +220,18 @@ class WebRTCSignaling {
   Future<void> hangUp(RTCVideoRenderer localVideo) async {
     if (!_startedOrAccepted) return;
 
-    List<MediaStreamTrack> tracks = localVideo.srcObject!.getTracks();
-    tracks.forEach((track) {
-      track.stop();
-    });
+    localStream!.getTracks().forEach((track) => track.stop());
 
     if (remoteStream != null) {
       remoteStream!.getTracks().forEach((track) => track.stop());
     }
-    if (peerConnection != null) peerConnection!.close();
 
-    await rootContext.read<RealtimeDatabaseService>().deleteIncomingCallNode(chatRoomUid: chatRoomUid!);
+    if (peerConnection != null) {
+      peerConnection!.close();
+      peerConnection!.dispose();
+    }
+
+    RealtimeDatabaseService(FirebaseDatabase.instance).deleteIncomingCallNode(chatRoomUid: chatRoomUid!);
 
     localStream!.dispose();
     remoteStream?.dispose();
@@ -243,6 +246,7 @@ class WebRTCSignaling {
 
     peerConnection?.onConnectionState = (RTCPeerConnectionState state) {
       print('Connection state change: $state');
+      onPeerConnectionStateCallback?.call(state);
     };
 
     peerConnection?.onSignalingState = (RTCSignalingState state) {
