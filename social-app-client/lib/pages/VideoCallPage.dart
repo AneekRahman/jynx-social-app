@@ -44,6 +44,7 @@ class _VideoCallPageState extends State<VideoCallPage> {
 
   // For UX updates
   bool _callEnded = false;
+  String? _callMsg;
 
   // The states below are for WebRTC
   final _localVideoRenderer = RTCVideoRenderer();
@@ -75,6 +76,8 @@ class _VideoCallPageState extends State<VideoCallPage> {
             usersPhotoURL: element.url,
           );
       });
+    } else if (widget.fcmNotifcation != null) {
+      _otherUser = widget.fcmNotifcation!;
     }
 
     // Either [chatRoomsInfos] or [notificationChatRoomUid] will always be present
@@ -87,9 +90,21 @@ class _VideoCallPageState extends State<VideoCallPage> {
     // Listen to webRTC peerConnection state changes
     webRTCSignaling.onPeerConnectionStateCallback = ((RTCPeerConnectionState state) {
       print("GOT: new change in peer connection: $state");
-      if (state == RTCPeerConnectionState.RTCPeerConnectionStateDisconnected) {
+      if (state == RTCPeerConnectionState.RTCPeerConnectionStateConnecting) {
+        setState(() {
+          _callMsg = "Connecting...";
+        });
+      }
+      if (state == RTCPeerConnectionState.RTCPeerConnectionStateConnected) {
+        setState(() {
+          _callMsg = null;
+        });
+      }
+      if (state == RTCPeerConnectionState.RTCPeerConnectionStateDisconnected ||
+          state == RTCPeerConnectionState.RTCPeerConnectionStateFailed) {
         webRTCSignaling.hangUp(_localVideoRenderer);
         setState(() {
+          _callMsg = "Call ended...";
           _callEnded = true;
         });
       }
@@ -101,6 +116,8 @@ class _VideoCallPageState extends State<VideoCallPage> {
         _createdIncomingNode = true;
       } else {
         _createdIncomingNode = false;
+        // If already in a call, but the room gets deleted. Then stop.
+        if (_startedOrAccepted) webRTCSignaling.hangUp(_localVideoRenderer);
       }
       setState(() {});
     });
@@ -172,7 +189,7 @@ class _VideoCallPageState extends State<VideoCallPage> {
                   : SizedBox(),
               // Other users info
               !_startedOrAccepted ? _buildOtherUsersInfo() : SizedBox(),
-              _callEnded ? _buildCallEndedBox() : SizedBox(),
+              _buildCallMsgBox(),
               // Permission messages
               Center(
                 child: PermissionRequiredMsg(
@@ -202,36 +219,40 @@ class _VideoCallPageState extends State<VideoCallPage> {
     );
   }
 
-  Widget _buildCallEndedBox() {
+  Widget _buildCallMsgBox() {
+    if (_callMsg == null) return SizedBox();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Expanded(
           child: Center(
             child: Text(
-              "Call ended...",
+              _callMsg!,
               style: TextStyle(fontFamily: HelveticaFont.Roman, fontSize: 20),
             ),
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: TextButton(
-            style: ButtonStyle(
-              shape: MaterialStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(100)))),
-              backgroundColor: MaterialStateProperty.all(Colors.yellow),
-              padding: MaterialStateProperty.all(EdgeInsets.all(14)),
-            ),
-            onPressed: () async {
-              await context.read<RealtimeDatabaseService>().deleteIncomingCallNode(chatRoomUid: _chatRoomUid);
-              Navigator.pop(context);
-            },
-            child: Text(
-              "Go back",
-              style: TextStyle(color: Colors.black, fontFamily: HelveticaFont.Roman, fontSize: 18),
-            ),
-          ),
-        ),
+        _callEnded
+            ? Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: TextButton(
+                  style: ButtonStyle(
+                    shape: MaterialStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(100)))),
+                    backgroundColor: MaterialStateProperty.all(Colors.yellow),
+                    padding: MaterialStateProperty.all(EdgeInsets.all(14)),
+                  ),
+                  onPressed: () async {
+                    await context.read<RealtimeDatabaseService>().deleteIncomingCallNode(chatRoomUid: _chatRoomUid);
+                    Navigator.pop(context);
+                  },
+                  child: Text(
+                    "Go back",
+                    style: TextStyle(color: Colors.black, fontFamily: HelveticaFont.Roman, fontSize: 18),
+                  ),
+                ),
+              )
+            : SizedBox(),
       ],
     );
   }
@@ -320,6 +341,7 @@ class _VideoCallPageState extends State<VideoCallPage> {
         onPressed: () async {
           if (!await Constants.checkCamMicPermission()) return;
           setState(() {
+            _callMsg = "Calling...";
             _startedOrAccepted = true;
           });
           await webRTCSignaling.createRoom(_remoteVideoRenderer).catchError((e) {
@@ -359,7 +381,10 @@ class _VideoCallPageState extends State<VideoCallPage> {
                     IconButton(
                       onPressed: () async {
                         await webRTCSignaling.hangUp(_localVideoRenderer);
-                        Navigator.pop(context);
+                        setState(() {
+                          _callMsg = "Call ended...";
+                          _callEnded = true;
+                        });
                       },
                       icon: Icon(
                         Icons.call_end,

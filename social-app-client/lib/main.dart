@@ -49,6 +49,7 @@ void _showIncomingCallNotification(FCMNotifcation fcmNotifcation) async {
       roundedLargeIcon: true,
       notificationLayout: NotificationLayout.Default,
       category: NotificationCategory.Call,
+      criticalAlert: true,
     ),
   );
 
@@ -134,6 +135,20 @@ void _listenToAwesomeNotiTaps() {
   });
 }
 
+Future<void> _firebaseMessagingForegroungHandler(RemoteMessage message) async {
+  User? currentUser = FirebaseAuth.instance.currentUser;
+
+  if (currentUser != null) {
+    print("Handling a foreground message: ${message.toMap()} for ${currentUser.displayName}");
+    final FCMNotifcation fcmNotifcation = FCMNotifcation.fromJson(message.data);
+
+    if (fcmNotifcation.notiType == NotificationType.INCOMING_CALL) {
+      // If this is an /incomingCall/ notification
+      _showIncomingCallNotification(fcmNotifcation);
+    }
+  }
+}
+
 Future<void> main() async {
   // First bind flutter
   WidgetsFlutterBinding.ensureInitialized();
@@ -144,11 +159,12 @@ Future<void> main() async {
   // Create the background listener for notification (when app is in the background or terminated)
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-  // FirebaseMessaging.onMessage.listen((event) {});
-
   // Initialize firebase
   await Firebase.initializeApp();
   await FirebaseAppCheck.instance.activate();
+
+  // When the app is in the foreground this will run
+  FirebaseMessaging.onMessage.listen(_firebaseMessagingForegroungHandler);
 
   runApp(MyApp());
 
