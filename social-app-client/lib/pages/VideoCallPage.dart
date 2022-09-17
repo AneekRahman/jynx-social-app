@@ -13,6 +13,8 @@ import 'package:social_app/modules/WebRTCSignaling.dart';
 import 'package:wakelock/wakelock.dart';
 import '../models/FCMNotification.dart';
 import '../modules/PermissionRequiredMsg.dart';
+import '../modules/constants.dart';
+import '../services/rtd_service.dart';
 
 class VideoCallPage extends StatefulWidget {
   /// [chatRoomsInfos] is available when the currentUser creates a call
@@ -30,10 +32,13 @@ class VideoCallPage extends StatefulWidget {
 }
 
 class _VideoCallPageState extends State<VideoCallPage> {
+  late WebRTCSignaling webRTCSignaling;
+
   late final _currentUser;
   late final FCMNotifcation _otherUser;
   StreamSubscription<DatabaseEvent>? _incomingCallListener;
-  late WebRTCSignaling webRTCSignaling;
+  bool? _createdIncomingNode;
+  bool _startedOrAccepted = false;
 
   // The states below are for WebRTC
   final _localVideoRenderer = RTCVideoRenderer();
@@ -53,6 +58,8 @@ class _VideoCallPageState extends State<VideoCallPage> {
     // Keep screen awake while on VideoCallPage
     Wakelock.enable();
 
+    final String? chatRoomUid = widget.chatRoomsInfos != null ? widget.chatRoomsInfos!.chatRoomUid : widget.fcmNotifcation!.chatRoomUid;
+
     // If [fcmNotifcation] is null, get the otherUsers info from [chatRoomsInfos] to display it
     if (widget.fcmNotifcation == null && widget.chatRoomsInfos != null) {
       widget.chatRoomsInfos!.mems.forEach((element) {
@@ -68,9 +75,18 @@ class _VideoCallPageState extends State<VideoCallPage> {
     // Either [chatRoomsInfos] or [notificationChatRoomUid] will always be present
     webRTCSignaling = WebRTCSignaling(
       rootContext: context,
-      chatRoomUid: widget.chatRoomsInfos != null ? widget.chatRoomsInfos!.chatRoomUid : widget.fcmNotifcation!.chatRoomUid,
+      chatRoomUid: chatRoomUid,
       currentUser: _currentUser,
     );
+
+    // Listen to /incomingCall/ node
+    context.read<RealtimeDatabaseService>().getIncomingCallStream(chatRoomUid: chatRoomUid!).listen((event) {
+      if (event.snapshot.exists) {
+        _createdIncomingNode = true;
+      } else {
+        _createdIncomingNode = false;
+      }
+    });
   }
 
   @override
@@ -107,21 +123,38 @@ class _VideoCallPageState extends State<VideoCallPage> {
         body: SafeArea(
           child: Stack(
             children: [
-              SizedBox(
-                width: MediaQuery.of(context).size.width,
-                child: Container(
-                  color: Colors.yellow,
-                  child: RTCVideoView(
-                    _remoteVideoRenderer,
-                    objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
-                  ),
-                ),
-              ),
-              Positioned(
-                top: 0,
-                bottom: 0,
-                left: 0,
-                right: 0,
+              // otherUsers video
+              _startedOrAccepted
+                  ? SizedBox(
+                      width: MediaQuery.of(context).size.width,
+                      child: RTCVideoView(
+                        _remoteVideoRenderer,
+                        objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
+                      ),
+                    )
+                  : SizedBox(),
+              // currentUsers video
+              _startedOrAccepted
+                  ? Positioned(
+                      top: 16,
+                      right: 16,
+                      height: 130,
+                      width: 80,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.all(Radius.circular(10)),
+                        child: Container(
+                          color: Colors.black26,
+                          child: RTCVideoView(
+                            _localVideoRenderer,
+                            objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
+                            mirror: true,
+                          ),
+                        ),
+                      ),
+                    )
+                  : SizedBox(),
+              // Permission messages
+              Center(
                 child: PermissionRequiredMsg(
                   onChange: (bool) async {
                     // This will be called right after permission for camera and microphone is granted
@@ -135,28 +168,12 @@ class _VideoCallPageState extends State<VideoCallPage> {
                   },
                 ),
               ),
-              Positioned(
-                bottom: 90 + 30,
-                left: 30,
-                height: 160,
-                width: 100,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.all(Radius.circular(10)),
-                  child: Container(
-                    color: Colors.black26,
-                    child: RTCVideoView(
-                      _localVideoRenderer,
-                      objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
-                      mirror: true,
-                    ),
-                  ),
-                ),
-              ),
+              // Bottom buttons
               Positioned(
                 bottom: 20,
                 left: 20,
                 right: 20,
-                child: _buildBottomActionsBar(context),
+                child: _startedOrAccepted ? _buildInCallActionsBar(context) : _buildBottomButtons(),
               )
             ],
           ),
@@ -165,7 +182,81 @@ class _VideoCallPageState extends State<VideoCallPage> {
     );
   }
 
-  Widget _buildBottomActionsBar(BuildContext context) {
+  Widget _buildBottomButtons() {
+    if (_createdIncomingNode == null) return SizedBox();
+    if (_createdIncomingNode!) {
+      return Row(
+        children: [
+          Expanded(
+            child: TextButton(
+              style: ButtonStyle(
+                shape: MaterialStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(100)))),
+                backgroundColor: MaterialStateProperty.all(Colors.green),
+                padding: MaterialStateProperty.all(EdgeInsets.all(14)),
+              ),
+              onPressed: () async {
+                if (!await Constants.checkCamMicPermission()) return;
+
+                await webRTCSignaling.joinRoom(_remoteVideoRenderer);
+                setState(() {
+                  _startedOrAccepted = true;
+                });
+              },
+              child: Text(
+                "Answer Call",
+                style: TextStyle(color: Colors.white, fontFamily: HelveticaFont.Roman, fontSize: 18),
+              ),
+            ),
+          ),
+          SizedBox(width: 14),
+          Expanded(
+            child: TextButton(
+              style: ButtonStyle(
+                shape: MaterialStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(100)))),
+                backgroundColor: MaterialStateProperty.all(Colors.red),
+                padding: MaterialStateProperty.all(EdgeInsets.all(14)),
+              ),
+              onPressed: () async {
+                if (!_startedOrAccepted) return;
+
+                webRTCSignaling.hangUp(_localVideoRenderer);
+                setState(() {
+                  _startedOrAccepted = false;
+                  _createdIncomingNode = false;
+                });
+              },
+              child: Text(
+                "Hang up",
+                style: TextStyle(color: Colors.white, fontFamily: HelveticaFont.Roman, fontSize: 18),
+              ),
+            ),
+          ),
+        ],
+      );
+    } else {
+      return TextButton(
+        style: ButtonStyle(
+          shape: MaterialStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(100)))),
+          backgroundColor: MaterialStateProperty.all(Colors.yellow),
+          padding: MaterialStateProperty.all(EdgeInsets.all(14)),
+        ),
+        onPressed: () async {
+          if (!await Constants.checkCamMicPermission()) return;
+
+          await webRTCSignaling.createRoom(_remoteVideoRenderer);
+          setState(() {
+            _startedOrAccepted = true;
+          });
+        },
+        child: Text(
+          "Make a Call",
+          style: TextStyle(color: Colors.black, fontFamily: HelveticaFont.Roman, fontSize: 20),
+        ),
+      );
+    }
+  }
+
+  Widget _buildInCallActionsBar(BuildContext context) {
     return Column(
       children: [
         Container(
@@ -185,7 +276,10 @@ class _VideoCallPageState extends State<VideoCallPage> {
                     IconButton(
                       onPressed: () async {
                         await webRTCSignaling.hangUp(_localVideoRenderer);
-                        setState(() {});
+                        setState(() {
+                          _startedOrAccepted = false;
+                          _createdIncomingNode = false;
+                        });
                       },
                       icon: Icon(
                         Icons.call_end,
@@ -196,7 +290,9 @@ class _VideoCallPageState extends State<VideoCallPage> {
                     IconButton(
                       onPressed: () async {
                         await webRTCSignaling.joinRoom(_remoteVideoRenderer);
-                        setState(() {});
+                        setState(() {
+                          _startedOrAccepted = true;
+                        });
                       },
                       icon: Icon(
                         Icons.check,
@@ -207,7 +303,9 @@ class _VideoCallPageState extends State<VideoCallPage> {
                     IconButton(
                       onPressed: () async {
                         await webRTCSignaling.createRoom(_remoteVideoRenderer);
-                        setState(() {});
+                        setState(() {
+                          _startedOrAccepted = true;
+                        });
                       },
                       icon: Icon(
                         Icons.add,

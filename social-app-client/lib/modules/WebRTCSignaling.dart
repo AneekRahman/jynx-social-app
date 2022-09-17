@@ -20,6 +20,13 @@ class WebRTCSignaling {
       }
     ]
   };
+  final Map<String, dynamic> offerSdpConstraints = {
+    "mandatory": {
+      "OfferToReceiveAudio": true,
+      "OfferToReceiveVideo": true,
+    },
+    "optional": [],
+  };
 
   final BuildContext rootContext;
   String? chatRoomUid;
@@ -31,14 +38,16 @@ class WebRTCSignaling {
   StreamStateCallback? onAddRemoteStream;
 
   bool _alreadyAddedAnswer = false;
+  bool _startedOrAccepted = false;
 
   WebRTCSignaling({this.chatRoomUid, required this.rootContext, required this.currentUser});
 
   Future createRoom(RTCVideoRenderer remoteRenderer) async {
-    if (chatRoomUid == null) return;
+    if (_startedOrAccepted) return;
+    _startedOrAccepted = true;
 
     print('Create PeerConnection with configuration: $configuration');
-    peerConnection = await createPeerConnection(configuration);
+    peerConnection = await createPeerConnection(configuration, offerSdpConstraints);
     registerPeerConnectionListeners();
 
     // The localStream returns the video and audio of currentUser
@@ -97,7 +106,6 @@ class WebRTCSignaling {
           await peerConnection?.setRemoteDescription(answer);
         }
 
-        // TODO make sure event.type == DocumentChangeType.added works
         // When new calleeIceCandidates are added on /incomingCall/callee/{iceCandidateUid}, add them
         if (incomingCall.calleeIceCandidates != null) {
           incomingCall.calleeIceCandidates!.iceCandidates.forEach((iceCandidate) {
@@ -116,11 +124,13 @@ class WebRTCSignaling {
   }
 
   Future<void> joinRoom(RTCVideoRenderer remoteVideo) async {
-    final roomSnapshot = await rootContext.read<RealtimeDatabaseService>().getIncomingCallSnaphsot(chatRoomUid: chatRoomUid!);
+    if (_startedOrAccepted) return;
+    _startedOrAccepted = true;
 
+    final roomSnapshot = await rootContext.read<RealtimeDatabaseService>().getIncomingCallSnaphsot(chatRoomUid: chatRoomUid!);
     if (roomSnapshot.exists) {
       print('Create PeerConnection with configuration: $configuration');
-      peerConnection = await createPeerConnection(configuration);
+      peerConnection = await createPeerConnection(configuration, offerSdpConstraints);
       registerPeerConnectionListeners();
 
       // The localStream returns the video and audio of currentUser
@@ -206,6 +216,8 @@ class WebRTCSignaling {
   }
 
   Future<void> hangUp(RTCVideoRenderer localVideo) async {
+    if (!_startedOrAccepted) return;
+
     List<MediaStreamTrack> tracks = localVideo.srcObject!.getTracks();
     tracks.forEach((track) {
       track.stop();
@@ -220,6 +232,8 @@ class WebRTCSignaling {
 
     localStream!.dispose();
     remoteStream?.dispose();
+
+    _startedOrAccepted = false;
   }
 
   void registerPeerConnectionListeners() {
