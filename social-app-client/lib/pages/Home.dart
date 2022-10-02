@@ -12,9 +12,9 @@ import 'package:social_app/pages/MyProfilePage.dart';
 import 'package:social_app/pages/RequestsPage.dart';
 import 'package:social_app/pages/SearchUsersPage.dart';
 import 'package:provider/provider.dart';
-import 'package:social_app/pages/StartRandomChatPage.dart';
 
 import '../services/rtd_service.dart';
+import 'PublicGroupChatsPage.dart';
 
 class HomePage extends StatefulWidget {
   static final String routeName = "/HomePage";
@@ -24,7 +24,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   late User _currentUser;
-  // 0 = StartRandomChatPage | 1 = RTDUsersChatsList | 2 = MyProfilePage
+  // 0 = PublicGroupChatsPage | 1 = RTDUsersChatsList | 2 = MyProfilePage
   int _pageNum = 1;
 
   Future _saveNewFCMToken(User user) async {
@@ -55,7 +55,7 @@ class _HomePageState extends State<HomePage> {
             Column(
               children: [
                 HomeAppBar(),
-                _pageNum == 0 ? StartRandomChatPage(currentUser: _currentUser) : SizedBox(),
+                _pageNum == 0 ? PublicGroupChatsPage() : SizedBox(),
                 _pageNum == 1
                     ? RTDUsersChatsList(
                         stream: context.read<RealtimeDatabaseService>().getUsersChatsStream(userUid: _currentUser.uid),
