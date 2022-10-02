@@ -14,7 +14,7 @@ import 'package:social_app/pages/SearchUsersPage.dart';
 import 'package:provider/provider.dart';
 
 import '../services/rtd_service.dart';
-import 'PublicGroupChatsPage.dart';
+import 'PublicGroupChatsList.dart';
 
 class HomePage extends StatefulWidget {
   static final String routeName = "/HomePage";
@@ -55,7 +55,7 @@ class _HomePageState extends State<HomePage> {
             Column(
               children: [
                 HomeAppBar(),
-                _pageNum == 0 ? PublicGroupChatsPage() : SizedBox(),
+                _pageNum == 0 ? PublicGroupChatsList() : SizedBox(),
                 _pageNum == 1
                     ? RTDUsersChatsList(
                         stream: context.read<RealtimeDatabaseService>().getUsersChatsStream(userUid: _currentUser.uid),
