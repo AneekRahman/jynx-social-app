@@ -11,7 +11,7 @@ import 'package:social_app/services/auth_service.dart';
 import 'package:social_app/services/firestore_service.dart';
 import 'package:social_app/services/rtd_service.dart';
 import 'modules/constants.dart';
-import 'pages/Home.dart';
+import 'pages/Home/HomePage.dart';
 
 class MyApp extends StatelessWidget {
   @override
