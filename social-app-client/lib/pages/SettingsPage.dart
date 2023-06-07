@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:social_app/modules/constants.dart';
-import 'package:social_app/pages/Home.dart';
+import 'package:social_app/pages/Home/HomePage.dart';
 import 'package:social_app/services/auth_service.dart';
 import 'package:provider/provider.dart';
 import 'package:social_app/services/rtd_service.dart';
