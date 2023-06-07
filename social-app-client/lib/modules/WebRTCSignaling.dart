@@ -223,6 +223,9 @@ class WebRTCSignaling {
   }
 
   Future<void> hangUp(RTCVideoRenderer localVideo) async {
+    // Make sure to delete the /incomingCall/ node in RTD
+    RealtimeDatabaseService(FirebaseDatabase.instance).deleteIncomingCallNode(chatRoomUid: chatRoomUid!);
+
     if (!_startedOrAccepted) return;
 
     // Dispose the peer connections
@@ -236,9 +239,6 @@ class WebRTCSignaling {
       peerConnection!.close();
       peerConnection!.dispose();
     }
-
-    // Make sure to delete the /incomingCall/ node in RTD
-    RealtimeDatabaseService(FirebaseDatabase.instance).deleteIncomingCallNode(chatRoomUid: chatRoomUid!);
 
     if (_incomingCallListener != null) _incomingCallListener!.cancel();
 
