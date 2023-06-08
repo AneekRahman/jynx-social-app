@@ -19,7 +19,7 @@ class _VideosListState extends State<VideosList> {
   PageController controller = PageController();
   int _currentPage = 0;
 
-  List<MyVideoPlayerController> myStateControllers = [
+  List<MyVideoPlayerController> myVideosStateControllers = [
     MyVideoPlayerController(),
     MyVideoPlayerController(),
   ];
@@ -35,14 +35,14 @@ class _VideosListState extends State<VideosList> {
           setState(() {
             _currentPage = num;
             print(num);
-            if (myStateControllers[_currentPage].play != null) {
-              myStateControllers[_currentPage].play!();
+            if (myVideosStateControllers[_currentPage].play != null) {
+              myVideosStateControllers[_currentPage].play!();
             }
           });
         },
         children: [
-          MyVideoPlayer(myStateController: myStateControllers[0]),
-          MyVideoPlayer(myStateController: myStateControllers[1]),
+          MyVideoPlayer(myStateController: myVideosStateControllers[0], firstIntializedVideo: true),
+          MyVideoPlayer(myStateController: myVideosStateControllers[1]),
         ],
       ),
     );
