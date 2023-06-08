@@ -32,7 +32,7 @@ class _VideosListState extends State<VideosList> {
               color: Colors.teal,
             ),
             child: Center(
-              child: Text("Page One"),
+              child: Text("Page $_currentPage"),
             ),
           ),
           Container(

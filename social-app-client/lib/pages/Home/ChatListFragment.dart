@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:social_app/modules/RTDUsersChatsList.dart';
+import 'package:social_app/modules/Home/RTDUsersChatsList.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../modules/constants.dart';

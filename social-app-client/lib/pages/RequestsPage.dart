@@ -5,7 +5,7 @@ import 'package:social_app/modules/constants.dart';
 import 'package:provider/provider.dart';
 import 'package:social_app/services/firestore_service.dart';
 
-import '../modules/RTDUsersChatsList.dart';
+import '../modules/Home/RTDUsersChatsList.dart';
 import '../services/rtd_service.dart';
 
 class RequestsPage extends StatefulWidget {

@@ -7,12 +7,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:social_app/models/ChatRoomsInfos.dart';
 import 'package:social_app/models/UsersChatRooms.dart';
-import 'package:social_app/modules/UsersChatRoomsRow.dart';
+import 'package:social_app/modules/Home/UsersChatRoomsRow.dart';
 import 'package:social_app/pages/ChatMessageRoom/ChatMessageRoom.dart';
 
-import '../services/rtd_service.dart';
-import 'LoadingBar.dart';
-import 'constants.dart';
+import '../../services/rtd_service.dart';
+import '../LoadingBar.dart';
+import '../constants.dart';
 
 class RTDUsersChatsList extends StatefulWidget {
   final Stream<DatabaseEvent> stream;
