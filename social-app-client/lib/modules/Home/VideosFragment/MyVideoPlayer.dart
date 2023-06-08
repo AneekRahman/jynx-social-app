@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:cached_video_player/cached_video_player.dart';
+import 'package:video_player/video_player.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 
 import '../../../pages/ProfilePage/MyProfilePage.dart';
@@ -21,7 +21,7 @@ class _MyVideoPlayerState extends State<MyVideoPlayer> {
     myStateController.play = startVideoFromParent;
   }
 
-  late CachedVideoPlayerController _controller;
+  late VideoPlayerController _controller;
 
   void startVideoFromParent() {
     _controller.play();
@@ -30,7 +30,8 @@ class _MyVideoPlayerState extends State<MyVideoPlayer> {
   @override
   void initState() {
     super.initState();
-    _controller = CachedVideoPlayerController.network('https://www.pexels.com/download/video/4434286/?fps=30.0&h=1280&w=720');
+
+    _controller = VideoPlayerController.network('https://www.pexels.com/download/video/4434286/?fps=30.0&h=1280&w=720');
     _controller.setLooping(true);
     _controller.initialize().then((value) {
       setState(() {});
@@ -43,7 +44,9 @@ class _MyVideoPlayerState extends State<MyVideoPlayer> {
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        Expanded(
+        Positioned.fill(
+          top: 0,
+          bottom: 0,
           child: GestureDetector(
             onTap: () {
               if (_controller.value.isPlaying) {
@@ -56,7 +59,7 @@ class _MyVideoPlayerState extends State<MyVideoPlayer> {
               height: double.infinity,
               child: AspectRatio(
                 aspectRatio: _controller.value.aspectRatio,
-                child: CachedVideoPlayer(_controller),
+                child: VideoPlayer(_controller),
               ),
             ),
           ),

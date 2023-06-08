@@ -22,6 +22,8 @@ class _VideosListState extends State<VideosList> {
   List<MyVideoPlayerController> myVideosStateControllers = [
     MyVideoPlayerController(),
     MyVideoPlayerController(),
+    MyVideoPlayerController(),
+    MyVideoPlayerController(),
   ];
 
   @override
@@ -43,6 +45,8 @@ class _VideosListState extends State<VideosList> {
         children: [
           MyVideoPlayer(myStateController: myVideosStateControllers[0], firstIntializedVideo: true),
           MyVideoPlayer(myStateController: myVideosStateControllers[1]),
+          MyVideoPlayer(myStateController: myVideosStateControllers[2]),
+          MyVideoPlayer(myStateController: myVideosStateControllers[3]),
         ],
       ),
     );
