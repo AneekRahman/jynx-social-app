@@ -12,6 +12,7 @@ import 'package:social_app/services/firestore_service.dart';
 import 'package:social_app/services/rtd_service.dart';
 import 'modules/constants.dart';
 import 'pages/Home/HomePage.dart';
+import 'pages/ProfilePage/SettingsPage.dart';
 
 class MyApp extends StatelessWidget {
   @override
@@ -47,6 +48,7 @@ class MyApp extends StatelessWidget {
         routes: {
           AuthenticationWrapper.routeName: (context) => AuthenticationWrapper(),
           HomePage.routeName: (context) => HomePage(),
+          SettingsPage.routeName: (context) => SettingsPage(),
         },
         initialRoute: AuthenticationWrapper.routeName,
       ),

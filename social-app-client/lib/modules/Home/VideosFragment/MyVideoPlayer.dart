@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cached_video_player/cached_video_player.dart';
+import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 
+import '../../../pages/ProfilePage/MyProfilePage.dart';
 import '../../constants.dart';
 import 'VideosList.dart';
 
@@ -93,20 +95,64 @@ class PostInfoBox extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                "As a beauty editor, I’ve jumped on many skincare trends. Some have been more helpful than others, I’ll admit. But over the years",
-                style: TextStyle(fontFamily: HelveticaFont.Roman),
+              TextButton(
+                onPressed: () {
+                  showMaterialModalBottomSheet(
+                    backgroundColor: Colors.transparent,
+                    context: context,
+                    builder: (context) => Padding(
+                      padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
+                      child: Container(),
+                    ),
+                  );
+                },
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "2.4k views",
+                      style: TextStyle(fontFamily: HelveticaFont.Bold, color: Colors.white),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      "As a beauty editor, I’ve jumped on many skincare trends. Some have been more helpful than others, I’ll admit. But over the years",
+                      style: TextStyle(fontFamily: HelveticaFont.Roman, color: Colors.white),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
               ),
-              SizedBox(height: 16),
-              Text(
-                "Aneek Rahman",
-                style: TextStyle(fontFamily: HelveticaFont.Bold),
+              TextButton(
+                onPressed: () {
+                  showMaterialModalBottomSheet(
+                    backgroundColor: Colors.transparent,
+                    context: context,
+                    builder: (context) => Padding(
+                      padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
+                      child: MyProfilePage(),
+                      // child: OthersProfilePage(
+                      //   otherUsersProfileObject: UserFirestore.fromChatRoomsInfosMem(otherPrivateChatRoomUser),
+                      //   showMessageButton: false,
+                      // ),
+                    ),
+                  );
+                },
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Aneek Rahman",
+                      style: TextStyle(fontFamily: HelveticaFont.Bold, color: Colors.white),
+                    ),
+                    Text(
+                      "@mr_rahman",
+                      style: TextStyle(fontFamily: HelveticaFont.Roman, color: Colors.white),
+                    ),
+                  ],
+                ),
               ),
-              Text(
-                "@mr_rahman",
-                style: TextStyle(fontFamily: HelveticaFont.Roman),
-              ),
-              SizedBox(height: 10),
+              SizedBox(height: 4),
             ],
           ),
         ),

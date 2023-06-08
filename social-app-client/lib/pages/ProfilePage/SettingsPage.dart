@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:social_app/services/rtd_service.dart';
 
 class SettingsPage extends StatefulWidget {
+  static final String routeName = "/SettingsPage";
   @override
   _SettingsPageState createState() => _SettingsPageState();
 }
