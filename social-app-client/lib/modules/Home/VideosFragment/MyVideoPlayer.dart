@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_video_player/cached_video_player.dart';
 
+import '../../constants.dart';
 import 'VideosList.dart';
 
 /// Stateful widget to fetch and then display video content.
@@ -27,7 +28,7 @@ class _MyVideoPlayerState extends State<MyVideoPlayer> {
   @override
   void initState() {
     super.initState();
-    _controller = CachedVideoPlayerController.network('https://www.pexels.com/download/video/4434242/?fps=23.976&h=1280&w=720');
+    _controller = CachedVideoPlayerController.network('https://www.pexels.com/download/video/4434286/?fps=30.0&h=1280&w=720');
     _controller.setLooping(true);
     _controller.initialize().then((value) {
       setState(() {});
@@ -49,7 +50,8 @@ class _MyVideoPlayerState extends State<MyVideoPlayer> {
                 _controller.play();
               }
             },
-            child: Center(
+            child: SizedBox(
+              height: double.infinity,
               child: AspectRatio(
                 aspectRatio: _controller.value.aspectRatio,
                 child: CachedVideoPlayer(_controller),
@@ -59,11 +61,9 @@ class _MyVideoPlayerState extends State<MyVideoPlayer> {
         ),
         Positioned(
           right: 20,
+          left: 20,
           bottom: 100,
-          child: AbsorbPointer(
-            absorbing: false,
-            child: PostButtons(),
-          ),
+          child: PostInfoBox(),
         ),
       ],
     );
@@ -73,6 +73,45 @@ class _MyVideoPlayerState extends State<MyVideoPlayer> {
   void dispose() {
     super.dispose();
     _controller.dispose();
+  }
+}
+
+class PostInfoBox extends StatelessWidget {
+  const PostInfoBox({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        AbsorbPointer(
+          absorbing: false,
+          child: PostButtons(),
+        ),
+        SizedBox(width: 6),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "As a beauty editor, I’ve jumped on many skincare trends. Some have been more helpful than others, I’ll admit. But over the years",
+                style: TextStyle(fontFamily: HelveticaFont.Roman),
+              ),
+              SizedBox(height: 16),
+              Text(
+                "Aneek Rahman",
+                style: TextStyle(fontFamily: HelveticaFont.Bold),
+              ),
+              Text(
+                "@mr_rahman",
+                style: TextStyle(fontFamily: HelveticaFont.Roman),
+              ),
+              SizedBox(height: 10),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 }
 
@@ -103,7 +142,7 @@ class PostButtons extends StatelessWidget {
         height: 45,
         width: 45,
         decoration: BoxDecoration(
-          color: Colors.black.withOpacity(.5),
+          color: Colors.black.withOpacity(.4),
           borderRadius: BorderRadius.circular(10000),
         ),
       ),
@@ -116,18 +155,10 @@ class PostButtons extends StatelessWidget {
       children: [
         IconButton(
           iconSize: 40,
-          onPressed: () {
-            print("HELLO");
-          },
-          icon: _buildOtherUsersProfilePic(),
-        ),
-        SizedBox(height: 6),
-        IconButton(
-          iconSize: 40,
           onPressed: () {},
           icon: Opacity(
             child: Image.asset("assets/icons/Like-icon.png"),
-            opacity: .7,
+            opacity: .8,
           ),
         ),
         SizedBox(height: 6),
@@ -136,7 +167,7 @@ class PostButtons extends StatelessWidget {
           onPressed: () {},
           icon: Opacity(
             child: Image.asset("assets/icons/Dislike-icon.png"),
-            opacity: .7,
+            opacity: .8,
           ),
         ),
         SizedBox(height: 6),
@@ -145,8 +176,16 @@ class PostButtons extends StatelessWidget {
           onPressed: () {},
           icon: Opacity(
             child: Image.asset("assets/icons/Message-icon.png"),
-            opacity: .7,
+            opacity: .8,
           ),
+        ),
+        SizedBox(height: 10),
+        IconButton(
+          iconSize: 40,
+          onPressed: () {
+            print("HELLO");
+          },
+          icon: _buildOtherUsersProfilePic(),
         ),
       ],
     );
