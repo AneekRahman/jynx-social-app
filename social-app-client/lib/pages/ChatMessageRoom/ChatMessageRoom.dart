@@ -14,7 +14,7 @@ import 'package:social_app/services/rtd_service.dart';
 
 import '../../models/MsgRow.dart';
 import '../../modules/LoadingBar.dart';
-import '../../modules/MessageBubble.dart';
+import '../../modules/ChatMessageRoom/MessageBubble.dart';
 import '../../modules/constants.dart';
 import '../ProfilePage/OthersProfilePage.dart';
 import 'VideoCallPage.dart';

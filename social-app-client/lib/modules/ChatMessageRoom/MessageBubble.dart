@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:social_app/models/ChatRoomsInfos.dart';
 
-import '../models/MsgRow.dart';
-import 'constants.dart';
+import '../../models/MsgRow.dart';
+import '../constants.dart';
 
 class MessageBubble extends StatelessWidget {
   final MsgRow msgRow;

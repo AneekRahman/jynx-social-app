@@ -9,10 +9,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:provider/provider.dart';
 import 'package:social_app/models/ChatRoomsInfos.dart';
-import 'package:social_app/modules/WebRTCSignaling.dart';
+import 'package:social_app/modules/ChatMessageRoom/WebRTCSignaling.dart';
 import 'package:wakelock/wakelock.dart';
 import '../../models/FCMNotification.dart';
-import '../../modules/PermissionRequiredMsg.dart';
+import '../../modules/ChatMessageRoom/PermissionRequiredMsg.dart';
 import '../../modules/constants.dart';
 import '../../services/rtd_service.dart';
 
