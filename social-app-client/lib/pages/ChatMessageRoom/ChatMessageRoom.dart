@@ -16,7 +16,7 @@ import '../../models/MsgRow.dart';
 import '../../modules/LoadingBar.dart';
 import '../../modules/MessageBubble.dart';
 import '../../modules/constants.dart';
-import '../OthersProfilePage.dart';
+import '../ProfilePage/OthersProfilePage.dart';
 import 'VideoCallPage.dart';
 
 class ChatMessageRoom extends StatefulWidget {

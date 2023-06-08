@@ -7,7 +7,7 @@ import 'package:social_app/models/UserFirestore.dart';
 import 'package:social_app/modules/LoadingBar.dart';
 import 'package:social_app/modules/constants.dart';
 import 'package:provider/provider.dart';
-import 'package:social_app/pages/OthersProfilePage.dart';
+import 'package:social_app/pages/ProfilePage/OthersProfilePage.dart';
 
 class SearchUsersPage extends StatefulWidget {
   @override

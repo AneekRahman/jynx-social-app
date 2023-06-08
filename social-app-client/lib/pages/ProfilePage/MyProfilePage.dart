@@ -8,7 +8,7 @@ import 'package:social_app/models/CustomClaims.dart';
 import 'package:provider/provider.dart';
 import 'package:social_app/models/UserFirestore.dart';
 import 'package:social_app/modules/constants.dart';
-import 'package:social_app/pages/EditProfile.dart';
+import 'package:social_app/pages/ProfilePage/EditProfile.dart';
 import 'package:social_app/services/auth_service.dart';
 import 'package:social_app/services/firestore_service.dart';
 import 'package:url_launcher/url_launcher.dart';

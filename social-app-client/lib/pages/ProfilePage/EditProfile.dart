@@ -14,7 +14,7 @@ import 'package:http/http.dart' as http;
 import 'dart:async';
 import 'package:google_maps_webservice/places.dart';
 
-import '../services/auth_service.dart';
+import '../../services/auth_service.dart';
 
 class EditProfile extends StatelessWidget {
   UserFirestore userObject;

@@ -6,7 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../modules/constants.dart';
 import '../../services/rtd_service.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
-import 'package:social_app/pages/MyProfilePage.dart';
+import 'package:social_app/pages/ProfilePage/MyProfilePage.dart';
 import 'package:social_app/pages/RequestsPage.dart';
 import 'package:social_app/pages/SearchUsersPage.dart';
 
