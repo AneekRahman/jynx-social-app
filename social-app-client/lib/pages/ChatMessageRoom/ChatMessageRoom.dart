@@ -492,10 +492,8 @@ class _MessagesStreamBuilderState extends State<MessagesStreamBuilder> {
                     }
 
                     bool wasSentInTheSameDay = false;
-
-                    if (index == 0 ||
-                        msgRow.sentTime! < _msgRows.elementAt(index - 1).sentTime! + 86400000 ||
-                        msgRow.sentTime! > _msgRows.elementAt(index + 1).sentTime! - 86400000) {
+                    if (0 == index) {
+                    } else if (msgRow.sentTime! + 86400 > _msgRows.elementAt(index - 1).sentTime!) {
                       wasSentInTheSameDay = true;
                     }
 

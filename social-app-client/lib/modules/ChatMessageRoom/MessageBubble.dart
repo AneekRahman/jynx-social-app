@@ -67,19 +67,20 @@ class MessageBubble extends StatelessWidget {
                     bottomRight: isUsersMsg && nextMsgSameUser ? Radius.circular(30) : Radius.circular(100),
                     topRight: isUsersMsg && prevMsgSameUser ? Radius.circular(30) : Radius.circular(100),
                   ),
-                  gradient: LinearGradient(
-                    colors: isUsersMsg
-                        ? [
-                            const Color(0xFF3EC2F9),
-                            const Color(0xFF3BDDFA),
-                          ]
-                        : [
-                            const Color(0xFF9B72FD),
-                            const Color(0xFFBB9BFE),
-                          ],
-                    begin: Alignment.bottomCenter,
-                    end: Alignment.topCenter,
-                  ),
+                  color: isUsersMsg ? Colors.white24 : Colors.blue,
+                  // gradient: LinearGradient(
+                  //   colors: isUsersMsg
+                  //       ? [
+                  //           const Color(0xFF3EC2F9),
+                  //           const Color(0xFF3BDDFA),
+                  //         ]
+                  //       : [
+                  //           const Color(0xFF9B72FD),
+                  //           const Color(0xFFBB9BFE),
+                  //         ],
+                  //   begin: Alignment.bottomCenter,
+                  //   end: Alignment.topCenter,
+                  // ),
                   // border: Border(
                   //   right: isUser ? BorderSide(color: Colors.purpleAccent, width: 4) : BorderSide(style: BorderStyle.none),
                   //   left: isUser ? BorderSide(style: BorderStyle.none) : BorderSide(color: Colors.orange, width: 4),
@@ -101,10 +102,11 @@ class MessageBubble extends StatelessWidget {
         Container(
           margin: EdgeInsets.only(
             top: 2,
+            bottom: !wasSentInTheSameDay && nextMsgSameUser ? 10 : 0,
             right: !isUsersMsg ? 0 : 30,
             left: isUsersMsg ? 0 : 30,
           ),
-          child: !nextMsgSameUser && !wasSentInTheSameDay
+          child: !wasSentInTheSameDay
               ? Text(
                   sentTimeFormattedString + " ago",
                   style: TextStyle(fontFamily: HelveticaFont.Roman, fontSize: 11, color: Colors.white54),
