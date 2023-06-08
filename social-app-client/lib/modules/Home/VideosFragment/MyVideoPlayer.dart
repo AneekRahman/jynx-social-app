@@ -1,18 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:cached_video_player/cached_video_player.dart';
 
-void main() => runApp(const MyVideoPlayer());
+import 'VideosList.dart';
 
 /// Stateful widget to fetch and then display video content.
 class MyVideoPlayer extends StatefulWidget {
-  const MyVideoPlayer({super.key});
+  final myStateController;
+  const MyVideoPlayer({super.key, required this.myStateController});
 
   @override
-  _MyVideoPlayerState createState() => _MyVideoPlayerState();
+  _MyVideoPlayerState createState() => _MyVideoPlayerState(myStateController);
 }
 
 class _MyVideoPlayerState extends State<MyVideoPlayer> {
+  _MyVideoPlayerState(MyVideoPlayerController myStateController) {
+    myStateController.play = startVideoFromParent;
+  }
+
   late CachedVideoPlayerController _controller;
+
+  void startVideoFromParent() {
+    _controller.play();
+  }
 
   @override
   void initState() {
@@ -20,7 +29,6 @@ class _MyVideoPlayerState extends State<MyVideoPlayer> {
     _controller = CachedVideoPlayerController.network('https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4');
     _controller.setLooping(true);
     _controller.initialize().then((value) {
-      _controller.play();
       setState(() {});
     });
   }

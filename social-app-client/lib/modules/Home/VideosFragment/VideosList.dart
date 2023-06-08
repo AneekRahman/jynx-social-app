@@ -2,8 +2,11 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
+import './MyVideoPlayer.dart';
 
-import 'MyVideoPlayer.dart';
+class MyVideoPlayerController {
+  void Function()? play;
+}
 
 class VideosList extends StatefulWidget {
   const VideosList({super.key});
@@ -16,6 +19,11 @@ class _VideosListState extends State<VideosList> {
   PageController controller = PageController();
   int _currentPage = 0;
 
+  List<MyVideoPlayerController> myStateControllers = [
+    MyVideoPlayerController(),
+    MyVideoPlayerController(),
+  ];
+
   @override
   Widget build(BuildContext context) {
     return Expanded(
@@ -26,48 +34,15 @@ class _VideosListState extends State<VideosList> {
         onPageChanged: (num) {
           setState(() {
             _currentPage = num;
+            print(num);
+            if (myStateControllers[_currentPage].play != null) {
+              myStateControllers[_currentPage].play!();
+            }
           });
         },
         children: [
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.teal,
-            ),
-            child: Center(
-              child: Text("Page $_currentPage"),
-            ),
-          ),
-          Container(
-            height: double.infinity,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: Colors.red.shade100,
-            ),
-            child: Center(
-              child: Text("Page Two"),
-            ),
-          ),
-          MyVideoPlayer(),
-          Container(
-            height: double.infinity,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: Colors.grey,
-            ),
-            child: Center(
-              child: Text("Page Three"),
-            ),
-          ),
-          Container(
-            height: double.infinity,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: Colors.yellow.shade100,
-            ),
-            child: Center(
-              child: Text("Page Four"),
-            ),
-          ),
+          MyVideoPlayer(myStateController: myStateControllers[0]),
+          MyVideoPlayer(myStateController: myStateControllers[1]),
         ],
       ),
     );
