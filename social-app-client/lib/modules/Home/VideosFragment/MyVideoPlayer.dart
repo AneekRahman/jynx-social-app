@@ -27,7 +27,7 @@ class _MyVideoPlayerState extends State<MyVideoPlayer> {
   @override
   void initState() {
     super.initState();
-    _controller = CachedVideoPlayerController.network('https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4');
+    _controller = CachedVideoPlayerController.network('https://www.pexels.com/download/video/4434242/?fps=23.976&h=1280&w=720');
     _controller.setLooping(true);
     _controller.initialize().then((value) {
       setState(() {});
@@ -37,28 +37,34 @@ class _MyVideoPlayerState extends State<MyVideoPlayer> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Video Demo',
-      home: Scaffold(
-        body: Center(
-          child: _controller.value.isInitialized
-              ? AspectRatio(
-                  aspectRatio: _controller.value.aspectRatio,
-                  child: CachedVideoPlayer(_controller),
-                )
-              : Container(),
-        ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () {
-            setState(() {
-              _controller.value.isPlaying ? _controller.pause() : _controller.play();
-            });
-          },
-          child: Icon(
-            _controller.value.isPlaying ? Icons.pause : Icons.play_arrow,
+    return Stack(
+      children: [
+        Expanded(
+          child: GestureDetector(
+            onTap: () {
+              if (_controller.value.isPlaying) {
+                _controller.pause();
+              } else {
+                _controller.play();
+              }
+            },
+            child: Center(
+              child: AspectRatio(
+                aspectRatio: _controller.value.aspectRatio,
+                child: CachedVideoPlayer(_controller),
+              ),
+            ),
           ),
         ),
-      ),
+        Positioned(
+          right: 20,
+          bottom: 100,
+          child: AbsorbPointer(
+            absorbing: false,
+            child: PostButtons(),
+          ),
+        ),
+      ],
     );
   }
 
@@ -66,5 +72,51 @@ class _MyVideoPlayerState extends State<MyVideoPlayer> {
   void dispose() {
     super.dispose();
     _controller.dispose();
+  }
+}
+
+class PostButtons extends StatelessWidget {
+  const PostButtons({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        IconButton(
+          iconSize: 40,
+          onPressed: () {
+            print("HELLO");
+          },
+          icon: Image.asset("assets/profile-user.png"),
+        ),
+        SizedBox(height: 6),
+        IconButton(
+          iconSize: 40,
+          onPressed: () {},
+          icon: Opacity(
+            child: Image.asset("assets/icons/Like-icon.png"),
+            opacity: .7,
+          ),
+        ),
+        SizedBox(height: 6),
+        IconButton(
+          iconSize: 40,
+          onPressed: () {},
+          icon: Opacity(
+            child: Image.asset("assets/icons/Dislike-icon.png"),
+            opacity: .7,
+          ),
+        ),
+        SizedBox(height: 6),
+        IconButton(
+          iconSize: 30,
+          onPressed: () {},
+          icon: Opacity(
+            child: Image.asset("assets/icons/Message-icon.png"),
+            opacity: .7,
+          ),
+        ),
+      ],
+    );
   }
 }
