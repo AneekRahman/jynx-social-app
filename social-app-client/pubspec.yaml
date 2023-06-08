@@ -41,7 +41,7 @@ dependencies:
   rxdart: ^0.27.5 # For location
   permission_handler: ^10.0.0
   flutter_webrtc: ^0.9.5 # TODO This is a very large package, do something to make it smaller
-  video_player: ^2.4.7 # For video banner mainly
+  cached_video_player: ^2.0.4
   firebase_messaging: ^13.0.1
   encrypt: ^5.0.1
   awesome_notifications: ^0.6.21

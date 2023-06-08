@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
 
+import 'MyVideoPlayer.dart';
+
 class VideosList extends StatefulWidget {
   const VideosList({super.key});
 
@@ -45,6 +47,7 @@ class _VideosListState extends State<VideosList> {
               child: Text("Page Two"),
             ),
           ),
+          MyVideoPlayer(),
           Container(
             height: double.infinity,
             width: double.infinity,

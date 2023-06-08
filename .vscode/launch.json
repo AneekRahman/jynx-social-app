@@ -1,0 +1,28 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "social-app-client",
+      "cwd": "social-app-client",
+      "request": "launch",
+      "type": "dart"
+    },
+    {
+      "name": "social-app-client (profile mode)",
+      "cwd": "social-app-client",
+      "request": "launch",
+      "type": "dart",
+      "flutterMode": "profile"
+    },
+    {
+      "name": "social-app-client (release mode)",
+      "cwd": "social-app-client",
+      "request": "launch",
+      "type": "dart",
+      "flutterMode": "release"
+    }
+  ]
+}
