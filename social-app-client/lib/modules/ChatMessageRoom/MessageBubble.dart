@@ -6,12 +6,14 @@ import '../constants.dart';
 
 class MessageBubble extends StatelessWidget {
   final MsgRow msgRow;
+  final bool wasSentInTheSameDay;
   final bool prevMsgSameUser;
   final bool nextMsgSameUser;
   final bool isUsersMsg;
   final ChatRoomsInfosMem otherUser;
   MessageBubble(
       {required this.msgRow,
+      required this.wasSentInTheSameDay,
       required this.prevMsgSameUser,
       required this.isUsersMsg,
       required this.nextMsgSameUser,
@@ -94,15 +96,6 @@ class MessageBubble extends StatelessWidget {
                 ),
               ),
             ),
-            // Container(
-            //   margin: EdgeInsets.only(bottom: 8, left: !isUsersMsg ? 6 : 60, right: isUsersMsg ? 6 : 60),
-            //   child: !nextMsgSameUser
-            //       ? Text(
-            //           sentTimeFormattedString + " ago",
-            //           style: TextStyle(fontFamily: HelveticaFont.Roman, fontSize: 11, color: Colors.black26),
-            //         )
-            //       : SizedBox(),
-            // ),
           ],
         ),
         Container(
@@ -111,10 +104,10 @@ class MessageBubble extends StatelessWidget {
             right: !isUsersMsg ? 0 : 30,
             left: isUsersMsg ? 0 : 30,
           ),
-          child: !nextMsgSameUser
+          child: !nextMsgSameUser && !wasSentInTheSameDay
               ? Text(
                   sentTimeFormattedString + " ago",
-                  style: TextStyle(fontFamily: HelveticaFont.Roman, fontSize: 11, color: Colors.black26),
+                  style: TextStyle(fontFamily: HelveticaFont.Roman, fontSize: 11, color: Colors.white54),
                 )
               : SizedBox(),
         ),

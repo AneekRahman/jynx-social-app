@@ -172,51 +172,53 @@ class _ChatMessageRoomState extends State<ChatMessageRoom> {
 
   @override
   Widget build(BuildContext context) {
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(statusBarColor: Colors.transparent, statusBarIconBrightness: Brightness.dark),
-      child: Theme(
-        data: ThemeData.light(),
-        child: Scaffold(
-          body: Column(
-            children: [
-              otherPrivateChatRoomUser != null
-                  ? ChatTopBar(
-                      chatRoomsInfos: widget.chatRoomsInfos,
-                      otherPrivateChatRoomUser: otherPrivateChatRoomUser!,
-                      otherUserBlockedInPrivateChat: otherUserBlockedInPrivateChat,
-                      rootContext: context,
-                    )
-                  : SizedBox(),
-              // The mesasges list
-              Expanded(
-                child: widget.chatRoomsInfos != null
-                    ? MessagesStreamBuilder(
-                        chatRoomUid: widget.chatRoomsInfos!.chatRoomUid,
-                        currentUser: currentUser,
-                        otherPrivateChatRoomUser: otherPrivateChatRoomUser!,
+    // return AnnotatedRegion<SystemUiOverlayStyle>(
+    //   value: const SystemUiOverlayStyle(statusBarColor: Colors.transparent, statusBarIconBrightness: Brightness.dark),
+    //   child: Theme(
+    //     data: ThemeData.light(),
+    //     child: ,
+    //   ),
+    // );
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Column(
+        children: [
+          otherPrivateChatRoomUser != null
+              ? ChatTopBar(
+                  chatRoomsInfos: widget.chatRoomsInfos,
+                  otherPrivateChatRoomUser: otherPrivateChatRoomUser!,
+                  otherUserBlockedInPrivateChat: otherUserBlockedInPrivateChat,
+                  rootContext: context,
+                )
+              : SizedBox(),
+          // The mesasges list
+          Expanded(
+            child: widget.chatRoomsInfos != null
+                ? MessagesStreamBuilder(
+                    chatRoomUid: widget.chatRoomsInfos!.chatRoomUid,
+                    currentUser: currentUser,
+                    otherPrivateChatRoomUser: otherPrivateChatRoomUser!,
+                  )
+                : noChatRoomFound
+                    ? Center(
+                        child: Text("You haven't sent a message yet!"),
                       )
-                    : noChatRoomFound
-                        ? Center(
-                            child: Text("You haven't sent a message yet!"),
-                          )
-                        : Center(
-                            child: Text("preparing..."),
-                          ),
-              ),
-              otherPrivateChatRoomUser != null
-                  ? ChatBottomBar(
-                      currentUser: currentUser,
-                      fromRequestList: widget.fromRequestList,
-                      chatRoomsInfos: widget.chatRoomsInfos,
-                      otherUser: otherPrivateChatRoomUser!,
-                      setNewChatRoomUid: (newChatRoomUid) {
-                        getAndSetChatRoomsInfos(newChatRoomUid);
-                      },
-                    )
-                  : SizedBox(),
-            ],
+                    : Center(
+                        child: Text("preparing..."),
+                      ),
           ),
-        ),
+          otherPrivateChatRoomUser != null
+              ? ChatBottomBar(
+                  currentUser: currentUser,
+                  fromRequestList: widget.fromRequestList,
+                  chatRoomsInfos: widget.chatRoomsInfos,
+                  otherUser: otherPrivateChatRoomUser!,
+                  setNewChatRoomUid: (newChatRoomUid) {
+                    getAndSetChatRoomsInfos(newChatRoomUid);
+                  },
+                )
+              : SizedBox(),
+        ],
       ),
     );
   }
@@ -258,19 +260,20 @@ class ChatTopBar extends StatelessWidget {
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
-            color: Colors.black.withOpacity(.02),
+            color: Colors.white.withOpacity(.14),
             width: 1.0,
           ),
         ),
       ),
-      padding: EdgeInsets.fromLTRB(10, 20 + MediaQuery.of(context).padding.top, 20, 10),
+      padding: EdgeInsets.fromLTRB(10, 10 + MediaQuery.of(context).padding.top, 20, 10),
       child: Row(
         children: <Widget>[
-          IconButton(
+          CupertinoButton(
             onPressed: () => Navigator.pop(context),
-            icon: Icon(
+            child: Icon(
               Icons.arrow_back_ios_new_outlined,
               size: 18,
+              color: Colors.yellow,
             ),
           ),
           _buildOtherUserNamesRow(context),
@@ -317,13 +320,11 @@ class ChatTopBar extends StatelessWidget {
       onSelected: ((value) {
         if (value == 1) _showOtherUsersProfileModal(context);
         if (value == 2) blockUnblockUser();
-        if (value == 3) Navigator.pop(context);
       }),
       itemBuilder: (ctx) => chatRoomsInfos != null
           ? [
-              _buildPopupMenuItem(context, 'View user profile', Icons.person_outline, 1),
-              _buildPopupMenuItem(context, otherUserBlockedInPrivateChat ? "Unblock user" : "Block user", Icons.person_off, 2),
-              _buildPopupMenuItem(context, 'Back to chat list', Icons.line_weight_sharp, 3),
+              _buildPopupMenuItem(context, 'Open Profile', CupertinoIcons.person, 1),
+              _buildPopupMenuItem(context, otherUserBlockedInPrivateChat ? "Unblock user" : "Block user", null, 2),
             ]
           : [],
     );
@@ -331,8 +332,8 @@ class ChatTopBar extends StatelessWidget {
 
   Container _buildOtherUsersProfilePic() {
     return Container(
-      height: 45,
-      width: 45,
+      height: 40,
+      width: 40,
       decoration: BoxDecoration(
         color: Colors.white10,
         borderRadius: BorderRadius.circular(10000),
@@ -342,15 +343,15 @@ class ChatTopBar extends StatelessWidget {
           ? ClipRRect(
               child: Image.network(
                 otherPrivateChatRoomUser.url,
-                height: 45,
-                width: 45,
+                height: 40,
+                width: 40,
                 fit: BoxFit.cover,
               ),
               borderRadius: BorderRadius.all(Radius.circular(100)),
             )
           : Container(
-              height: 45,
-              width: 45,
+              height: 40,
+              width: 40,
               decoration: BoxDecoration(
                 color: Colors.black.withOpacity(.07),
                 borderRadius: BorderRadius.circular(10000),
@@ -359,17 +360,19 @@ class ChatTopBar extends StatelessWidget {
     );
   }
 
-  PopupMenuItem _buildPopupMenuItem(BuildContext context, String title, IconData iconData, int value) {
+  PopupMenuItem _buildPopupMenuItem(BuildContext context, String title, IconData? iconData, int value) {
     return PopupMenuItem(
       value: value,
+      padding: EdgeInsets.all(20),
       child: Row(
         children: [
-          Icon(
-            iconData,
-            color: Colors.black,
-          ),
+          iconData == null ? SizedBox() : Icon(iconData),
           SizedBox(width: 10),
           Text(title),
+          Divider(
+            height: 1,
+            color: Colors.white12,
+          ),
         ],
       ),
     );
@@ -391,11 +394,9 @@ class ChatTopBar extends StatelessWidget {
 
   Expanded _buildOtherUserNamesRow(BuildContext context) {
     return Expanded(
-      child: TextButton(
-        style: ButtonStyle(
-          alignment: Alignment.centerLeft,
-          padding: MaterialStatePropertyAll(EdgeInsets.symmetric(horizontal: 10, vertical: 4)),
-        ),
+      child: CupertinoButton(
+        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        alignment: Alignment.centerLeft,
         onPressed: () {
           _showOtherUsersProfileModal(context);
         },
@@ -405,13 +406,13 @@ class ChatTopBar extends StatelessWidget {
             Text(
               otherPrivateChatRoomUser.name,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontFamily: HelveticaFont.Medium, fontSize: 14, color: Colors.black),
+              style: TextStyle(fontFamily: HelveticaFont.Medium, fontSize: 14, color: Colors.white),
             ),
             Text(
               "@" + otherPrivateChatRoomUser.uName,
               // "Last message " + convertToTimeAgo(new DateTime.fromMillisecondsSinceEpoch(int.parse(chatRow!.lastMsgSentTime!))) + " ago",
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontFamily: HelveticaFont.Roman, fontSize: 12, color: Colors.black38),
+              style: TextStyle(fontFamily: HelveticaFont.Roman, fontSize: 12, color: Colors.white70),
             ),
           ],
         ),
@@ -490,8 +491,17 @@ class _MessagesStreamBuilderState extends State<MessagesStreamBuilder> {
                       prevMsgSameUser = false;
                     }
 
+                    bool wasSentInTheSameDay = false;
+
+                    if (index == 0 ||
+                        msgRow.sentTime! < _msgRows.elementAt(index - 1).sentTime! + 86400000 ||
+                        msgRow.sentTime! > _msgRows.elementAt(index + 1).sentTime! - 86400000) {
+                      wasSentInTheSameDay = true;
+                    }
+
                     return MessageBubble(
                       msgRow: msgRow,
+                      wasSentInTheSameDay: wasSentInTheSameDay,
                       isUsersMsg: msgRow.userUid == widget.currentUser.uid,
                       prevMsgSameUser: prevMsgSameUser,
                       nextMsgSameUser: nextMsgSameUser,
@@ -644,18 +654,19 @@ class _ChatBottomBarState extends State<ChatBottomBar> {
           children: [
             SizedBox(width: 10),
             Container(
-              margin: EdgeInsets.only(bottom: 14),
-              child: IconButton(
+              margin: EdgeInsets.only(bottom: 20),
+              child: CupertinoButton(
+                padding: EdgeInsets.all(10),
                 onPressed: () {},
-                icon: Image.asset("assets/icons/Camera-icon.png", height: 30, width: 30),
+                child: Image.asset("assets/icons/Camera-icon.png", height: 30, width: 30),
               ),
             ),
             Container(
               width: MediaQuery.of(context).size.width - 60,
-              padding: EdgeInsets.symmetric(vertical: 14, horizontal: 10),
+              padding: EdgeInsets.symmetric(vertical: 18, horizontal: 10),
               child: Material(
                 borderRadius: BorderRadius.circular(26),
-                color: Color(0xFFF1F1F1F1),
+                color: Colors.white10,
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
@@ -683,7 +694,8 @@ class _ChatBottomBarState extends State<ChatBottomBar> {
                         ),
                       ),
                     ),
-                    IconButton(
+                    CupertinoButton(
+                      padding: EdgeInsets.all(10),
                       onPressed: () async {
                         // Save the input value
                         _textInputValue = chatMsgTextController.text;
@@ -693,7 +705,7 @@ class _ChatBottomBarState extends State<ChatBottomBar> {
                         if (_textInputValue.isEmpty || _alreadySending) return;
                         onSendHandler();
                       },
-                      icon: Image.asset("assets/icons/Send-icon.png", height: 30, width: 30),
+                      child: Image.asset("assets/icons/Send-icon.png", height: 30, width: 30),
                     ),
                     SizedBox(width: 10),
                   ],
