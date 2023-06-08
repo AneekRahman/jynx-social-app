@@ -15,9 +15,29 @@ typedef void OnPeerConnectionStateCallback(RTCPeerConnectionState state);
 
 class WebRTCSignaling {
   Map<String, dynamic> configuration = {
+    // 'iceServers': [
+    //   {
+    //     'username': "AGomKP9gM9FpCl1s0X84incsQG7ow1vgpTmMOvYkt8H095EH-jtIdFYZq8jf9jtyAAAAAGSBFIlhdXJhbmd6ZWI=",
+    //     'credential': "276d8f50-058c-11ee-8f8e-0242ac140004",
+    //     'urls': [
+    //       "turn:bn-turn1.xirsys.com:80?transport=udp",
+    //       "turn:bn-turn1.xirsys.com:3478?transport=udp",
+    //       "turn:bn-turn1.xirsys.com:80?transport=tcp",
+    //       "turn:bn-turn1.xirsys.com:3478?transport=tcp",
+    //       "turns:bn-turn1.xirsys.com:443?transport=tcp",
+    //       "turns:bn-turn1.xirsys.com:5349?transport=tcp"
+    //     ]
+    //   },
+    // ]
     'iceServers': [
       {
-        'urls': ['stun:stun1.l.google.com:19302', 'stun:stun2.l.google.com:19302']
+        'urls': [
+          "stun:stun.services.mozilla.com",
+          'stun:stun1.l.google.com:19302',
+          'stun:stun2.l.google.com:19302',
+          "stun:stun3.l.google.com:19302",
+          "stun:stun4.l.google.com:19302"
+        ]
       }
     ]
   };
@@ -264,8 +284,14 @@ class WebRTCSignaling {
       print('Signaling state change: $state');
     };
 
-    peerConnection?.onIceGatheringState = (RTCIceGatheringState state) {
+    peerConnection?.onIceConnectionState = (RTCIceConnectionState state) {
       print('ICE connection state change: $state');
+
+      // if (state == RTCIceConnectionState.RTCIceConnectionStateFailed) {
+      //   print('ICE connection state RESTARTING!');
+      //   // Restart IceConnection
+      //   peerConnection?.restartIce();
+      // }
     };
 
     peerConnection?.onAddStream = (MediaStream stream) {
