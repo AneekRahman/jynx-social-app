@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../modules/VideosList.dart';
+
 class ExploreVideos extends StatefulWidget {
   const ExploreVideos({super.key});
 
@@ -10,12 +12,10 @@ class ExploreVideos extends StatefulWidget {
 class _ExploreVideosState extends State<ExploreVideos> {
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: Column(
-        children: [
-          Text("This is ExploreVideos"),
-        ],
-      ),
+    return Column(
+      children: [
+        VideosList(),
+      ],
     );
   }
 }
