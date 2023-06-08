@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../modules/VideosList.dart';
+import '../../modules/Home/VideosFragment/VideosList.dart';
 
 class ExploreVideos extends StatefulWidget {
   const ExploreVideos({super.key});
