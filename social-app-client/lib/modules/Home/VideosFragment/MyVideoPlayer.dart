@@ -38,6 +38,7 @@ class _MyVideoPlayerState extends State<MyVideoPlayer> {
   @override
   Widget build(BuildContext context) {
     return Stack(
+      clipBehavior: Clip.none,
       children: [
         Expanded(
           child: GestureDetector(
@@ -78,6 +79,37 @@ class _MyVideoPlayerState extends State<MyVideoPlayer> {
 class PostButtons extends StatelessWidget {
   const PostButtons({super.key});
 
+  Container _buildOtherUsersProfilePic() {
+    return Container(
+      height: 45,
+      width: 45,
+      decoration: BoxDecoration(
+        color: Colors.white10,
+        borderRadius: BorderRadius.circular(10000),
+        border: Border.all(color: Colors.yellow, width: 2),
+      ),
+      child:
+          // otherPrivateChatRoomUser.url.isNotEmpty
+          //     ? ClipRRect(
+          //         child: Image.network(
+          //           otherPrivateChatRoomUser.url,
+          //           height: 45,
+          //           width: 45,
+          //           fit: BoxFit.cover,
+          //         ),
+          //         borderRadius: BorderRadius.all(Radius.circular(100)),
+          //       ):
+          Container(
+        height: 45,
+        width: 45,
+        decoration: BoxDecoration(
+          color: Colors.black.withOpacity(.5),
+          borderRadius: BorderRadius.circular(10000),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -87,7 +119,7 @@ class PostButtons extends StatelessWidget {
           onPressed: () {
             print("HELLO");
           },
-          icon: Image.asset("assets/profile-user.png"),
+          icon: _buildOtherUsersProfilePic(),
         ),
         SizedBox(height: 6),
         IconButton(

@@ -283,68 +283,79 @@ class ChatTopBar extends StatelessWidget {
   Row _buildUserPicActionsRow(BuildContext context, ChatRoomsInfos? chatRoomsInfos) {
     return Row(
       children: [
-        chatRoomsInfos != null
-            ? IconButton(
-                onPressed: () {
-                  if (otherPrivateChatRoomUser.acc == 1) {
-                    Navigator.push(
-                        context,
-                        CupertinoPageRoute(
-                            builder: (context) => VideoCallPage(
-                                  chatRoomsInfos: chatRoomsInfos,
-                                  shouldCreateOffer: true,
-                                )));
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(otherPrivateChatRoomUser.name + " hasn't accepted your request. Please try again later.")));
-                  }
-                },
-                icon: Image.asset("assets/icons/Call-icon.png", height: 24, width: 24),
-              )
-            : SizedBox(),
-        PopupMenuButton(
-          icon: Container(
-            height: 45,
-            width: 45,
-            decoration: BoxDecoration(
-              color: Colors.white10,
-              borderRadius: BorderRadius.circular(10000),
-              border: Border.all(color: Colors.yellow, width: 2),
-            ),
-            child: otherPrivateChatRoomUser.url.isNotEmpty
-                ? ClipRRect(
-                    child: Image.network(
-                      otherPrivateChatRoomUser.url,
-                      height: 45,
-                      width: 45,
-                      fit: BoxFit.cover,
-                    ),
-                    borderRadius: BorderRadius.all(Radius.circular(100)),
-                  )
-                : Container(
-                    height: 45,
-                    width: 45,
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(.07),
-                      borderRadius: BorderRadius.circular(10000),
-                    ),
-                  ),
-          ),
-          padding: EdgeInsets.all(0),
-          onSelected: ((value) {
-            if (value == 1) _showOtherUsersProfileModal(context);
-            if (value == 2) blockUnblockUser();
-            if (value == 3) Navigator.pop(context);
-          }),
-          itemBuilder: (ctx) => chatRoomsInfos != null
-              ? [
-                  _buildPopupMenuItem(context, 'View user profile', Icons.person_outline, 1),
-                  _buildPopupMenuItem(context, otherUserBlockedInPrivateChat ? "Unblock user" : "Block user", Icons.person_off, 2),
-                  _buildPopupMenuItem(context, 'Back to chat list', Icons.line_weight_sharp, 3),
-                ]
-              : [],
-        ),
+        // TODO Fix Video calling on custom TURN servers using COTURN (service)
+        // chatRoomsInfos != null ? _buildCallButton(context, chatRoomsInfos) : SizedBox(),
+        _buildPicDropMenu(context, chatRoomsInfos),
       ],
+    );
+  }
+
+  IconButton _buildCallButton(BuildContext context, ChatRoomsInfos chatRoomsInfos) {
+    return IconButton(
+      onPressed: () {
+        if (otherPrivateChatRoomUser.acc == 1) {
+          Navigator.push(
+              context,
+              CupertinoPageRoute(
+                  builder: (context) => VideoCallPage(
+                        chatRoomsInfos: chatRoomsInfos,
+                        shouldCreateOffer: true,
+                      )));
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(otherPrivateChatRoomUser.name + " hasn't accepted your request. Please try again later.")));
+        }
+      },
+      icon: Image.asset("assets/icons/Call-icon.png", height: 24, width: 24),
+    );
+  }
+
+  PopupMenuButton<Object?> _buildPicDropMenu(BuildContext context, ChatRoomsInfos? chatRoomsInfos) {
+    return PopupMenuButton(
+      icon: _buildOtherUsersProfilePic(),
+      padding: EdgeInsets.all(0),
+      onSelected: ((value) {
+        if (value == 1) _showOtherUsersProfileModal(context);
+        if (value == 2) blockUnblockUser();
+        if (value == 3) Navigator.pop(context);
+      }),
+      itemBuilder: (ctx) => chatRoomsInfos != null
+          ? [
+              _buildPopupMenuItem(context, 'View user profile', Icons.person_outline, 1),
+              _buildPopupMenuItem(context, otherUserBlockedInPrivateChat ? "Unblock user" : "Block user", Icons.person_off, 2),
+              _buildPopupMenuItem(context, 'Back to chat list', Icons.line_weight_sharp, 3),
+            ]
+          : [],
+    );
+  }
+
+  Container _buildOtherUsersProfilePic() {
+    return Container(
+      height: 45,
+      width: 45,
+      decoration: BoxDecoration(
+        color: Colors.white10,
+        borderRadius: BorderRadius.circular(10000),
+        border: Border.all(color: Colors.yellow, width: 2),
+      ),
+      child: otherPrivateChatRoomUser.url.isNotEmpty
+          ? ClipRRect(
+              child: Image.network(
+                otherPrivateChatRoomUser.url,
+                height: 45,
+                width: 45,
+                fit: BoxFit.cover,
+              ),
+              borderRadius: BorderRadius.all(Radius.circular(100)),
+            )
+          : Container(
+              height: 45,
+              width: 45,
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(.07),
+                borderRadius: BorderRadius.circular(10000),
+              ),
+            ),
     );
   }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../modules/constants.dart';
 import 'ExploreVideos.dart';
 
 class VideosFragment extends StatefulWidget {
@@ -33,12 +34,12 @@ class VideosPagesAppBar extends StatelessWidget {
         children: [
           GestureDetector(
             onTap: () {},
-            child: Text("Explore"),
+            child: Text("Explore", style: TextStyle(fontFamily: HelveticaFont.Bold, fontSize: 16)),
           ),
           SizedBox(width: 20),
           GestureDetector(
             onTap: () {},
-            child: Text("For you"),
+            child: Text("For you", style: TextStyle(fontFamily: HelveticaFont.Roman, fontSize: 16)),
           ),
         ],
       ),
