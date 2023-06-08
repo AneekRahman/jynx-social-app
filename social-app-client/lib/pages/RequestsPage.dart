@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:social_app/modules/constants.dart';
@@ -53,15 +54,13 @@ class HomeAppBar extends StatelessWidget {
       width: MediaQuery.of(context).size.width,
       child: Row(
         children: [
-          GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Icon(
-                Icons.arrow_back_ios,
-                size: 16,
-                color: Colors.white,
-              ),
+          CupertinoButton(
+            padding: EdgeInsets.all(0),
+            onPressed: () => Navigator.pop(context),
+            child: Icon(
+              CupertinoIcons.left_chevron,
+              color: Colors.yellow,
+              size: 20,
             ),
           ),
           Text(

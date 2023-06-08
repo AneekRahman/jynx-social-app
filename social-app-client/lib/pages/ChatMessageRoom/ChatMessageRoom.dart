@@ -271,7 +271,7 @@ class ChatTopBar extends StatelessWidget {
           CupertinoButton(
             onPressed: () => Navigator.pop(context),
             child: Icon(
-              Icons.arrow_back_ios_new_outlined,
+              CupertinoIcons.left_chevron,
               size: 18,
               color: Colors.yellow,
             ),

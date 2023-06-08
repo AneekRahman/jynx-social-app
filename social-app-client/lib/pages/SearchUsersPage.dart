@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
@@ -149,24 +150,22 @@ class SearchAppBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.fromLTRB(18, 20 + MediaQuery.of(context).padding.top, 10, 20),
+      padding: EdgeInsets.fromLTRB(10, 20 + MediaQuery.of(context).padding.top, 10, 20),
       width: MediaQuery.of(context).size.width,
       child: Row(
         children: [
           SizedBox(width: 10),
-          GestureDetector(
-            onTap: () {
+          CupertinoButton(
+            padding: EdgeInsets.all(0),
+            onPressed: () {
               if (Navigator.canPop(context)) {
                 Navigator.pop(context);
               }
             },
-            child: Padding(
-              child: Icon(
-                Icons.arrow_back_ios,
-                color: Colors.white,
-                size: 20,
-              ),
-              padding: EdgeInsets.all(4),
+            child: Icon(
+              CupertinoIcons.left_chevron,
+              color: Colors.yellow,
+              size: 20,
             ),
           ),
           SearchBox(
@@ -191,7 +190,7 @@ class SearchBox extends StatelessWidget {
   Widget build(BuildContext context) {
     return Expanded(
       child: Container(
-        margin: EdgeInsets.only(left: 9, right: 15),
+        margin: EdgeInsets.only(left: 0, right: 15),
         padding: EdgeInsets.symmetric(horizontal: 8),
         height: 40,
         decoration: BoxDecoration(color: Colors.white12, borderRadius: BorderRadius.circular(100)),
@@ -203,8 +202,8 @@ class SearchBox extends StatelessWidget {
           style: TextStyle(fontSize: 14, color: Colors.white, height: 1.3),
           decoration: InputDecoration(
             prefixIcon: Icon(
-              Icons.search,
-              color: Colors.white,
+              CupertinoIcons.search,
+              color: Colors.white54,
             ),
             border: InputBorder.none,
             contentPadding: EdgeInsets.symmetric(vertical: 6, horizontal: 0),

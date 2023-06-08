@@ -38,8 +38,9 @@ class ChatListAppBar extends StatelessWidget {
       width: MediaQuery.of(context).size.width,
       child: Row(
         children: [
-          GestureDetector(
-            onTap: () {
+          CupertinoButton(
+            padding: EdgeInsets.all(0),
+            onPressed: () {
               showMaterialModalBottomSheet(
                 backgroundColor: Colors.transparent,
                 context: context,
@@ -56,8 +57,9 @@ class ChatListAppBar extends StatelessWidget {
             ),
           ),
           SearchBox(),
-          GestureDetector(
-            onTap: () {
+          CupertinoButton(
+            padding: EdgeInsets.all(0),
+            onPressed: () {
               Navigator.push(
                 context,
                 CupertinoPageRoute(builder: (context) => RequestsPage()),
@@ -99,7 +101,10 @@ class SearchBox extends StatelessWidget {
           decoration: BoxDecoration(color: Colors.white12, borderRadius: BorderRadius.circular(100)),
           child: Row(
             children: [
-              Icon(Icons.search, color: Colors.white38),
+              Icon(
+                CupertinoIcons.search,
+                color: Colors.white38,
+              ),
               SizedBox(
                 width: 6,
               ),
