@@ -3,8 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:social_app/pages/ChatMessageRoom.dart';
-import 'package:social_app/pages/VideoCallPage.dart';
+import 'package:social_app/pages/ChatMessageRoom/ChatMessageRoom.dart';
+import 'package:social_app/pages/ChatMessageRoom/VideoCallPage.dart';
 import 'app.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 

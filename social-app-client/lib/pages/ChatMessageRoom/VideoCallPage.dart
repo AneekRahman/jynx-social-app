@@ -11,10 +11,10 @@ import 'package:provider/provider.dart';
 import 'package:social_app/models/ChatRoomsInfos.dart';
 import 'package:social_app/modules/WebRTCSignaling.dart';
 import 'package:wakelock/wakelock.dart';
-import '../models/FCMNotification.dart';
-import '../modules/PermissionRequiredMsg.dart';
-import '../modules/constants.dart';
-import '../services/rtd_service.dart';
+import '../../models/FCMNotification.dart';
+import '../../modules/PermissionRequiredMsg.dart';
+import '../../modules/constants.dart';
+import '../../services/rtd_service.dart';
 
 class VideoCallPage extends StatefulWidget {
   /// [chatRoomsInfos] is available when the currentUser creates a call

@@ -8,7 +8,7 @@ import 'package:provider/provider.dart';
 import 'package:social_app/models/ChatRoomsInfos.dart';
 import 'package:social_app/models/UsersChatRooms.dart';
 import 'package:social_app/modules/UsersChatRoomsRow.dart';
-import 'package:social_app/pages/ChatMessageRoom.dart';
+import 'package:social_app/pages/ChatMessageRoom/ChatMessageRoom.dart';
 
 import '../services/rtd_service.dart';
 import 'LoadingBar.dart';

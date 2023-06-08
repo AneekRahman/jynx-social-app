@@ -12,11 +12,11 @@ import 'package:social_app/models/UserFirestore.dart';
 import 'package:social_app/services/firestore_service.dart';
 import 'package:social_app/services/rtd_service.dart';
 
-import '../models/MsgRow.dart';
-import '../modules/LoadingBar.dart';
-import '../modules/MessageBubble.dart';
-import '../modules/constants.dart';
-import 'OthersProfilePage.dart';
+import '../../models/MsgRow.dart';
+import '../../modules/LoadingBar.dart';
+import '../../modules/MessageBubble.dart';
+import '../../modules/constants.dart';
+import '../OthersProfilePage.dart';
 import 'VideoCallPage.dart';
 
 class ChatMessageRoom extends StatefulWidget {
