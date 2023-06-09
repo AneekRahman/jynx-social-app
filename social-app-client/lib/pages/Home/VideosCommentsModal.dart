@@ -50,47 +50,26 @@ class _VideosCommentsModalState extends State<VideosCommentsModal> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      body: Column(
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            backgroundColor: Colors.black,
+            flexibleSpace: VideosCommentsModalAppBar(),
+            automaticallyImplyLeading: false,
+            toolbarHeight: 20,
+          ),
+          _buildPostInfo(context),
+        ],
+      ),
+    );
+  }
+
+  SliverToBoxAdapter _buildPostInfo(BuildContext context) {
+    return SliverToBoxAdapter(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          VideosCommentsModalAppBar(),
-          CupertinoButton(
-            padding: EdgeInsets.all(14),
-            onPressed: () {
-              // Show others profile
-              showMaterialModalBottomSheet(
-                backgroundColor: Colors.transparent,
-                context: context,
-                builder: (context) => Padding(
-                  padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
-                  child: MyProfilePage(),
-                  // child: OthersProfilePage(
-                  //   otherUsersProfileObject: UserFirestore.fromChatRoomsInfosMem(otherPrivateChatRoomUser),
-                  //   showMessageButton: false,
-                  // ),
-                ),
-              );
-            },
-            child: Row(
-              children: [
-                _buildOtherUsersProfilePic(),
-                SizedBox(width: 10),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Aneek Rahman",
-                      style: TextStyle(fontFamily: HelveticaFont.Bold, color: Colors.white, fontSize: 14),
-                    ),
-                    Text(
-                      "@mr_rahman",
-                      style: TextStyle(fontFamily: HelveticaFont.Roman, color: Colors.white, fontSize: 14),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
+          _buildUsersInfoBlock(context),
           Padding(
             padding: const EdgeInsets.fromLTRB(14, 0, 14, 20),
             child: Column(
@@ -120,6 +99,47 @@ class _VideosCommentsModalState extends State<VideosCommentsModal> {
           ),
           MyCommentBox(
             setInput: (input) {},
+          ),
+          SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
+
+  CupertinoButton _buildUsersInfoBlock(BuildContext context) {
+    return CupertinoButton(
+      padding: EdgeInsets.all(14),
+      onPressed: () {
+        // Show others profile
+        showMaterialModalBottomSheet(
+          backgroundColor: Colors.transparent,
+          context: context,
+          builder: (context) => Padding(
+            padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
+            child: MyProfilePage(),
+            // child: OthersProfilePage(
+            //   otherUsersProfileObject: UserFirestore.fromChatRoomsInfosMem(otherPrivateChatRoomUser),
+            //   showMessageButton: false,
+            // ),
+          ),
+        );
+      },
+      child: Row(
+        children: [
+          _buildOtherUsersProfilePic(),
+          SizedBox(width: 10),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Aneek Rahman",
+                style: TextStyle(fontFamily: HelveticaFont.Bold, color: Colors.white, fontSize: 14),
+              ),
+              Text(
+                "@mr_rahman",
+                style: TextStyle(fontFamily: HelveticaFont.Roman, color: Colors.white, fontSize: 14),
+              ),
+            ],
           ),
         ],
       ),
@@ -198,6 +218,20 @@ class MyCommentBox extends StatelessWidget {
         ),
         SizedBox(width: 14),
       ],
+    );
+  }
+}
+
+class CommentBubble extends StatelessWidget {
+  const CommentBubble({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(color: Colors.white12, borderRadius: BorderRadius.circular(8)),
+      padding: EdgeInsets.all(10),
+      margin: EdgeInsets.fromLTRB(10, 0, 10, 10),
+      child: Text("Hey, this is an amazing video!", style: TextStyle(fontFamily: HelveticaFont.Roman)),
     );
   }
 }
