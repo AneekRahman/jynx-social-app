@@ -172,13 +172,6 @@ class _ChatMessageRoomState extends State<ChatMessageRoom> {
 
   @override
   Widget build(BuildContext context) {
-    // return AnnotatedRegion<SystemUiOverlayStyle>(
-    //   value: const SystemUiOverlayStyle(statusBarColor: Colors.transparent, statusBarIconBrightness: Brightness.dark),
-    //   child: Theme(
-    //     data: ThemeData.light(),
-    //     child: ,
-    //   ),
-    // );
     return Scaffold(
       backgroundColor: Colors.black,
       body: Column(

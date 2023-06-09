@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 
+import '../../../pages/Home/VideosCommentsModal.dart';
 import '../../../pages/ProfilePage/MyProfilePage.dart';
 import '../../constants.dart';
 import 'VideosList.dart';
@@ -107,7 +108,7 @@ class PostInfoBox extends StatelessWidget {
                     context: context,
                     builder: (context) => Padding(
                       padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
-                      child: Container(),
+                      child: VideosCommentsModal(),
                     ),
                   );
                 },
@@ -213,7 +214,7 @@ class PostButtons extends StatelessWidget {
             opacity: .8,
           ),
         ),
-        SizedBox(height: 6),
+        SizedBox(height: 8),
         CupertinoButton(
           padding: EdgeInsets.all(8),
           onPressed: () {},
@@ -222,7 +223,7 @@ class PostButtons extends StatelessWidget {
             opacity: .8,
           ),
         ),
-        SizedBox(height: 6),
+        SizedBox(height: 10),
         CupertinoButton(
           padding: EdgeInsets.all(8),
           onPressed: () {},
@@ -240,7 +241,7 @@ class PostButtons extends StatelessWidget {
             opacity: .8,
           ),
         ),
-        SizedBox(height: 10),
+        SizedBox(height: 14),
         CupertinoButton(
           padding: EdgeInsets.all(8),
           onPressed: () {

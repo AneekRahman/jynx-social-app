@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
@@ -94,25 +95,28 @@ class BottomNavBar extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    IconButton(
+                    CupertinoButton(
+                      padding: EdgeInsets.all(0),
                       onPressed: () {
                         setPageNum(0);
                       },
-                      icon: Opacity(
+                      child: Opacity(
                         opacity: pageNum == 0 ? 1 : .5,
-                        child: Image.asset("assets/icons/People-icon.png"),
+                        child: Image.asset("assets/icons/People-icon.png", height: 30),
                       ),
                     ),
-                    IconButton(
+                    CupertinoButton(
+                      padding: EdgeInsets.all(0),
                       onPressed: () {
                         setPageNum(1);
                       },
-                      icon: Opacity(
+                      child: Opacity(
                         opacity: pageNum == 1 ? 1 : .5,
-                        child: Image.asset("assets/icons/Send-icon-white.png"),
+                        child: Image.asset("assets/icons/Send-icon-white.png", height: 30),
                       ),
                     ),
-                    IconButton(
+                    CupertinoButton(
+                      padding: EdgeInsets.all(0),
                       onPressed: () {
                         showMaterialModalBottomSheet(
                           backgroundColor: Colors.transparent,
@@ -123,9 +127,9 @@ class BottomNavBar extends StatelessWidget {
                           ),
                         );
                       },
-                      icon: Opacity(
+                      child: Opacity(
                         opacity: .5,
-                        child: Image.asset("assets/icons/User-icon.png"),
+                        child: Image.asset("assets/icons/User-icon.png", height: 30),
                       ),
                     ),
                   ],
