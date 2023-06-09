@@ -15,37 +15,6 @@ class VideosCommentsModal extends StatefulWidget {
 }
 
 class _VideosCommentsModalState extends State<VideosCommentsModal> {
-  Container _buildOtherUsersProfilePic() {
-    return Container(
-      height: 40,
-      width: 40,
-      decoration: BoxDecoration(
-        color: Colors.white10,
-        borderRadius: BorderRadius.circular(10000),
-        border: Border.all(color: Colors.yellow, width: 2),
-      ),
-      child:
-          // otherPrivateChatRoomUser.url.isNotEmpty
-          //     ? ClipRRect(
-          //         child: Image.network(
-          //           otherPrivateChatRoomUser.url,
-          //           height: 45,
-          //           width: 45,
-          //           fit: BoxFit.cover,
-          //         ),
-          //         borderRadius: BorderRadius.all(Radius.circular(100)),
-          //       ):
-          Container(
-        height: 40,
-        width: 40,
-        decoration: BoxDecoration(
-          color: Colors.black.withOpacity(.4),
-          borderRadius: BorderRadius.circular(10000),
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -53,12 +22,20 @@ class _VideosCommentsModalState extends State<VideosCommentsModal> {
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
+            pinned: true,
             backgroundColor: Colors.black,
             flexibleSpace: VideosCommentsModalAppBar(),
             automaticallyImplyLeading: false,
-            toolbarHeight: 20,
+            toolbarHeight: 30,
           ),
           _buildPostInfo(context),
+          SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (BuildContext context, int index) {
+                return CommentBubble();
+              },
+            ),
+          ),
         ],
       ),
     );
@@ -108,7 +85,7 @@ class _VideosCommentsModalState extends State<VideosCommentsModal> {
 
   CupertinoButton _buildUsersInfoBlock(BuildContext context) {
     return CupertinoButton(
-      padding: EdgeInsets.all(14),
+      padding: EdgeInsets.fromLTRB(14, 0, 14, 14),
       onPressed: () {
         // Show others profile
         showMaterialModalBottomSheet(
@@ -142,6 +119,37 @@ class _VideosCommentsModalState extends State<VideosCommentsModal> {
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Container _buildOtherUsersProfilePic() {
+    return Container(
+      height: 40,
+      width: 40,
+      decoration: BoxDecoration(
+        color: Colors.white10,
+        borderRadius: BorderRadius.circular(10000),
+        border: Border.all(color: Colors.yellow, width: 2),
+      ),
+      child:
+          // otherPrivateChatRoomUser.url.isNotEmpty
+          //     ? ClipRRect(
+          //         child: Image.network(
+          //           otherPrivateChatRoomUser.url,
+          //           height: 45,
+          //           width: 45,
+          //           fit: BoxFit.cover,
+          //         ),
+          //         borderRadius: BorderRadius.all(Radius.circular(100)),
+          //       ):
+          Container(
+        height: 40,
+        width: 40,
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(.1),
+          borderRadius: BorderRadius.circular(10000),
+        ),
       ),
     );
   }
@@ -227,11 +235,68 @@ class CommentBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(color: Colors.white12, borderRadius: BorderRadius.circular(8)),
-      padding: EdgeInsets.all(10),
-      margin: EdgeInsets.fromLTRB(10, 0, 10, 10),
-      child: Text("Hey, this is an amazing video!", style: TextStyle(fontFamily: HelveticaFont.Roman)),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 0),
+      child: Row(
+        children: [
+          Expanded(
+            child: Container(
+              decoration: BoxDecoration(color: Colors.white12, borderRadius: BorderRadius.circular(8)),
+              padding: EdgeInsets.all(10),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    height: 30,
+                    width: 30,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(.1),
+                      borderRadius: BorderRadius.circular(10000),
+                    ),
+                  ),
+                  SizedBox(width: 10),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text("@anonymous", style: TextStyle(fontFamily: HelveticaFont.Roman)),
+                          SizedBox(width: 10),
+                          Text("3 days ago", style: TextStyle(fontFamily: HelveticaFont.Roman, color: Colors.white54)),
+                        ],
+                      ),
+                      SizedBox(height: 4),
+                      Text("Hey, this is an amazing video!", style: TextStyle(fontFamily: HelveticaFont.Roman)),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Column(
+            children: [
+              CupertinoButton(
+                padding: EdgeInsets.all(0),
+                minSize: 30,
+                onPressed: () {},
+                child: Opacity(
+                  child: Image.asset("assets/icons/Like-icon.png", height: 20),
+                  opacity: .8,
+                ),
+              ),
+              CupertinoButton(
+                padding: EdgeInsets.all(0),
+                minSize: 30,
+                onPressed: () {},
+                child: Opacity(
+                  child: Image.asset("assets/icons/Dislike-icon.png", height: 20),
+                  opacity: .8,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
