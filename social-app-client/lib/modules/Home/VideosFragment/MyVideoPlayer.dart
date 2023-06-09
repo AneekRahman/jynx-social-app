@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
@@ -98,7 +99,8 @@ class PostInfoBox extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              TextButton(
+              CupertinoButton(
+                padding: EdgeInsets.all(6),
                 onPressed: () {
                   showMaterialModalBottomSheet(
                     backgroundColor: Colors.transparent,
@@ -114,20 +116,21 @@ class PostInfoBox extends StatelessWidget {
                   children: [
                     Text(
                       "2.4k views",
-                      style: TextStyle(fontFamily: HelveticaFont.Bold, color: Colors.white),
+                      style: TextStyle(fontFamily: HelveticaFont.Bold, color: Colors.white, fontSize: 14),
                     ),
                     SizedBox(height: 4),
                     Text(
-                      "As a beauty editor, I’ve jumped on many skincare trends. Some have been more helpful than others, I’ll admit. But over the years",
-                      style: TextStyle(fontFamily: HelveticaFont.Roman, color: Colors.white),
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                        "As a beauty editor, I’ve jumped on many skincare trends. Some have been more helpful than others, I’ll admit. But over the years",
+                        style: TextStyle(fontFamily: HelveticaFont.Roman, color: Colors.white, fontSize: 14),
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis),
                   ],
                 ),
               ),
-              TextButton(
+              CupertinoButton(
+                padding: EdgeInsets.all(6),
                 onPressed: () {
+                  // Show others profile
                   showMaterialModalBottomSheet(
                     backgroundColor: Colors.transparent,
                     context: context,
@@ -146,16 +149,16 @@ class PostInfoBox extends StatelessWidget {
                   children: [
                     Text(
                       "Aneek Rahman",
-                      style: TextStyle(fontFamily: HelveticaFont.Bold, color: Colors.white),
+                      style: TextStyle(fontFamily: HelveticaFont.Bold, color: Colors.white, fontSize: 14),
                     ),
                     Text(
                       "@mr_rahman",
-                      style: TextStyle(fontFamily: HelveticaFont.Roman, color: Colors.white),
+                      style: TextStyle(fontFamily: HelveticaFont.Roman, color: Colors.white, fontSize: 14),
                     ),
                   ],
                 ),
               ),
-              SizedBox(height: 4),
+              SizedBox(height: 5),
             ],
           ),
         ),
@@ -169,8 +172,8 @@ class PostButtons extends StatelessWidget {
 
   Container _buildOtherUsersProfilePic() {
     return Container(
-      height: 45,
-      width: 45,
+      height: 40,
+      width: 40,
       decoration: BoxDecoration(
         color: Colors.white10,
         borderRadius: BorderRadius.circular(10000),
@@ -188,8 +191,8 @@ class PostButtons extends StatelessWidget {
           //         borderRadius: BorderRadius.all(Radius.circular(100)),
           //       ):
           Container(
-        height: 45,
-        width: 45,
+        height: 40,
+        width: 40,
         decoration: BoxDecoration(
           color: Colors.black.withOpacity(.4),
           borderRadius: BorderRadius.circular(10000),
@@ -202,39 +205,60 @@ class PostButtons extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        IconButton(
-          iconSize: 40,
+        CupertinoButton(
+          padding: EdgeInsets.all(8),
           onPressed: () {},
-          icon: Opacity(
-            child: Image.asset("assets/icons/Like-icon.png"),
+          child: Opacity(
+            child: Image.asset("assets/icons/More-icon.png", height: 40),
             opacity: .8,
           ),
         ),
         SizedBox(height: 6),
-        IconButton(
-          iconSize: 40,
+        CupertinoButton(
+          padding: EdgeInsets.all(8),
           onPressed: () {},
-          icon: Opacity(
-            child: Image.asset("assets/icons/Dislike-icon.png"),
+          child: Opacity(
+            child: Image.asset("assets/icons/Like-icon.png", height: 40),
             opacity: .8,
           ),
         ),
         SizedBox(height: 6),
-        IconButton(
-          iconSize: 30,
+        CupertinoButton(
+          padding: EdgeInsets.all(8),
           onPressed: () {},
-          icon: Opacity(
-            child: Image.asset("assets/icons/Message-icon.png"),
+          child: Opacity(
+            child: Image.asset("assets/icons/Dislike-icon.png", height: 40),
+            opacity: .8,
+          ),
+        ),
+        SizedBox(height: 6),
+        CupertinoButton(
+          padding: EdgeInsets.all(8),
+          onPressed: () {},
+          child: Opacity(
+            child: Image.asset("assets/icons/Message-icon.png", height: 34),
             opacity: .8,
           ),
         ),
         SizedBox(height: 10),
-        IconButton(
-          iconSize: 40,
+        CupertinoButton(
+          padding: EdgeInsets.all(8),
           onPressed: () {
-            print("HELLO");
+            // Show others profile
+            showMaterialModalBottomSheet(
+              backgroundColor: Colors.transparent,
+              context: context,
+              builder: (context) => Padding(
+                padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
+                child: MyProfilePage(),
+                // child: OthersProfilePage(
+                //   otherUsersProfileObject: UserFirestore.fromChatRoomsInfosMem(otherPrivateChatRoomUser),
+                //   showMessageButton: false,
+                // ),
+              ),
+            );
           },
-          icon: _buildOtherUsersProfilePic(),
+          child: _buildOtherUsersProfilePic(),
         ),
       ],
     );
