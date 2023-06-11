@@ -68,7 +68,7 @@ class _VideosCommentsModalState extends State<VideosCommentsModal> {
           Container(width: double.infinity, height: 1, color: Colors.white.withOpacity(.2)),
           SizedBox(height: 10),
           Padding(
-            padding: const EdgeInsets.fromLTRB(14, 0, 14, 20),
+            padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
             child: Text(
               "1k comments",
               style: TextStyle(fontFamily: HelveticaFont.Bold, color: Colors.white, fontSize: 12),
@@ -77,7 +77,6 @@ class _VideosCommentsModalState extends State<VideosCommentsModal> {
           MyCommentBox(
             setInput: (input) {},
           ),
-          SizedBox(height: 20),
         ],
       ),
     );
@@ -273,6 +272,7 @@ class CommentBubble extends StatelessWidget {
               ),
             ),
           ),
+          SizedBox(width: 10),
           Column(
             children: [
               CupertinoButton(
